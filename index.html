@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Centichess</title>
+
+	<!-- Meta -->
+	<meta name="description"
+		content="Analyze chess games for free, forever. Centichess is an open-source chess analysis program built to help you play better!">
+	<meta name="keywords"
+		content="chess, analysis, engine, chess engine analysis, chess engine evaluation, chess engine analysis, chess engine, chessify, chessly, centipawns">
+
+	<!-- CSS -->
+	<link href="assets/css/style.css" rel="stylesheet" type="text/css" />
+
+	<!-- Scripts -->
+	<script src="libs/jquery.3.7.1.min.js"></script>
+
+	<!-- Favicon -->
+	<link rel="icon" type="image/x-icon" href="assets/images/favicon.svg">
+	<link rel="apple-touch-icon" href="assets/images/apple-icon.png">
+	<link rel="manifest" href="manifest.json">
+
+	<!-- Fonts -->
+	<link href="assets/css/fonts.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body id="top" class="dark_theme">
+	<header class="header" data-header>
+		<div class="inner">
+
+			<h1 class="h1 logo">
+				<?xml version="1.0" encoding="UTF-8"?><svg id="a" xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 520.11 504.87">
+					<path
+						d="M484,205.95c-1.04-21.38-19.21-37.92-40.61-37.92H76.72c-21.4,0-39.57,16.54-40.61,37.92-.29,6.02.67,11.94,3.05,17.48l76.9,184.6h288l76.9-184.6c2.37-5.54,3.34-11.46,3.05-17.48Z"
+						fill="currentColor" />
+					<path
+						d="M404.06,424.87H116.06l-41.4,41.4c-4.2,4.2-6.6,10-6.6,16,0,12.5,10.1,22.6,22.6,22.6h338.8c12.5,0,22.6-10.1,22.6-22.6,0-6-2.4-11.8-6.6-16l-41.4-41.4Z"
+						fill="currentColor" />
+					<path
+						d="M186.05,99.81c4.2,6.77,14.37,12.19,22.34,12.19h19.67v17.99c0,7.98,5.43,18.15,12.21,22.35,25.44,15.77,51.79-1.99,51.79-26.02v-14.32h16c18.06,0,32.58-14.89,31.98-33.08.12-6.51-1.68-13.49-5.97-20.41-4.2-6.77-14.37-12.19-22.34-12.19h-19.67v-17.99c0-7.98-5.43-18.15-12.21-22.35-25.44-15.77-51.79,1.99-51.79,26.02v14.32h-16c-18.06,0-32.58,14.89-31.98,33.08-.12,6.51,1.68,13.49,5.97,20.41Z"
+						fill="currentColor" />
+					<path
+						d="M48.07,111.78c27.37.04,33.86-.03,64,0,23.75,2.48,47.99-5.06,47.98-33.09,1.06-14.86-11.69-32.86-28.31-32.59,0,0-83.66,0-83.66,0h-16c-27.06-.24-40.84,31.48-26,53.49,8.41,14.07,28.07,12.45,42,12.19Z"
+						fill="currentColor" />
+					<path
+						d="M408.07,111.78c27.37.04,33.86-.03,64,0,23.75,2.48,47.99-5.06,47.98-33.09,1.06-14.86-11.69-32.86-28.31-32.59,0,0-83.66,0-83.66,0h-16c-27.06-.24-40.84,31.48-26,53.49,8.41,14.07,28.07,12.45,42,12.19Z"
+						fill="currentColor" />
+				</svg>
+				<a href="#">Centichess</a>
+			</h1>
+
+			<button class="nav-toggle-btn" aria-label="Toggle Menu" title="Toggle Menu" data-nav-toggle-btn>
+				<span class="one"></span>
+				<span class="two"></span>
+				<span class="three"></span>
+			</button>
+
+			<nav class="navbar" data-navbar>
+				<ul class="navbar-list">
+
+					<!-- <li>
+						<a href="index.html" class="navbar-link">Home</a>
+					</li> -->
+
+					<!-- <li>
+						<a href="https://youtube.com" class="navbar-link" target="_blank" rel="noopener noreferrer">
+							<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="20"
+								height="20">
+								<path
+									d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"
+									fill="currentColor" />
+							</svg>
+
+						</a>
+					</li> -->
+
+					<li>
+						<a href="https://github.com/cooper-ross/centichess" class="navbar-link" target="_blank" rel="noopener noreferrer">
+							<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512" width="20"
+								height="20">
+								<path
+									d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 389.7 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.3-1.3 1.3-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"
+									fill="currentColor" />
+							</svg>
+
+						</a>
+					</li>
+
+				</ul>
+			</nav>
+		</div>
+	</header>
+	<div class="overlay" data-nav-toggler data-overlay></div>
+
+	<main>
+		<article class="container">
+			<div class="main-panel">
+				<div class="chess-container">
+					<div class="nameplate top">
+						<div class="profile">
+							<img id="black-profile" class="profile-picture" src="./assets/placeholders/white_400.png">
+							<h4 id="black-name" class="name">Black</h4>
+							<p id="black-rating" class="rating">Unrated</p>
+						</div>
+						<div class="clock" id="black-clock">
+							<span class="clock-time">--:--</span>
+						</div>
+					</div>
+
+					<div class="chess-box">
+						<div class="eval-bar-container">
+							<div class="eval-bar">
+								<div class="eval-text"></div>
+								<div class="eval-fill"></div>
+							</div>
+						</div>
+						<div id="chessboard"></div>
+					</div>
+
+					<div class="nameplate bottom">
+						<div class="profile">
+							<img id="white-profile" class="profile-picture" src="./assets/placeholders/white_400.png">
+							<h4 id="white-name" class="name">White</h4>
+							<p id="white-rating" class="rating">Unrated</p>
+						</div>
+						<div class="clock" id="white-clock">
+							<span class="clock-time">--:--</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="sidebar">
+					<div class="sidebar-header">
+						<div class="tab-buttons">
+							<button class="tab-button active" data-tab="report">Report</button>
+							<button class="tab-button" data-tab="moves">Moves</button>
+							<button class="tab-button" data-tab="games">Games</button>
+							<button class="tab-button" data-tab="settings">Settings</button>
+						</div>
+						<div class="evaluation-progress-container">
+							<div class="evaluation-progress-bar">
+								<div class="progress-bar-fill"></div>
+							</div>
+						</div>
+					</div>
+					<div class="tab-content blur-content">
+						<div id="report-tab" class="tab-panel active">
+							<div class="top-content game-graph">
+								<canvas id="game-analysis-graph"></canvas>
+							</div>
+							<div class="top-content game-info">
+
+							</div>
+							<div class="top-content game-stats">
+
+							</div>
+						</div>
+						<div id="moves-tab" class="tab-panel">
+							<div class="top-content move-info">
+
+							</div>
+							<div class="top-content engine-lines">
+
+							</div>
+							<div class="moves-container">
+								<div id="move-tree" class="move-tree"></div>
+							</div>
+						</div>
+						<div id="games-tab" class="tab-panel">
+							<ul class="three-tag-layout">
+								<li class="tag selected">
+									<svg class="icon" xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 320 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+										<path
+											d="M215.5 224c29.2-18.4 48.5-50.9 48.5-88c0-57.4-46.6-104-104-104S56 78.6 56 136c0 37.1 19.4 69.6 48.5 88L96 224c-17.7 0-32 14.3-32 32c0 16.5 12.5 30 28.5 31.8L80 400l160 0L227.5 287.8c16-1.8 28.5-15.3 28.5-31.8c0-17.7-14.3-32-32-32l-8.5 0zM22.6 473.4c-4.2 4.2-6.6 10-6.6 16C16 501.9 26.1 512 38.6 512l242.7 0c12.5 0 22.6-10.1 22.6-22.6c0-6-2.4-11.8-6.6-16L256 432 64 432 22.6 473.4z"
+											fill="currentColor" />
+									</svg>
+									<span>Chess</span>
+								</li>
+								<li class="tag">
+									<svg class="icon" xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 448 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+										<path
+											d="M96 48L82.7 61.3C70.7 73.3 64 89.5 64 106.5l0 132.4c0 10.7 5.3 20.7 14.2 26.6l10.6 7c14.3 9.6 32.7 10.7 48.1 3l3.2-1.6c2.6-1.3 5-2.8 7.3-4.5l49.4-37c6.6-5 15.7-5 22.3 0c10.2 7.7 9.9 23.1-.7 30.3L90.4 350C73.9 361.3 64 380 64 400l320 0 28.9-159c2.1-11.3 3.1-22.8 3.1-34.3l0-14.7C416 86 330 0 224 0L83.8 0C72.9 0 64 8.9 64 19.8c0 7.5 4.2 14.3 10.9 17.7L96 48zm24 68a20 20 0 1 1 40 0 20 20 0 1 1 -40 0zM22.6 473.4c-4.2 4.2-6.6 10-6.6 16C16 501.9 26.1 512 38.6 512l370.7 0c12.5 0 22.6-10.1 22.6-22.6c0-6-2.4-11.8-6.6-16L384 432 64 432 22.6 473.4z"
+											fill="currentColor" />
+									</svg>
+									<span>Lichess</span>
+								</li>
+								<li class="tag">
+									<svg class="icon" xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 448 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+										<path
+											d="M64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64L64 32zm64 64l0 64 64 0 0-64 64 0 0 64 64 0 0-64 64 0 0 64-64 0 0 64 64 0 0 64-64 0 0 64 64 0 0 64-64 0 0-64-64 0 0 64-64 0 0-64-64 0 0 64-64 0 0-64 64 0 0-64-64 0 0-64 64 0 0-64-64 0 0-64 64 0zm64 128l64 0 0-64-64 0 0 64zm0 64l0-64-64 0 0 64 64 0zm64 0l-64 0 0 64 64 0 0-64zm0 0l64 0 0-64-64 0 0 64z"
+											fill="currentColor" />
+									</svg>
+									<span>PGN</span>
+								</li>
+							</ul>
+
+							<div class="selection-content">
+								<div class="game-search-box">
+									<div class="search-bar">
+										<input type="text" name="" placeholder="Search for username..."
+											class="search-field">
+										<div class="button-actions">
+											<div class="dropdown">
+												<button id="filter" type="idk" class="search-button">
+													<svg class="icon" xmlns="http://www.w3.org/2000/svg"
+														viewBox="0 0 576 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+														<path
+															d="M151.6 42.4C145.5 35.8 137 32 128 32s-17.5 3.8-23.6 10.4l-88 96c-11.9 13-11.1 33.3 2 45.2s33.3 11.1 45.2-2L96 146.3 96 448c0 17.7 14.3 32 32 32s32-14.3 32-32l0-301.7 32.4 35.4c11.9 13 32.2 13.9 45.2 2s13.9-32.2 2-45.2l-88-96zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l32 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-32 0zm0 128c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0zm0 128c-17.7 0-32 14.3-32 32s14.3 32 32 32l160 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-160 0zm0 128c-17.7 0-32 14.3-32 32s14.3 32 32 32l224 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-224 0z"
+															fill="currentColor" />
+													</svg>
+												</button>
+												<div class="dropdown-content">
+
+												</div>
+											</div>
+											<button id="search-btn" type="submit" class="search-button">
+												<svg class="icon" xmlns="http://www.w3.org/2000/svg"
+													viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+													<path
+														d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"
+														fill="currentColor" />
+												</svg>
+											</button>
+										</div>
+									</div>
+								</div>
+
+								<div class="recent-games">
+									<ul class="games-list">
+
+									</ul>
+								</div>
+							</div>
+						</div>
+						<div id="settings-tab" class="tab-panel">
+							<div class="settings-menu-container">
+								<!-- Settings content will be dynamically generated here -->
+							</div>
+						</div>
+					</div>
+
+					<div class="bottom-content blur-content">
+						<div class="controls">
+							<button id="restart"><svg xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 320 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+									<path
+										d="M267.5 440.6c9.5 7.9 22.8 9.7 34.1 4.4s18.4-16.6 18.4-29l0-320c0-12.4-7.2-23.7-18.4-29s-24.5-3.6-34.1 4.4l-192 160L64 241 64 96c0-17.7-14.3-32-32-32S0 78.3 0 96L0 416c0 17.7 14.3 32 32 32s32-14.3 32-32l0-145 11.5 9.6 192 160z"
+										fill="currentColor" />
+								</svg></button>
+							<button id="backward"><svg xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 448 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+									<path
+										d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"
+										fill="currentColor" />
+								</svg></button>
+							<div class="quick-menu-container">
+								<button id="popup-quick-menu"><svg xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 448 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+										<path
+											d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" 
+											fill="currentColor" />
+									</svg></button>
+								<div class="quick-menu" id="quick-menu">
+									<div class="quick-menu-item" id="flip-board">
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+											<path d="M105.1 202.6c7.7-21.8 20.2-42.3 37.8-59.8c62.5-62.5 163.8-62.5 226.3 0L386.3 160H352c-17.7 0-32 14.3-32 32s14.3 32 32 32H463.5c0 0 0 0 0 0h.4c17.7 0 32-14.3 32-32V80c0-17.7-14.3-32-32-32s-32 14.3-32 32v35.2L414.4 97.6c-87.5-87.5-229.3-87.5-316.8 0C73.2 122 55.6 150.7 44.8 181.4c-5.9 16.7 2.9 34.9 19.5 40.8s34.9-2.9 40.8-19.5zM39 289.3c-5 1.5-9.8 4.2-13.7 8.2c-4 4-6.7 8.8-8.1 14c-.3 1.2-.6 2.5-.8 3.8c-.3 1.7-.4 3.4-.4 5.1V448c0 17.7 14.3 32 32 32s32-14.3 32-32V413.3l17.6 17.5 0 0c87.5 87.4 229.3 87.4 316.7 0c24.4-24.4 42.1-53.1 52.9-83.7c5.9-16.7-2.9-34.9-19.5-40.8s-34.9 2.9-40.8 19.5c-7.7 21.8-20.2 42.3-37.8 59.8c-62.5 62.5-163.8 62.5-226.3 0L125.7 352H160c17.7 0 32-14.3 32-32s-14.3-32-32-32H48.4c-2.2 0-4.2 .9-5.6 2.3c-1.5 1.4-2.4 3.3-2.5 5.4c0 .5 0 1.1 .1 1.6z" fill="currentColor"/>
+										</svg>
+										<span>Flip Board</span>
+									</div>
+									<div class="quick-menu-item" id="share-fen">
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+											<path d="M352 224c53 0 96-43 96-96s-43-96-96-96s-96 43-96 96c0 4 .2 8 .7 11.9l-94.1 47C145.4 170.2 121.9 160 96 160c-53 0-96 43-96 96s43 96 96 96c25.9 0 49.4-10.2 66.6-26.9l94.1 47c-.5 3.9-.7 7.8-.7 11.9c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-25.9 0-49.4 10.2-66.6 26.9l-94.1-47c.5-3.9 .7-7.8 .7-11.9s-.2-8-.7-11.9l94.1-47C302.6 213.8 326.1 224 352 224z" fill="currentColor"/>
+										</svg>
+										<span>Share FEN</span>
+									</div>
+									<div class="quick-menu-item" id="copy-pgn">
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+											<path d="M192 0c-41.8 0-77.4 26.7-90.5 64L64 64C28.7 64 0 92.7 0 128L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64l-37.5 0C269.4 26.7 233.8 0 192 0zm0 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64zM72 272a24 24 0 1 1 48 0 24 24 0 1 1 -48 0zm104-16l128 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-128 0c-8.8 0-16-7.2-16-16s7.2-16 16-16zM72 368a24 24 0 1 1 48 0 24 24 0 1 1 -48 0zm88 0c0-8.8 7.2-16 16-16l128 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-128 0c-8.8 0-16-7.2-16-16z" fill="currentColor"/>
+										</svg>
+										<span>Copy PGN</span>
+									</div>
+									<div class="quick-menu-item" id="download-pgn">
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+											<path d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32V274.7l-73.4-73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l128 128c12.5 12.5 32.8 12.5 45.3 0l128-128c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L288 274.7V32zM64 352c-35.3 0-64 28.7-64 64v32c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V416c0-35.3-28.7-64-64-64H346.5l-45.3 45.3c-25 25-65.5 25-90.5 0L165.5 352H64zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z" fill="currentColor"/>
+										</svg>
+										<span>Download PGN</span>
+									</div>
+								</div>
+							</div>
+							<button id="forward"><svg xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 448 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+									<path
+										d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"
+										fill="currentColor" />
+								</svg></button>
+							<button id="skip-to-end"><svg xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 320 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+									<path
+										d="M52.5 440.6c-9.5 7.9-22.8 9.7-34.1 4.4S0 428.4 0 416L0 96C0 83.6 7.2 72.3 18.4 67s24.5-3.6 34.1 4.4l192 160L256 241l0-145c0-17.7 14.3-32 32-32s32 14.3 32 32l0 320c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-145-11.5 9.6-192 160z"
+										fill="currentColor" />
+								</svg></button>
+						</div>
+					</div>
+
+					<!-- Analysis Overlay -->
+					<div class="analysis-overlay active">
+						<div class="analysis-content">
+							<h2>Analyzing Game</h2>
+							<p>Stockfish is analyzing your game...</p>
+							<div class="analysis-progress">
+								<div class="analysis-progress-bar"></div>
+							</div>
+							<div class="fun-fact">Here's a fun fact: the website is still loading!</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</article>
+	</main>
+
+	<script src="src/pages/analysis.js" type="module"></script>
+</body>
+
+</html>

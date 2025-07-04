@@ -1,0 +1,27 @@
+{
+    "name": "Centichess",
+    "short_name": "Centichess",
+    "description":"Analyze chess games for free, offline or online",
+    "categories": ["games", "entertainment", "chess"],
+    "start_url": "./index.html",
+    "display": "standalone",
+    "scope": ".",
+    "background_color": "#1F1F1F",
+    "theme_color": "#1F1F1F",
+    "orientation": "any",
+    "id": "./",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "assets/images/favicon.svg",               
+            "sizes": "any",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "assets/images/apple-icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}
