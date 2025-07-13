@@ -84,10 +84,10 @@ centichess/
 ## Contributing
 
 Contributions are welcome! Whether it's:
-- 🐛 Bug fixes
-- ✨ New features
-- 📝 Documentation improvements
-- 🎨 UI/UX enhancements
+- Bug fixes
+- New features
+- Documentation improvements
+- UI/UX enhancements
 
 Please feel free to submit pull requests or open issues.
 
