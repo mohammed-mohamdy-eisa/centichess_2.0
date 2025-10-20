@@ -175,6 +175,7 @@ export class GameGraph {
                 ctx.beginPath();
                 ctx.arc(offset, y, 4 * this.scaleFactor, 0, Math.PI * 2 * this.scaleFactor);
                 ctx.fill();
+
             }
 
             // Draw hover effects

@@ -84,6 +84,51 @@ export class MoveNavigator {
         
         // Update clocks
         Clock.updateFromMoveTree(this.chessUI.moveTree, this.chessUI.board.flipped, this.chessUI.game?.pgn);
+
+        // Update board arrows per mode
+        this.updateBoardArrows(node);
+    }
+
+    /**
+     * Updates the best move arrow on the chessboard for the current position
+     * @param {Object} node - The current move tree node
+     */
+    updateBoardArrows(node) {
+        if (!this.chessUI.analysis || !this.chessUI.analysis.moves) return;
+
+        const mode = this.chessUI.settingsMenu.getSettingValue('bestMoveArrowsMode') || 'best-response';
+
+        // Always start by clearing arrows
+        this.chessUI.board.clearBestMoveArrows();
+
+        // If mode is 'none', don't show any arrows
+        if (mode === 'none') return;
+
+        // Best response: engine's top move for the current position
+        if (mode === 'best-response' || mode === 'both') {
+            const currentFen = node.fen;
+            const currentAnalysis = this.chessUI.analysis.moves.find(m => m.fen === currentFen);
+            const bestLine = currentAnalysis?.lines?.find(l => l.id === 1);
+            if (bestLine?.uciMove) {
+                // Green
+                this.chessUI.board.setBestMoveArrow(bestLine.uciMove);
+            }
+        }
+
+        // Top alternative: best move you should have played instead of your actual previous move
+        if (mode === 'top-alternative' || mode === 'both') {
+            const prevNode = this.chessUI.moveTree.getPreviousMove();
+            if (prevNode) {
+                // Evaluate the previous position to see the best move instead of what was played
+                const prevFen = prevNode.fen || prevNode.move?.before;
+                const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
+                const prevBest = prevAnalysis?.lines?.find(l => l.id === 1);
+                if (prevBest?.uciMove) {
+                    // Use alternativeColor from settings
+                    this.chessUI.board.addBestMoveArrow(prevBest.uciMove, null, 0.85);
+                }
+            }
+        }
     }
 
     handleForwardMove() {

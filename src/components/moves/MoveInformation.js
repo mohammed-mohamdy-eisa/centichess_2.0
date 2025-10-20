@@ -38,7 +38,7 @@ export class MoveInformation {
         // Show placeholder when at the root node or have no move data
         if (!node || node.id === 'root' || !node.move) {
             $("<div>").addClass("move-info-placeholder")
-                .text("Select a move to see its classification.")
+                .text("Welcome to CentiChess! Select a Game to see its analysis.")
                 .appendTo($moveInfo);
             return;
         }
@@ -46,8 +46,16 @@ export class MoveInformation {
         // Create container for move classification info
         const $moveInfoContainer = $("<div>").addClass("move-classification-info");
 
+		// If we have a move selected but classification isn't ready yet, show a loading message
+		if (!node.classification) {
+			$("<div>").addClass("move-info-placeholder")
+				.text("Analysing...")
+				.appendTo($moveInfo);
+			return;
+		}
+
         // Add the current move classification if available
-        if (node.classification) {
+		if (node.classification) {
             const $moveInfoLine = $("<div>").addClass("classification-line");
 
             // Left side - classification and move

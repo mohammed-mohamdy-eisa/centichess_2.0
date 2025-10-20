@@ -391,6 +391,27 @@ export class SettingsMenu {
                                 description: 'Play sounds for moves and captures',
                                 defaultValue: true,
                                 path: 'audioEnabled'
+                            },
+                            {
+                                key: 'showBestMoveArrows',
+                                type: 'toggle',
+                                label: 'Show Board Arrows',
+                                description: 'Display analysis arrows on the board',
+                                defaultValue: true,
+                                path: 'showBestMoveArrows'
+                            },
+                            {
+                                key: 'bestMoveArrowsMode',
+                                type: 'dropdown',
+                                label: 'Board Arrows Mode',
+                                description: 'Choose which analysis arrows to show',
+                                defaultValue: 'top-alternative',
+                                path: 'bestMoveArrowsMode',
+                                options: [
+                                    { value: 'top-alternative', label: 'Top alternative' },
+                                    { value: 'best-response', label: 'Best response' },
+                                    { value: 'both', label: 'Both' }
+                                ]
                             }
                         ]
                     }

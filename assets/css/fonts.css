@@ -1,6 +1,6 @@
 /* cyrillic */
 @font-face {
-    font-family: 'Jost';
+    font-family: 'Roboto';
     font-style: italic;
     font-weight: 100 900;
     font-display: swap;
@@ -9,7 +9,7 @@
 }
 /* latin-ext */
 @font-face {
-    font-family: 'Jost';
+    font-family: 'Roboto';
     font-style: italic;
     font-weight: 100 900;
     font-display: swap;
@@ -18,7 +18,7 @@
 }
 /* latin */
 @font-face {
-    font-family: 'Jost';
+    font-family: 'Roboto';
     font-style: italic;
     font-weight: 100 900;
     font-display: swap;
@@ -27,7 +27,7 @@
 }
 /* cyrillic */
 @font-face {
-    font-family: 'Jost';
+    font-family: 'Roboto';
     font-style: normal;
     font-weight: 100 900;
     font-display: swap;
@@ -36,7 +36,7 @@
 }
 /* latin-ext */
 @font-face {
-    font-family: 'Jost';
+    font-family: 'Roboto';
     font-style: normal;
     font-weight: 100 900;
     font-display: swap;
@@ -45,7 +45,7 @@
 }
 /* latin */
 @font-face {
-    font-family: 'Jost';
+    font-family: 'Roboto';
     font-style: normal;
     font-weight: 100 900;
     font-display: swap;

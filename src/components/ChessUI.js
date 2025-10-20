@@ -76,6 +76,13 @@ export class ChessUI {
         
         // Initialize clocks to default state
         Clock.resetClocks();
+
+        // Listen for board settings changes to update arrows instantly
+        this.board.on('settingsChanged', () => {
+            if (this.moveTree && this.moveTree.currentNode) {
+                this.moveNavigator.updateBoardArrows(this.moveTree.currentNode);
+            }
+        });
     }
 
     async load(game) {

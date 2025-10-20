@@ -1,4 +1,4 @@
-import { GameLoader } from '../components/games/GameLoader.js';
+import { GameLoader, Platform } from '../components/games/GameLoader.js';
 import { ChessUI } from '../components/ChessUI.js';
 import { GameGraph } from '../components/report/GameGraph.js';
 
@@ -46,6 +46,13 @@ $(document).ready(async () => {
     chessUI.load(game);
     loadPlayerData(game.white, game.black);
 
+    // Make profile pictures transparent for Lichess or PGN games
+    if (game.platform === Platform.LICHESS || game.platform === Platform.PGN) {
+        $('#white-profile, #black-profile').css('opacity', 0);
+    } else {
+        $('#white-profile, #black-profile').css('opacity', 1);
+    }
+
     // Listen for PGN game loading events
     window.addEventListener('loadPGNGame', (event) => {
         const gameData = event.detail;
@@ -55,6 +62,13 @@ $(document).ready(async () => {
         console.log(gameData)
         chessUI.load(gameData);
         loadPlayerData(gameData.white, gameData.black);
+
+        // Update profile picture transparency for dynamically loaded PGN
+        if (gameData.platform === Platform.LICHESS || gameData.platform === Platform.PGN) {
+            $('#white-profile, #black-profile').css('opacity', 0);
+        } else {
+            $('#white-profile, #black-profile').css('opacity', 1);
+        }
     });
 
     // Tab switching
