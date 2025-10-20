@@ -333,8 +333,12 @@ export class SettingsMenu {
                                 key: 'engineType',
                                 type: 'dropdown',
                                 label: 'Engine Type',
-                                defaultValue: 'stockfish-17-lite',
+                                defaultValue: 'stockfish-17.1-lite',
                                 options: [
+                                    {
+                                        value: 'stockfish-17.1-lite',
+                                        label: 'Stockfish 17.1 Lite'
+                                    },
                                     {
                                         value: 'stockfish-17-lite',
                                         label: 'Stockfish 17 Lite'

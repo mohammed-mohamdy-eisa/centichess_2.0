@@ -1,4 +1,8 @@
 const engines = {
+    'stockfish-17.1-lite': {
+        name: "Stockfish 17.1 Lite",
+        path: "./src/engines/stockfish/stockfish-17.1-lite-single-03e3232.js",
+    },
     'stockfish-17-lite': {
         name: "Stockfish 17 Lite",
         path: "./src/engines/stockfish/stockfish-17-lite.js",
@@ -25,7 +29,7 @@ export class Engine {
     currentResolve = null;
     currentReject = null;
 
-    constructor({ engineType = 'stockfish-17-lite' } = {}) {
+    constructor({ engineType = 'stockfish-17.1-lite' } = {}) {
         this.engine = engines[engineType];
         this.worker = new Worker(this.engine.path);
         
