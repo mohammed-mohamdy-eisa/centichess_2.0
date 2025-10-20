@@ -366,6 +366,17 @@ export class SettingsMenu {
                                 max: 24,
                             },
                             {
+                                key: 'maxMoveTime',
+                                type: 'slider',
+                                label: 'Max Time per Move',
+                                description: 'Limit engine thinking time per move (31 = ∞)',
+                                defaultValue: 10,
+                                min: 2,
+                                max: 31,
+                                step: 1,
+                                format: (v) => (v >= 31 ? '∞' : `${v}s`)
+                            },
+                            {
                                 key: 'variationEngineDepth',
                                 type: 'slider',
                                 label: 'Variation Engine Depth',
