@@ -38,7 +38,7 @@ export class MoveInformation {
         // Show placeholder when at the root node or have no move data
         if (!node || node.id === 'root' || !node.move) {
             $("<div>").addClass("move-info-placeholder")
-                .text("Welcome to CentiChess! Select a Game to see its analysis.")
+                .text("Welcome to CentiChess!")
                 .appendTo($moveInfo);
             return;
         }

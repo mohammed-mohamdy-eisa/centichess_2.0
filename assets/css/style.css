@@ -1037,7 +1037,6 @@ select {
     transition: all 0.2s ease;
     min-width: 24px;
     position: relative;
-    font-size: large;
 }
 
 .move:hover {
@@ -1518,7 +1517,6 @@ select {
     position: relative;
     width: 100%;
     text-align: left;
-    font-size: large;
     font-weight: 500;
     align-self: center;
 }
