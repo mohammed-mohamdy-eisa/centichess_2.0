@@ -962,6 +962,10 @@ select {
     position: relative;
 }
 
+.turn:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
 .variation {
     margin-left: 20px; /* Indentation for variations */
     margin-bottom: 10px;
@@ -980,6 +984,7 @@ select {
     align-items: center;
     margin: 0 4px;
     position: relative;
+    min-width: 40%;
 }
 
 .move-container {
@@ -1067,48 +1072,93 @@ select {
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
-/* Add some highlighting for move quality */
-.move[data-node-id*="brilliant"],
-.brilliant-move {
+/* Add some highlighting for move quality - scoped to moves container only */
+.moves-container .move[data-node-id*="brilliant"],
+.moves-container .brilliant-move {
 	color: var(--color-classification-brilliant);
 }
 
-.move[data-node-id*="great"],
-.great-move {
+.moves-container .move[data-node-id*="great"],
+.moves-container .great-move {
     color: var(--color-classification-great);
 }
 
-.move[data-node-id*="perfect"],
-.move[data-node-id*="excellent"],
-.perfect-move,
-.excellent-move {
-    color: var(--color-classification-excellent);
+.moves-container .move[data-node-id*="perfect"],
+.moves-container .move[data-node-id*="excellent"],
+.moves-container .perfect-move,
+.moves-container .excellent-move {
+    color: var(--pure-white);
 }
 
-.move[data-node-id*="good"],
-.good-move,
-.forced-move {
-    color: var(--color-classification-forced);
+.moves-container .move[data-node-id*="good"],
+.moves-container .good-move,
+.moves-container .forced-move {
+    color: var(--pure-white);
 }
 
-.move[data-node-id*="inaccuracy"],
-.inaccuracy-move {
+.moves-container .move[data-node-id*="inaccuracy"],
+.moves-container .inaccuracy-move {
     color: var(--color-classification-inaccuracy);
 }
 
-.move[data-node-id*="mistake"],
-.mistake-move {
+.moves-container .move[data-node-id*="mistake"],
+.moves-container .mistake-move {
     color: var(--color-classification-mistake);
 }
 
-.move[data-node-id*="blunder"],
-.move[data-node-id*="miss"],
-.blunder-move,
-.miss-move {
+.moves-container .move[data-node-id*="blunder"],
+.moves-container .move[data-node-id*="miss"],
+.moves-container .blunder-move,
+.moves-container .miss-move {
     color: var(--color-classification-blunder);
 }
 
-.theory-move {
+.moves-container .theory-move {
+    color: var(--pure-white);
+}
+
+/* Move classification colors for everywhere else (outside moves container) */
+.move[data-node-id*="brilliant"]:not(.moves-container .move),
+.brilliant-move:not(.moves-container .brilliant-move) {
+	color: var(--color-classification-brilliant);
+}
+
+.move[data-node-id*="great"]:not(.moves-container .move),
+.great-move:not(.moves-container .great-move) {
+    color: var(--color-classification-great);
+}
+
+.move[data-node-id*="perfect"]:not(.moves-container .move),
+.move[data-node-id*="excellent"]:not(.moves-container .move),
+.perfect-move:not(.moves-container .perfect-move),
+.excellent-move:not(.moves-container .excellent-move) {
+    color: var(--color-classification-excellent);
+}
+
+.move[data-node-id*="good"]:not(.moves-container .move),
+.good-move:not(.moves-container .good-move),
+.forced-move:not(.moves-container .forced-move) {
+    color: var(--color-classification-forced);
+}
+
+.move[data-node-id*="inaccuracy"]:not(.moves-container .move),
+.inaccuracy-move:not(.moves-container .inaccuracy-move) {
+    color: var(--color-classification-inaccuracy);
+}
+
+.move[data-node-id*="mistake"]:not(.moves-container .move),
+.mistake-move:not(.moves-container .mistake-move) {
+    color: var(--color-classification-mistake);
+}
+
+.move[data-node-id*="blunder"]:not(.moves-container .move),
+.move[data-node-id*="miss"]:not(.moves-container .move),
+.blunder-move:not(.moves-container .blunder-move),
+.miss-move:not(.moves-container .miss-move) {
+    color: var(--color-classification-blunder);
+}
+
+.theory-move:not(.moves-container .theory-move) {
     color: var(--color-classification-book);
 }
 
@@ -1410,7 +1460,13 @@ select {
     border-radius: 8px;
     margin: 15px 15px 0 15px;
     box-shadow: var(--shadow-1);
+    min-height: auto;
+    padding-bottom: 10px;
+}
+
+.engine-lines:not(.collapsed) {
     min-height: 160px;
+    padding-bottom: 10px;
 }
 
 .section-title {
@@ -1423,6 +1479,19 @@ select {
     letter-spacing: 0.5px;
     display: flex;
     align-items: center;
+}
+
+.section-title.clickable-title {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin: -6px -8px 10px -8px;
+}
+
+.section-title.clickable-title:hover {
+    background-color: var(--hover-dark);
 }
 
 /* Engine lines title and waiting message */
@@ -1441,6 +1510,32 @@ select {
 
 .engine-lines-title.no-evaluation::before {
     background-color: #999;
+}
+
+.engine-lines-collapse-button {
+    margin-left: auto;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.engine-lines-collapse-button:hover {
+    background-color: var(--hover-dark);
+}
+
+.engine-lines-collapse-button svg {
+    width: 12px;
+    height: 12px;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+}
+
+.engine-lines-collapse-button:hover svg {
+    color: var(--text-primary);
 }
 
 .engine-depth {
