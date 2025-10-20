@@ -68,10 +68,11 @@ export class EvaluationQueue {
             let engine = null;
             
             if (!lines || lines.length < 2) {
-                const engineType = this.settingsMenu?.getSettingValue('engineType') || 'stockfish-17-lite';
+                const engineType = this.settingsMenu?.getSettingValue('engineType') || 'stockfish-17.1-lite';
                 engine = new Engine({ engineType: engineType });
-                const depth = this.settingsMenu?.getSettingValue('variationEngineDepth') || 16;
-                lines = await this.evaluateWithEngine(item.fen, depth, 0, 100, engine);
+                const depth = this.settingsMenu?.getSettingValue('engineDepth') || 16;
+                const maxMoveTime = this.settingsMenu?.getSettingValue('maxMoveTime') || 5;
+                lines = await this.evaluateWithEngine(item.fen, depth, 0, 100, engine, maxMoveTime);
             }
             
             // Create and store result
@@ -120,17 +121,21 @@ export class EvaluationQueue {
      * Evaluates a position using the engine with progress tracking
      * @private
      */
-    async evaluateWithEngine(fen, depth, startProgress, endProgress, engine = null) {
+    async evaluateWithEngine(fen, depth, startProgress, endProgress, engine = null, maxMoveTime = null) {
         if (!engine) {
             // Get engine type from settings
-            const engineType = this.settingsMenu?.getSettingValue('engineType') || 'stockfish-17-lite';
+            const engineType = this.settingsMenu?.getSettingValue('engineType') || 'stockfish-17.1-lite';
             engine = new Engine({ engineType: engineType });
+        }
+
+        if (maxMoveTime === null) {
+            maxMoveTime = this.settingsMenu?.getSettingValue('maxMoveTime') || 5;
         }
 
         return await engine.evaluate(fen, depth, false, (progress) => {
             const scaledProgress = startProgress + (progress.percent * (endProgress - startProgress) / 100);
             this.updateMiniEvaluationProgress(Math.round(scaledProgress));
-        });
+        }, 0, maxMoveTime);
     }
     
     /**

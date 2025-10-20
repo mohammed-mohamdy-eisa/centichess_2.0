@@ -2170,6 +2170,7 @@ select {
     border-radius: 4px;
     font-weight: 600;
     padding: 2px 0;
+    font-size: larger;
 }
 
 .stats-box.black {

@@ -97,7 +97,8 @@ export class MoveEvaluator {
         });
 
         const depth = settings.engineDepth || 16;
-        const engineType = settings.engineType || 'stockfish-17-lite';
+        const engineType = settings.engineType || 'stockfish-17.1-lite';
+        const maxMoveTime = settings.maxMoveTime || 5;
         const maxWorkers = navigator.hardwareConcurrency || 8; // Use hardware concurrency when available
         const moves = new Array(history.length);
         
@@ -145,7 +146,7 @@ export class MoveEvaluator {
                     try {
                         // Start both cloud and local evaluations in parallel
                         const cloudPromise = MoveEvaluator.tryCloudEvaluation(move.fen);
-                        const localPromise = worker.evaluate(move.fen, depth);
+                        const localPromise = worker.evaluate(move.fen, depth, false, null, 0, maxMoveTime);
                         
                         // Race between cloud and local evaluation
                         // Use Promise.allSettled to get both results regardless of success/failure

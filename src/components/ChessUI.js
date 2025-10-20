@@ -116,14 +116,15 @@ export class ChessUI {
         this.board.setOption({ isInteractive: false });
 
         const engineType = this.settingsMenu.getSettingValue('engineType');
-        const engineDepth = this.settingsMenu.getSettingValue('engineDepth') || 14;
+        const engineDepth = this.settingsMenu.getSettingValue('engineDepth') || 16;
+        const maxMoveTime = this.settingsMenu.getSettingValue('maxMoveTime') || 5;
 
         const analysis = await MoveEvaluator.analyzeGame(
             this.game, 
             (progress) => {
                 SidebarOverlay.updateEvaluationProgress(progress);
             },
-            { engineType, engineDepth }
+            { engineType, engineDepth, maxMoveTime }
         );
 
         this.board.setOption({ isInteractive: true });

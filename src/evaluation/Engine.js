@@ -152,7 +152,7 @@ export class Engine {
         return lines;
     }
 
-    async evaluate(fen, targetDepth, verbose = false, progressCallback = null, fallen = 0) {
+    async evaluate(fen, targetDepth, verbose = false, progressCallback = null, fallen = 0, maxMoveTime = null) {
         this.busy = true;
         
         // Reset current depth
@@ -168,17 +168,24 @@ export class Engine {
             } catch (err) {
                 console.log("Error creating worker:", err);
                 this.fallbackToAlternativeEngine(fallen);
-                return this.evaluate(fen, targetDepth, verbose, progressCallback, fallen + 1);
+                return this.evaluate(fen, targetDepth, verbose, progressCallback, fallen + 1, maxMoveTime);
             }
         }
         
         try {
             this.worker.postMessage(`position fen ${fen}`);
-            this.worker.postMessage(`go depth ${targetDepth}`);
+            
+            // Use both depth and time limits when time is specified, otherwise just depth
+            if (maxMoveTime && maxMoveTime < 31) {
+                const timeInMs = maxMoveTime * 1000;
+                this.worker.postMessage(`go depth ${targetDepth} movetime ${timeInMs}`);
+            } else {
+                this.worker.postMessage(`go depth ${targetDepth}`);
+            }
         } catch (err) {
             console.log("Error sending commands to worker:", err);
             this.fallbackToAlternativeEngine(fallen);
-            return this.evaluate(fen, targetDepth, verbose, progressCallback, fallen + 1);
+            return this.evaluate(fen, targetDepth, verbose, progressCallback, fallen + 1, maxMoveTime);
         }
 
         const messages = [];
@@ -246,7 +253,7 @@ export class Engine {
                     if (fallen < 2) {
                         // Try with fallback engine
                         this.fallbackToAlternativeEngine(fallen);
-                        this.evaluate(fen, targetDepth, verbose, progressCallback, fallen + 1)
+                        this.evaluate(fen, targetDepth, verbose, progressCallback, fallen + 1, maxMoveTime)
                             .then(resolve)
                             .catch(reject);
                     } else {
