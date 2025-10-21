@@ -15,3 +15,8 @@
     font-display: swap;
     src: url(../fonts/Roboto-Italic-VariableFont_wdth,wght.ttf) format('truetype-variations');
 }
+@font-face {
+    font-family: 'Jost';
+    font-display: swap;
+    src: url(../fonts/Jost-ExtraBold.ttf) format('truetype');
+}

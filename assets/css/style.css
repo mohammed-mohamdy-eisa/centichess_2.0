@@ -15,7 +15,7 @@
     --transition-1: 0.25s ease-in-out;
     
     /* Base Colors */
-    --pure-white: #ffffff;
+    --pure-white: #e0e0e0;
     --pure-black: #000000;
     
     /* Classification Colors */
@@ -1098,7 +1098,7 @@ select {
 
 .moves-container .move[data-node-id*="inaccuracy"],
 .moves-container .inaccuracy-move {
-    color: var(--color-classification-inaccuracy);
+    color: var(--pure-white);
 }
 
 .moves-container .move[data-node-id*="mistake"],
@@ -1115,6 +1115,27 @@ select {
 
 .moves-container .theory-move {
     color: var(--pure-white);
+}
+
+/* Move icon after text in moves-container only */
+.moves-container .move-container {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.moves-container .move-icon {
+    margin-right: 0;
+    margin-left: 5px;
+}
+
+/* Hide move icons for specific classifications in moves-container only */
+.moves-container .perfect-container .move-icon,
+.moves-container .excellent-container .move-icon,
+.moves-container .theory-container .move-icon,
+.moves-container .forced-container .move-icon,
+.moves-container .good-container .move-icon,
+.moves-container .inaccuracy-container .move-icon {
+    display: none;
 }
 
 /* Move classification colors for everywhere else (outside moves container) */
@@ -2249,6 +2270,7 @@ body.lock-scroll {
 .stats-count {
     flex: 1;
     text-align: center;
+    font-family: 'Jost', sans-serif;
     font-weight: bolder;
     font-size: 15px;
     display: flex;
@@ -2278,6 +2300,7 @@ body.lock-scroll {
 .stats-box {
     flex: 1;
     text-align: center;
+    font-family: 'Jost', sans-serif;
     color: #1a1a1a;
     background-color: #dddddd;
     border-radius: 4px;

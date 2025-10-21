@@ -47,14 +47,6 @@ export class SettingsMenu {
                                         label: 'Stockfish 17.1 NNUE'
                                     },
                                     {
-                                        value: 'stockfish-17-lite',
-                                        label: 'Stockfish 17 Lite'
-                                    },
-                                    {
-                                        value: 'stockfish-16-nnue',
-                                        label: 'Stockfish 16 NNUE '
-                                    },
-                                    {
                                         value: 'stockfish-16-lite',
                                         label: 'Stockfish 16 Lite'
                                     },
@@ -63,6 +55,15 @@ export class SettingsMenu {
                                         label: 'Stockfish 11'
                                     }
                                 ],
+                            },
+                            {
+                                key: 'engineDepth',
+                                type: 'slider',
+                                label: 'Engine Depth',
+                                description: 'Analysis depth for both main game and variations',
+                                defaultValue: 16,
+                                min: 2,
+                                max: 24,
                             },
                             {
                                 key: 'maxMoveTime',
@@ -75,15 +76,6 @@ export class SettingsMenu {
                                 step: 1,
                                 format: (v) => (v >= 31 ? '∞' : `${v}s`)
                             },
-                            {
-                                key: 'engineDepth',
-                                type: 'slider',
-                                label: 'Engine Depth',
-                                description: 'Analysis depth for both main game and variations',
-                                defaultValue: 16,
-                                min: 2,
-                                max: 24,
-                            }
                         ]
                     },
                     'quickToggles': {
