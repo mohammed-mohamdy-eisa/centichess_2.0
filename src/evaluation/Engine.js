@@ -9,6 +9,8 @@ const engines = {
     'stockfish-17.1-nnue': {
         name: "Stockfish 17.1 NNUE",
         path: "./src/engines/stockfish/stockfish-17.1-single-a496a04.js",
+        // asm.js fallback for mobile devices (no WASM multi-part support)
+        mobilePath: "./src/engines/stockfish/stockfish-17.1-asm-341ff22.js",
     },
     'stockfish-16-nnue': {
         name: "Stockfish 16 NNUE",
@@ -38,6 +40,17 @@ function supportsWasmThreads() {
     }
 }
 
+// Detect mobile devices
+function isMobileDevice() {
+    try {
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i;
+        return mobileRegex.test(userAgent);
+    } catch (_) {
+        return false;
+    }
+}
+
 
 export class Engine {
     currentDepth = 0;
@@ -49,9 +62,16 @@ export class Engine {
     constructor({ engineType = 'stockfish-17.1-lite' } = {}) {
         this.engine = engines[engineType];
 
-        // Prefer multi-threaded 17.1 lite when supported; do not alter 17 lite mapping
+        // Determine worker path based on capabilities
         let workerPath = this.engine.path;
-        if (
+        
+        // For 17.1 NNUE on mobile, use asm.js fallback (better compatibility)
+        if (engineType === 'stockfish-17.1-nnue' && isMobileDevice() && this.engine.mobilePath) {
+            console.log('Mobile device detected: Using asm.js for Stockfish 17.1 NNUE');
+            workerPath = this.engine.mobilePath;
+        }
+        // For 17.1 Lite, prefer multi-threaded when WASM threads are supported
+        else if (
             engineType === 'stockfish-17.1-lite' &&
             this.engine.multiPath &&
             supportsWasmThreads()
