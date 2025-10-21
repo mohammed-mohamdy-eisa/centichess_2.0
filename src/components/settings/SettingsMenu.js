@@ -25,6 +25,113 @@ export class SettingsMenu {
      */
     _getDefaultSettingsConfig() {
         return {
+            'Engine & Quick Settings': {
+                settings: {
+                    'engineSettings': {
+                        type: 'group',
+                        label: 'Engine Settings',
+                        description: 'Engine settings',
+                        settings: [
+                            {
+                                key: 'engineType',
+                                type: 'dropdown',
+                                label: 'Engine Type',
+                                defaultValue: 'stockfish-17.1-lite',
+                                options: [
+                                    {
+                                        value: 'stockfish-17.1-lite',
+                                        label: 'Stockfish 17.1 Lite'
+                                    },
+                                    {
+                                        value: 'stockfish-17.1-nnue',
+                                        label: 'Stockfish 17.1 NNUE'
+                                    },
+                                    {
+                                        value: 'stockfish-17-lite',
+                                        label: 'Stockfish 17 Lite'
+                                    },
+                                    {
+                                        value: 'stockfish-16-nnue',
+                                        label: 'Stockfish 16 NNUE '
+                                    },
+                                    {
+                                        value: 'stockfish-16-lite',
+                                        label: 'Stockfish 16 Lite'
+                                    },
+                                    {
+                                        value: 'stockfish-11',
+                                        label: 'Stockfish 11'
+                                    }
+                                ],
+                            },
+                            {
+                                key: 'maxMoveTime',
+                                type: 'slider',
+                                label: 'Max Time per Move',
+                                description: 'Limit engine thinking time per move (31 = ∞)',
+                                defaultValue: 31,
+                                min: 2,
+                                max: 31,
+                                step: 1,
+                                format: (v) => (v >= 31 ? '∞' : `${v}s`)
+                            },
+                            {
+                                key: 'engineDepth',
+                                type: 'slider',
+                                label: 'Engine Depth',
+                                description: 'Analysis depth for both main game and variations',
+                                defaultValue: 16,
+                                min: 2,
+                                max: 24,
+                            }
+                        ]
+                    },
+                    'quickToggles': {
+                        type: 'group',
+                        label: 'Quick Toggles',
+                        description: 'Quickly toggle settings',
+                        settings: [
+                            {
+                                key: 'showBoardLabels',
+                                type: 'toggle',
+                                label: 'Show Board Labels',
+                                description: 'Display file and rank labels around the board',
+                                defaultValue: true,
+                                path: 'showBoardLabels'
+                            },
+                            {
+                                key: 'audioEnabled',
+                                type: 'toggle',
+                                label: 'Sound Effects',
+                                description: 'Play sounds for moves and captures',
+                                defaultValue: true,
+                                path: 'audioEnabled'
+                            },
+                            {
+                                key: 'showBestMoveArrows',
+                                type: 'toggle',
+                                label: 'Show Board Arrows',
+                                description: 'Display analysis arrows on the board',
+                                defaultValue: true,
+                                path: 'showBestMoveArrows'
+                            },
+                            {
+                                key: 'bestMoveArrowsMode',
+                                type: 'dropdown',
+                                label: 'Board Arrows Mode',
+                                description: 'Choose which analysis arrows to show',
+                                defaultValue: 'top-alternative',
+                                path: 'bestMoveArrowsMode',
+                                options: [
+                                    { value: 'top-alternative', label: 'Top Engine Move' },
+                                    { value: 'best-response', label: 'Best response' },
+                                    { value: 'both', label: 'Both' }
+                                ]
+                            }
+                        ]
+                    }
+                },
+            },
             'Board Appearance': {
                 settings: {
                     'boardTheme': {
@@ -322,109 +429,6 @@ export class SettingsMenu {
                     // }
                 }
             },
-            'Engine & Quick Settings': {
-                settings: {
-                    'engineSettings': {
-                        type: 'group',
-                        label: 'Engine Settings',
-                        description: 'Engine settings',
-                        settings: [
-                            {
-                                key: 'engineType',
-                                type: 'dropdown',
-                                label: 'Engine Type',
-                                defaultValue: 'stockfish-17.1-lite',
-                                options: [
-                                    {
-                                        value: 'stockfish-17.1-lite',
-                                        label: 'Stockfish 17.1 Lite'
-                                    },
-                                    {
-                                        value: 'stockfish-17-lite',
-                                        label: 'Stockfish 17 Lite'
-                                    },
-                                    {
-                                        value: 'stockfish-16-nnue',
-                                        label: 'Stockfish 16 NNUE '
-                                    },
-                                    {
-                                        value: 'stockfish-16-lite',
-                                        label: 'Stockfish 16 Lite'
-                                    },
-                                    {
-                                        value: 'stockfish-11',
-                                        label: 'Stockfish 11'
-                                    }
-                                ],
-                            },
-                            {
-                                key: 'maxMoveTime',
-                                type: 'slider',
-                                label: 'Max Time per Move',
-                                description: 'Limit engine thinking time per move (31 = ∞)',
-                                defaultValue: 31,
-                                min: 2,
-                                max: 31,
-                                step: 1,
-                                format: (v) => (v >= 31 ? '∞' : `${v}s`)
-                            },
-                            {
-                                key: 'engineDepth',
-                                type: 'slider',
-                                label: 'Engine Depth',
-                                description: 'Analysis depth for both main game and variations',
-                                defaultValue: 16,
-                                min: 2,
-                                max: 24,
-                            }
-                        ]
-                    },
-                    'quickToggles': {
-                        type: 'group',
-                        label: 'Quick Toggles',
-                        description: 'Quickly toggle settings',
-                        settings: [
-                            {
-                                key: 'showBoardLabels',
-                                type: 'toggle',
-                                label: 'Show Board Labels',
-                                description: 'Display file and rank labels around the board',
-                                defaultValue: true,
-                                path: 'showBoardLabels'
-                            },
-                            {
-                                key: 'audioEnabled',
-                                type: 'toggle',
-                                label: 'Sound Effects',
-                                description: 'Play sounds for moves and captures',
-                                defaultValue: true,
-                                path: 'audioEnabled'
-                            },
-                            {
-                                key: 'showBestMoveArrows',
-                                type: 'toggle',
-                                label: 'Show Board Arrows',
-                                description: 'Display analysis arrows on the board',
-                                defaultValue: true,
-                                path: 'showBestMoveArrows'
-                            },
-                            {
-                                key: 'bestMoveArrowsMode',
-                                type: 'dropdown',
-                                label: 'Board Arrows Mode',
-                                description: 'Choose which analysis arrows to show',
-                                defaultValue: 'top-alternative',
-                                path: 'bestMoveArrowsMode',
-                                options: [
-                                    { value: 'top-alternative', label: 'Top alternative' },
-                                    { value: 'best-response', label: 'Best response' },
-                                    { value: 'both', label: 'Both' }
-                                ]
-                            }
-                        ]
-                    }
-                }
-            }
         };
     }
 

@@ -102,8 +102,10 @@ export class EvaluationQueue {
                 });
             }
 
-            engine.abort();
-            engine.terminate();
+            if (engine) {
+                engine.abort();
+                engine.terminate();
+            }
             
             this.updateMiniEvaluationProgress(100);
         } catch (error) {

@@ -1,11 +1,14 @@
 const engines = {
     'stockfish-17.1-lite': {
         name: "Stockfish 17.1 Lite",
+        // single-threaded fallback path (broadest compatibility)
         path: "./src/engines/stockfish/stockfish-17.1-lite-single-03e3232.js",
+        // multi-threaded path (faster when WASM threads + COOP/COEP are enabled)
+        multiPath: "./src/engines/stockfish/stockfish-17.1-lite-51f59da.js",
     },
-    'stockfish-17-lite': {
-        name: "Stockfish 17 Lite",
-        path: "./src/engines/stockfish/stockfish-17-lite.js",
+    'stockfish-17.1-nnue': {
+        name: "Stockfish 17.1 NNUE",
+        path: "./src/engines/stockfish/stockfish-17.1-single-a496a04.js",
     },
     'stockfish-16-nnue': {
         name: "Stockfish 16 NNUE",
@@ -22,6 +25,20 @@ const engines = {
 }
 
 
+// Runtime capability checks
+function supportsWasmThreads() {
+    try {
+        // WebAssembly threads require SharedArrayBuffer and cross-origin isolation
+        if (typeof SharedArrayBuffer === 'undefined') return false;
+        // crossOriginIsolated is true when COOP/COEP headers are set
+        if (typeof crossOriginIsolated !== 'undefined' && !crossOriginIsolated) return false;
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+
 export class Engine {
     currentDepth = 0;
     multiPV = 3;
@@ -31,7 +48,18 @@ export class Engine {
 
     constructor({ engineType = 'stockfish-17.1-lite' } = {}) {
         this.engine = engines[engineType];
-        this.worker = new Worker(this.engine.path);
+
+        // Prefer multi-threaded 17.1 lite when supported; do not alter 17 lite mapping
+        let workerPath = this.engine.path;
+        if (
+            engineType === 'stockfish-17.1-lite' &&
+            this.engine.multiPath &&
+            supportsWasmThreads()
+        ) {
+            workerPath = this.engine.multiPath;
+        }
+
+        this.worker = new Worker(workerPath);
         
         this.worker.postMessage("uci");
         this.worker.postMessage(`setoption name MultiPV value ${this.multiPV}`);
@@ -130,21 +158,31 @@ export class Engine {
     }
 
     interpret(uciOutputLines, fen, targetDepth) {
-        const lines = [];
         const outputs = uciOutputLines.filter(uciOutput => uciOutput.startsWith("info depth"));
+
+        // Determine the highest achieved search depth in the available outputs.
+        // This ensures we still return usable lines when movetime stops before targetDepth.
+        let maxDepth = 0;
+        for (const output of outputs) {
+            const d = parseInt(output.match(/(?:depth )(\d+)/)?.[1] || "0");
+            if (d > maxDepth) maxDepth = d;
+        }
+
+        const lines = [];
         for (const output of outputs) {
             // Extract depth, MultiPV line ID and evaluation from search message
             const id = parseInt(output.match(/(?:multipv )(\d+)/)?.[1]);
             const depth = parseInt(output.match(/(?:depth )(\d+)/)?.[1]);
             const uciMove = output.match(/(?: pv )(.+?)(?= |$)/)?.[1];
-            
-            if (!id || !depth || !uciMove || depth != targetDepth || lines.some(line => line.id == id)) continue;
+
+            // Only accept lines from the best achieved depth and avoid duplicates by multipv id
+            if (!id || !depth || !uciMove || depth !== maxDepth || lines.some(line => line.id == id)) continue;
 
             // Invert score for black since stockfish is negamax instead of minimax
             const negamaxScore = parseInt(output.match(/(?:(?:cp )|(?:mate ))([\d-]+)/)?.[1] || "0");
             const score = fen.includes(" b ") ? -negamaxScore : negamaxScore;
             const type = output.includes(" cp ") ? "cp" : "mate";
-            const pv = output.match(/.*pv\s+(.*)$/)?.[1].split(" ")
+            const pv = output.match(/.*pv\s+(.*)$/)?.[1].split(" ");
 
             lines.push({ id, uciMove, depth, score, type, pv });
         }

@@ -557,12 +557,21 @@ export class MoveClassifier {
         }
         
         // No second computer line means no other line exists (the move is forced)
-        if (!prevSecondLine) {
-            classification = Classification.FORCED;
-            move.classification = classification;
-            move.commentType = CommentType.FORCED;
-            move.centipawnLoss = 0;
-            return classification;
+        // But only classify as forced if we have sufficient evaluation data and it's truly forced
+        if (!prevSecondLine && previous.lines.length >= 1) {
+            // Check if this is actually a forced position by looking at the evaluation difference
+            // If the best line has a significantly better score than alternatives, it might be forced
+            const evalDiff = Math.abs(prevBestLine.score);
+            
+            // Only classify as forced if the position is clearly winning/losing or if we're in endgame
+            // For opening positions with equal evaluations, don't classify as forced
+            if (evalDiff > 200 || moves.length > 30) {
+                classification = Classification.FORCED;
+                move.classification = classification;
+                move.commentType = CommentType.FORCED;
+                move.centipawnLoss = 0;
+                return classification;
+            }
         }
 
         // If the move has no score, it's probably because the opening book didn't work

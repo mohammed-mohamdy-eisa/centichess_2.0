@@ -119,6 +119,15 @@ export class SidebarOverlay {
             $('.analysis-overlay, .board-overlay').addClass('active');
             $('.tab-content, .bottom-content').addClass('blur-content');
 
+            // On small screens, lock scroll and bring overlay into view
+            if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
+                document.body.classList.add('lock-scroll');
+                const overlay = document.querySelector('.analysis-overlay');
+                if (overlay && typeof overlay.scrollIntoView === 'function') {
+                    overlay.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                }
+            }
+
             // Initialize progress bar and show random fact
             $('.analysis-progress-bar').css('width', percentage + '%');
             const facts = funFacts;
@@ -146,6 +155,7 @@ export class SidebarOverlay {
                 $('.tab-content, .bottom-content').removeClass('blur-content');
                 this.isAnalysisOverlayActive = false;
                 this.stopFactCycling();
+                document.body.classList.remove('lock-scroll');
             }, 5);
         }
     }

@@ -115,6 +115,17 @@ export class ChessUI {
         $('.tab-content, .bottom-content').addClass('blur-content');
         this.board.setOption({ isInteractive: false });
 
+        // Wire up cancel button for analysis overlay
+        $('#cancel-analysis').off('click').on('click', () => {
+            try {
+                MoveEvaluator.cancelActiveAnalysis();
+            } catch (_) {}
+            $('.analysis-overlay').removeClass('active');
+            $('.tab-content, .bottom-content').removeClass('blur-content');
+            document.body.classList.remove('lock-scroll');
+            this.board.setOption({ isInteractive: true });
+        });
+
         const engineType = this.settingsMenu.getSettingValue('engineType');
         const engineDepth = this.settingsMenu.getSettingValue('engineDepth') || 16;
         const maxMoveTime = this.settingsMenu.getSettingValue('maxMoveTime') || 5;

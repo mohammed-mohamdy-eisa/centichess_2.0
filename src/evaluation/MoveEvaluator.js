@@ -15,6 +15,26 @@ import { Engine } from "./Engine.js";
 export class MoveEvaluator {
     constructor() {}
 
+    // Track active workers and cancellation state for in-flight analysis
+    static workerPool = [];
+    static cancelRequested = false;
+
+    static cancelActiveAnalysis() {
+        this.cancelRequested = true;
+        try {
+            (this.workerPool || []).forEach(worker => {
+                if (worker && typeof worker.abort === 'function') {
+                    worker.abort();
+                }
+                if (worker.worker && typeof worker.worker.terminate === 'function') {
+                    worker.worker.terminate();
+                }
+            });
+        } catch (e) {
+            // swallow
+        }
+    }
+
     static startPositionEvaluation = {
         fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         lines: [
@@ -104,6 +124,8 @@ export class MoveEvaluator {
         
         // Create a pool of workers upfront and reuse them
         const workerPool = Array.from({ length: Math.min(maxWorkers, queue.length) }, () => new Engine({ engineType }));
+        MoveEvaluator.workerPool = workerPool;
+        MoveEvaluator.cancelRequested = false;
         
         let completedMoves = 0;
 
@@ -111,6 +133,18 @@ export class MoveEvaluator {
         return new Promise((resolve) => {
             // Process a batch of positions with available workers
             async function processBatch() {
+                if (MoveEvaluator.cancelRequested) {
+                    try {
+                        workerPool.forEach(worker => {
+                            if (worker.worker && worker.worker.terminate) {
+                                worker.worker.terminate();
+                            }
+                        });
+                    } catch (_) {}
+                    progressCallback(100);
+                    resolve(moves);
+                    return;
+                }
                 const availableWorkers = workerPool.filter(worker => !worker.busy);
                 
                 // Process moves with available workers
@@ -143,6 +177,9 @@ export class MoveEvaluator {
                 
                 // Process each position in the batch
                 await Promise.all(batch.map(async ({ worker, move }) => {
+                    if (MoveEvaluator.cancelRequested) {
+                        return;
+                    }
                     try {
                         // Start both cloud and local evaluations in parallel
                         const cloudPromise = MoveEvaluator.tryCloudEvaluation(move.fen);

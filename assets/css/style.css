@@ -1616,6 +1616,13 @@ select {
     align-self: center;
 }
 
+/* Hide move-info when there's no move */
+.move-info.is-empty {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
 .move-info::after {
     content: "";
     position: absolute;
@@ -1674,6 +1681,13 @@ select {
     display: flex;
 }
 
+/* Lock scroll when overlay is active (applied via JS on mobile) */
+body.lock-scroll {
+    overflow: hidden;
+    height: 100vh;
+    touch-action: none;
+}
+
 .board-overlay {
     position: absolute;
     top: 0;
@@ -1697,6 +1711,10 @@ select {
     width: 80%;
     max-width: 350px;
     z-index: 21;
+}
+
+.analysis-content #cancel-analysis {
+    background-color: var(--btn-secondary);
 }
 
 .analysis-content h2 {
@@ -1752,7 +1770,7 @@ select {
     padding: 0px;
     background-color: #ffffff00;
     overflow: hidden;
-    height: 130px;
+    height: 100px;
 }
 
 #game-analysis-graph {
@@ -2231,7 +2249,7 @@ select {
 .stats-count {
     flex: 1;
     text-align: center;
-    font-weight: 600;
+    font-weight: bolder;
     font-size: 15px;
     display: flex;
     align-items: center;
@@ -2263,8 +2281,8 @@ select {
     color: #1a1a1a;
     background-color: #dddddd;
     border-radius: 4px;
-    font-weight: 600;
-    padding: 2px 0;
+    font-weight: bolder;
+    padding: 3px 0;
     font-size: larger;
 }
 
