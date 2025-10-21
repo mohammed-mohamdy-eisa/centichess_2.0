@@ -53,6 +53,7 @@ export class SidebarOverlay {
     static overlay = null;
     static factIntervalId = null;
     static isAnalysisOverlayActive = false;
+    static isUserInitiatedLoad = false; // Track if current load is user-initiated (not initial page load)
 
     static get $overlay() {
         if (!this.overlay) {
@@ -118,15 +119,14 @@ export class SidebarOverlay {
             this.isAnalysisOverlayActive = true;
             $('.analysis-overlay, .board-overlay').addClass('active');
             $('.tab-content, .bottom-content').addClass('blur-content');
-
-            // On small screens, lock scroll and bring overlay into view
-            if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
-                document.body.classList.add('lock-scroll');
-                const overlay = document.querySelector('.analysis-overlay');
-                if (overlay && typeof overlay.scrollIntoView === 'function') {
-                    overlay.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                }
-            }
+            
+            // Scroll to the bottom of the page when analysis starts
+            setTimeout(() => {
+                window.scrollTo({ 
+                    top: document.documentElement.scrollHeight, 
+                    behavior: 'smooth' 
+                });
+            }, 100);
 
             // Initialize progress bar and show random fact
             $('.analysis-progress-bar').css('width', percentage + '%');
@@ -155,8 +155,23 @@ export class SidebarOverlay {
                 $('.tab-content, .bottom-content').removeClass('blur-content');
                 this.isAnalysisOverlayActive = false;
                 this.stopFactCycling();
-                document.body.classList.remove('lock-scroll');
             }, 5);
         }
+    }
+    
+    /**
+     * Force cleanup when overlay is manually closed
+     */
+    static cleanup() {
+        this.isAnalysisOverlayActive = false;
+        this.isUserInitiatedLoad = false;
+        this.stopFactCycling();
+    }
+    
+    /**
+     * Mark the next analysis as user-initiated (from game selection)
+     */
+    static setUserInitiatedLoad(value = true) {
+        this.isUserInitiatedLoad = value;
     }
 }

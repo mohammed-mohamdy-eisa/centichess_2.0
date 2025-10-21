@@ -54,12 +54,17 @@ $(document).ready(async () => {
     }
 
     // Listen for PGN game loading events
-    window.addEventListener('loadPGNGame', (event) => {
+    window.addEventListener('loadPGNGame', async (event) => {
         const gameData = event.detail;
 
         //GameLoader.matchGameURL()
 
         console.log(gameData)
+        
+        // Mark this as a user-initiated load (game was selected by user)
+        const { SidebarOverlay } = await import('../components/report/SidebarOverlay.js');
+        SidebarOverlay.setUserInitiatedLoad(true);
+        
         chessUI.load(gameData);
         loadPlayerData(gameData.white, gameData.black);
 
@@ -81,6 +86,16 @@ $(document).ready(async () => {
         $('#' + tabName + '-tab').addClass('active');
 
         GameGraph.render();
+        
+        // On mobile, scroll down to show tab content
+        if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && typeof sidebar.scrollIntoView === 'function') {
+                setTimeout(() => {
+                    sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
     });
 
     // Navigation toggle

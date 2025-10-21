@@ -2296,6 +2296,55 @@ body.lock-scroll {
     margin: 16px 0px;
 }
 
+/* Stats Expand/Collapse Button */
+.stats-expand-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    margin-top: 6px;
+    background-color: var(--sidebar-inner-base);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.stats-expand-button:hover {
+    background-color: var(--hover-dark);
+}
+
+.stats-expand-button .expand-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.stats-expand-button:hover .expand-text {
+    color: var(--text-primary);
+}
+
+.stats-expand-button .expand-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.stats-expand-button .expand-icon svg {
+    color: var(--text-secondary);
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.stats-expand-button:hover .expand-icon svg {
+    color: var(--text-primary);
+}
+
+.stats-expandable-row {
+    overflow: hidden;
+}
+
 
 
 

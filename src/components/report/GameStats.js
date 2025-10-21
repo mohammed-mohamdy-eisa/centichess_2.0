@@ -139,22 +139,56 @@ export class GameStats {
     static createMovesSection(analysis) {
         const movesSection = $('<div class="stats-moves"></div>');
 
-        const displayedClassifications = [
+        // Classifications to show when collapsed (default)
+        const collapsedClassifications = [
+            Classification.BRILLIANT, 
+            Classification.GREAT, 
+            Classification.PERFECT, 
+            Classification.MISTAKE, 
+            Classification.BLUNDER
+        ];
+
+        // Additional classifications to show when expanded
+        const expandedClassifications = [
+            Classification.EXCELLENT, 
+            Classification.GOOD, 
+            Classification.THEORY,
+            Classification.INACCURACY
+        ];
+
+        // All classifications in order for expanded view
+        const allClassifications = [
             Classification.BRILLIANT, 
             Classification.GREAT, 
             Classification.PERFECT, 
             Classification.EXCELLENT, 
             Classification.GOOD, 
+            Classification.THEORY,
+            Classification.INACCURACY, 
             Classification.MISTAKE, 
             Classification.BLUNDER
         ];
 
-        displayedClassifications.forEach(classif => {
+        // Track if section is collapsed (default is collapsed)
+        let isCollapsed = true;
+
+        // Create expand/collapse button
+        const expandButton = $(`<div class="stats-expand-button">
+            <span class="expand-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </span>
+            <span class="expand-text">Show more</span>
+        </div>`);
+
+        // Create rows for all classifications
+        allClassifications.forEach(classif => {
             const whiteCount = analysis.white.counts[classif.type] || 0;
             const blackCount = analysis.black.counts[classif.type] || 0;
             
             const label = classif.type.charAt(0).toUpperCase() + classif.type.slice(1);
-            const row = $(`<div class="stats-row">
+            const row = $(`<div class="stats-row stats-classification-row">
                 <div class="stats-label">${label}</div>
                 <div class="stats-count ${classif.class}">${whiteCount}</div>
                 <div class="stats-icon"></div>
@@ -169,9 +203,35 @@ export class GameStats {
                 const icon = $(`<img src="${classif.src}" alt="${classif.type}" class="stats-icon">`);
                 row.find('.stats-icon').append(icon);
             }
+
+            // Mark expandable rows (those only shown when expanded)
+            if (expandedClassifications.includes(classif)) {
+                row.addClass('stats-expandable-row');
+            }
             
             movesSection.append(row);
         });
+
+        // Add expand button after all rows
+        movesSection.append(expandButton);
+
+        // Add click handler for expand/collapse
+        expandButton.on('click', function() {
+            isCollapsed = !isCollapsed;
+            
+            if (isCollapsed) {
+                movesSection.find('.stats-expandable-row').slideUp(200);
+                expandButton.find('.expand-text').text('Show more');
+                expandButton.find('.expand-icon svg').css('transform', 'rotate(0deg)');
+            } else {
+                movesSection.find('.stats-expandable-row').slideDown(200);
+                expandButton.find('.expand-text').text('Show less');
+                expandButton.find('.expand-icon svg').css('transform', 'rotate(180deg)');
+            }
+        });
+
+        // Hide expandable rows initially (collapsed state)
+        movesSection.find('.stats-expandable-row').hide();
         
         return movesSection;
     }

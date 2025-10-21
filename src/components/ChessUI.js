@@ -122,7 +122,7 @@ export class ChessUI {
             } catch (_) {}
             $('.analysis-overlay').removeClass('active');
             $('.tab-content, .bottom-content').removeClass('blur-content');
-            document.body.classList.remove('lock-scroll');
+            SidebarOverlay.cleanup(); // Cleanup scroll lock and state
             this.board.setOption({ isInteractive: true });
         });
 
