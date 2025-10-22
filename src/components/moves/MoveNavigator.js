@@ -179,14 +179,16 @@ export class MoveNavigator {
                     }
                 }
             } else {
-                // On opponent's turn: Only show best move (top alternative)
-                const prevNode = this.chessUI.moveTree.getPreviousMove();
-                if (prevNode) {
-                    const prevFen = prevNode.fen || prevNode.move?.before;
-                    const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
-                    const prevBest = prevAnalysis?.lines?.find(l => l.id === 1);
-                    if (prevBest?.uciMove) {
-                        this.chessUI.board.addBestMoveArrow(prevBest.uciMove, null, 0.85);
+                // On opponent's turn: Only show best move if they played a suboptimal move
+                if (!isOptimalMove(node.classification)) {
+                    const prevNode = this.chessUI.moveTree.getPreviousMove();
+                    if (prevNode) {
+                        const prevFen = prevNode.fen || prevNode.move?.before;
+                        const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
+                        const prevBest = prevAnalysis?.lines?.find(l => l.id === 1);
+                        if (prevBest?.uciMove) {
+                            this.chessUI.board.addBestMoveArrow(prevBest.uciMove, null, 0.85);
+                        }
                     }
                 }
             }

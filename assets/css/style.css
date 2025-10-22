@@ -535,7 +535,7 @@ select {
 .chess-wrapper {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     gap: 0;
 }
 
@@ -1620,38 +1620,50 @@ select {
     gap: 10px;
 }
 
+/* Wrapper for move-info and avatar */
+.move-info-wrapper {
+    display: flex;
+    align-items: flex-end;
+    gap: 15px;
+    margin: 8px 0;
+    justify-content: flex-start;
+}
+
+/* Avatar styling */
+.move-info-avatar {
+    width: auto;
+    height: 30px;
+    flex-shrink: 0;
+    padding-left: 14px;
+}
+
 /* Bubble styling for the move-info positioned outside chess-container */
 .move-info {
     background-color: var(--engine-white-bg);
     color: var(--engine-white-text);
     border-radius: 15px;
     box-shadow: var(--shadow-1);
-    padding: 10px 20px;
-    margin: 8px 0;
+    padding: 12px 10px;
+    margin: 0;
     position: relative;
     width: auto;
+    max-width: fit-content;
     text-align: left;
     font-weight: 500;
-    align-self: center;
-}
-
-/* Hide move-info when there's no move */
-.move-info.is-empty {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
+    transition: width 0.3s ease, max-width 0.3s ease;
 }
 
 .move-info::after {
     content: "";
     position: absolute;
-    top: -5px;
-    left: 5%;
+    top: 60%;
+    left: -5px;
+    transform: translateY(-50%);
     width: 0;
     height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-bottom: 8px solid var(--engine-white-bg);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid var(--engine-white-bg);
 }
 
 .classification-line {
