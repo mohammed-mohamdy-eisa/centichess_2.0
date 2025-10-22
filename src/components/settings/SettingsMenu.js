@@ -116,8 +116,8 @@ export class SettingsMenu {
                                 path: 'bestMoveArrowsMode',
                                 options: [
                                     { value: 'top-alternative', label: 'Top Engine Move' },
-                                    { value: 'best-response', label: 'Best response' },
-                                    { value: 'both', label: 'Both' }
+                                    { value: 'best-response', label: 'Best Response' },
+                                    { value: 'both', label: 'Both (Smart)' }
                                 ]
                             }
                         ]
@@ -130,7 +130,7 @@ export class SettingsMenu {
                         type: 'visual-list',
                         label: 'Board Theme',
                         description: 'Choose your preferred board style',
-                        defaultValue: 'green',
+                        defaultValue: 'grey',
                         path: 'theme.boardColors',
                         options: [
                             { 
@@ -170,6 +170,15 @@ export class SettingsMenu {
                                 ]
                             },
                             { 
+                                value: 'pink', 
+                                label: 'Pink',
+                                preview: { type: 'board', light: '#ffe8f0', dark: '#ff9cae' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#ffe8f0' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#ff9cae' }
+                                ]
+                            },
+                            { 
                                 value: 'red', 
                                 label: 'Red',
                                 preview: { type: 'board', light: '#ffe6e6', dark: '#cc5555' },
@@ -186,6 +195,38 @@ export class SettingsMenu {
                                     { path: 'theme.boardLightSquareColor', value: '#ffe6e6' },
                                     { path: 'theme.boardDarkSquareColor', value: '#cd8042' }
                                 ]
+                            },
+                            { 
+                                value: 'grey', 
+                                label: 'Grey',
+                                preview: { type: 'board', light: '#c2c2c2', dark: '#7d7d7d' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#c2c2c2' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#7d7d7d' }
+                                ]
+                            }
+                        ]
+                    },
+                    'boardColors': {
+                        type: 'group',
+                        label: 'Custom Board Colors',
+                        description: 'Customize light and dark square colors manually',
+                        settings: [
+                            {
+                                key: 'boardLightSquareColor',
+                                type: 'color',
+                                label: 'Light Squares',
+                                defaultValue: '#f0d9b5',
+                                path: 'theme.boardLightSquareColor',
+                                preview: { target: '.color-preview-box' }
+                            },
+                            {
+                                key: 'boardDarkSquareColor',
+                                type: 'color',
+                                label: 'Dark Squares',
+                                defaultValue: '#b58863',
+                                path: 'theme.boardDarkSquareColor',
+                                preview: { target: '.color-preview-box' }
                             }
                         ]
                     },
@@ -375,29 +416,6 @@ export class SettingsMenu {
                                 value: 'xkcd', 
                                 label: 'XKCD', 
                                 preview: { type: 'pieces', folder: 'xkcd' }
-                            }
-                        ]
-                    },
-                    'boardColors': {
-                        type: 'group',
-                        label: 'Custom Board Colors',
-                        description: 'Customize light and dark square colors manually',
-                        settings: [
-                            {
-                                key: 'boardLightSquareColor',
-                                type: 'color',
-                                label: 'Light Squares',
-                                defaultValue: '#f0d9b5',
-                                path: 'theme.boardLightSquareColor',
-                                preview: { target: '.color-preview-box' }
-                            },
-                            {
-                                key: 'boardDarkSquareColor',
-                                type: 'color',
-                                label: 'Dark Squares',
-                                defaultValue: '#b58863',
-                                path: 'theme.boardDarkSquareColor',
-                                preview: { target: '.color-preview-box' }
                             }
                         ]
                     },

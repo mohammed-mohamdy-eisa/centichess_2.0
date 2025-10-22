@@ -104,28 +104,90 @@ export class MoveNavigator {
         // If mode is 'none', don't show any arrows
         if (mode === 'none') return;
 
-        // Best response: engine's top move for the current position
-        if (mode === 'best-response' || mode === 'both') {
+        // Helper function to check if a move classification is optimal
+        const isOptimalMove = (classification) => {
+            if (!classification) return false;
+            const optimal = ['brilliant', 'great', 'perfect', 'theory', 'excellent'];
+            return optimal.includes(classification.toLowerCase());
+        };
+
+        // Helper function to determine if current position is player's turn
+        const isPlayerTurn = () => {
+            if (!this.chessUI.game?.username) return false;
+            const userIsBlack = this.chessUI.game.username.toLowerCase() === this.chessUI.game.black?.name?.toLowerCase();
+            const prevNode = this.chessUI.moveTree.getPreviousMove();
+            if (!prevNode?.move) return false;
+            
+            // If the previous move was made by white, current turn is black
+            const currentTurnIsBlack = prevNode.move.color === 'w';
+            return userIsBlack === currentTurnIsBlack;
+        };
+
+        if (mode === 'best-response') {
+            // Best response mode - no changes
             const currentFen = node.fen;
             const currentAnalysis = this.chessUI.analysis.moves.find(m => m.fen === currentFen);
             const bestLine = currentAnalysis?.lines?.find(l => l.id === 1);
             if (bestLine?.uciMove) {
-                // Green
                 this.chessUI.board.setBestMoveArrow(bestLine.uciMove);
             }
-        }
-
-        // Top alternative: best move you should have played instead of your actual previous move
-        if (mode === 'top-alternative' || mode === 'both') {
+        } else if (mode === 'top-alternative') {
+            // Top engine move mode
             const prevNode = this.chessUI.moveTree.getPreviousMove();
-            if (prevNode) {
-                // Evaluate the previous position to see the best move instead of what was played
+            if (prevNode && !isOptimalMove(node.classification)) {
                 const prevFen = prevNode.fen || prevNode.move?.before;
                 const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
                 const prevBest = prevAnalysis?.lines?.find(l => l.id === 1);
                 if (prevBest?.uciMove) {
-                    // Use alternativeColor from settings
                     this.chessUI.board.addBestMoveArrow(prevBest.uciMove, null, 0.85);
+                }
+            }
+        } else if (mode === 'both') {
+            // Smart "Both" mode
+            const playersTurn = isPlayerTurn();
+            
+            if (playersTurn) {
+                // On player's turn
+                const prevNode = this.chessUI.moveTree.getPreviousMove();
+                
+                if (isOptimalMove(node.classification)) {
+                    // Optimal move: Only show best-response arrow
+                    const currentFen = node.fen;
+                    const currentAnalysis = this.chessUI.analysis.moves.find(m => m.fen === currentFen);
+                    const bestLine = currentAnalysis?.lines?.find(l => l.id === 1);
+                    if (bestLine?.uciMove) {
+                        this.chessUI.board.setBestMoveArrow(bestLine.uciMove);
+                    }
+                } else {
+                    // Suboptimal move: Show both arrows
+                    // Best response arrow
+                    const currentFen = node.fen;
+                    const currentAnalysis = this.chessUI.analysis.moves.find(m => m.fen === currentFen);
+                    const bestLine = currentAnalysis?.lines?.find(l => l.id === 1);
+                    if (bestLine?.uciMove) {
+                        this.chessUI.board.setBestMoveArrow(bestLine.uciMove);
+                    }
+                    
+                    // Top alternative arrow
+                    if (prevNode) {
+                        const prevFen = prevNode.fen || prevNode.move?.before;
+                        const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
+                        const prevBest = prevAnalysis?.lines?.find(l => l.id === 1);
+                        if (prevBest?.uciMove) {
+                            this.chessUI.board.addBestMoveArrow(prevBest.uciMove, null, 0.85);
+                        }
+                    }
+                }
+            } else {
+                // On opponent's turn: Only show best move (top alternative)
+                const prevNode = this.chessUI.moveTree.getPreviousMove();
+                if (prevNode) {
+                    const prevFen = prevNode.fen || prevNode.move?.before;
+                    const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
+                    const prevBest = prevAnalysis?.lines?.find(l => l.id === 1);
+                    if (prevBest?.uciMove) {
+                        this.chessUI.board.addBestMoveArrow(prevBest.uciMove, null, 0.85);
+                    }
                 }
             }
         }

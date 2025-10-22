@@ -222,7 +222,7 @@ export class Chessboard {
 				justMovedColor: 'rgba(255, 208, 0, 0.36)',
 				highlightColor: 'rgba(255, 82, 82, 0.71)',
 				arrowColor: 'rgba(223, 145, 0, 0.59)',
-				alternativeColor: 'rgba(46, 204, 113, 0.59)',
+				alternativeColor: 'rgba(223, 145, 0, 0.59)',
 				bestColor: 'rgba(231, 76, 60, 0.59)',
 				droppableIndicatorColor: 'rgba(0, 0, 0, 0.15)',
 				droppableHoverBorderColor: 'rgba(255, 255, 255, 0.781)',

@@ -600,7 +600,7 @@ select {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding-left: 10px;
+    padding-left: 15px;
 }
 
 .name {
@@ -3323,6 +3323,7 @@ body.lock-scroll {
     background-color: rgba(46, 181, 214, 0.1);
     outline: 1px solid var(--light-btn);
     outline-offset: -1px;
+    order: -1;
 }
 
 .visual-list-label {
