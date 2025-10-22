@@ -403,7 +403,6 @@ select {
 
 .logo a {
     color: var(--color-primary);
-    font-family: var(--ff-poppins);
     font-size: 22px;
 }
 
@@ -595,13 +594,13 @@ select {
 .profile-picture {
     width: 30px;
     height: 30px;
-    padding-left: 10px;
 }
 
 .profile {
     display: flex;
     align-items: center;
     gap: 10px;
+    padding-left: 10px;
 }
 
 .name {
@@ -1098,7 +1097,7 @@ select {
 
 .moves-container .move[data-node-id*="inaccuracy"],
 .moves-container .inaccuracy-move {
-    color: var(--pure-white);
+    color: var(--color-classification-inaccuracy);
 }
 
 .moves-container .move[data-node-id*="mistake"],
@@ -1133,8 +1132,7 @@ select {
 .moves-container .excellent-container .move-icon,
 .moves-container .theory-container .move-icon,
 .moves-container .forced-container .move-icon,
-.moves-container .good-container .move-icon,
-.moves-container .inaccuracy-container .move-icon {
+.moves-container .good-container .move-icon {
     display: none;
 }
 
@@ -1626,12 +1624,12 @@ select {
 .move-info {
     background-color: var(--engine-white-bg);
     color: var(--engine-white-text);
-    border-radius: 12px;
+    border-radius: 15px;
     box-shadow: var(--shadow-1);
-    padding: 10px 0px;
+    padding: 10px 20px;
     margin: 8px 0;
     position: relative;
-    width: 100%;
+    width: auto;
     text-align: left;
     font-weight: 500;
     align-self: center;
@@ -1647,8 +1645,8 @@ select {
 .move-info::after {
     content: "";
     position: absolute;
-    top: -8px;
-    left: 10%;
+    top: -5px;
+    left: 5%;
     width: 0;
     height: 0;
     border-left: 8px solid transparent;
@@ -1876,7 +1874,6 @@ body.lock-scroll {
         width: max-content;
         margin-inline: auto;
         color: var(--color-primary);
-        font-family: var(--ff-poppins);
         font-size: 18px;
     }
 
@@ -2271,7 +2268,7 @@ body.lock-scroll {
     flex: 1;
     text-align: center;
     font-family: 'Jost', sans-serif;
-    font-weight: bolder;
+    font-weight: 700;
     font-size: 15px;
     display: flex;
     align-items: center;
@@ -2304,7 +2301,7 @@ body.lock-scroll {
     color: #1a1a1a;
     background-color: #dddddd;
     border-radius: 4px;
-    font-weight: bolder;
+    font-weight: 700;
     padding: 3px 0;
     font-size: larger;
 }

@@ -46,11 +46,11 @@ $(document).ready(async () => {
     chessUI.load(game);
     loadPlayerData(game.white, game.black);
 
-    // Make profile pictures transparent for Lichess or PGN games
+    // Hide profile pictures for Lichess or PGN games
     if (game.platform === Platform.LICHESS || game.platform === Platform.PGN) {
-        $('#white-profile, #black-profile').css('opacity', 0);
+        $('#white-profile, #black-profile').hide();
     } else {
-        $('#white-profile, #black-profile').css('opacity', 1);
+        $('#white-profile, #black-profile').show();
     }
 
     // Listen for PGN game loading events
@@ -68,11 +68,11 @@ $(document).ready(async () => {
         chessUI.load(gameData);
         loadPlayerData(gameData.white, gameData.black);
 
-        // Update profile picture transparency for dynamically loaded PGN
+        // Hide profile pictures for dynamically loaded Lichess or PGN games
         if (gameData.platform === Platform.LICHESS || gameData.platform === Platform.PGN) {
-            $('#white-profile, #black-profile').css('opacity', 0);
+            $('#white-profile, #black-profile').hide();
         } else {
-            $('#white-profile, #black-profile').css('opacity', 1);
+            $('#white-profile, #black-profile').show();
         }
     });
 

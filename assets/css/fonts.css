@@ -18,5 +18,7 @@
 @font-face {
     font-family: 'Jost';
     font-display: swap;
-    src: url(../fonts/Jost-ExtraBold.ttf) format('truetype');
+    font-style: normal;
+    font-weight: 100 900;
+    src: url(../fonts/Jost-VariableFont_wght.ttf) format('truetype-variations');
 }
