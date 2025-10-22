@@ -128,8 +128,9 @@ export class MistakeLearner {
         // Update move info box
         const classification = this.currentMistakeMove.classification;
         const moveNotation = mistakeMoveNode?.move?.san || 'the move';
+        const classificationColor = this.getClassificationColor(classification);
         MoveInformation.showLearningFeedback(
-            `${moveNotation} was ${this.getArticle(classification)} <strong>${classification}</strong>. Find the best move!`,
+            `${moveNotation} was ${this.getArticle(classification)} <strong style="color: ${classificationColor}">${classification}</strong>. Find the best move!`,
             null
         );
     }
@@ -182,8 +183,14 @@ export class MistakeLearner {
             this.chessUI.board.clearHighlights();
             this.chessUI.board.clearBestMoveArrows();
 
-            // Show success message
-            MoveInformation.showLearningFeedback('Well done! You found the best move!', true);
+            // Show success message with icon
+            MoveInformation.showLearningFeedback(
+                `<span style="display: inline-flex; align-items: center;">
+                    <img src="/assets/classifications/excellent.svg" class="move-icon" style="width: 20px; height: 20px; margin-right: 6px;">
+                    <span style="font-weight: bold; color: var(--color-green-300);">Well done! </span> <span>You found the best move!</span>
+                </span>`,
+                true
+            );
 
             // Trigger confetti
             this.triggerConfetti();
@@ -199,7 +206,18 @@ export class MistakeLearner {
             return true; // Allow the move
         } else {
             // Incorrect move - undo it
-            MoveInformation.showLearningFeedback('Not quite. Try again!', false);
+            const classification = this.currentMistakeMove.classification;
+            const mistakeMoveNode = this.chessUI.moveTree.mainline[this.currentMistakeMove.mainlineIndex];
+            const moveNotation = mistakeMoveNode?.move?.san || 'the move';
+            const classificationColor = this.getClassificationColor(classification);
+            
+            MoveInformation.showLearningFeedback(
+                `<span style="display: inline-flex; align-items: center;">
+                    <img src="/assets/classifications/blunder.svg" class="move-icon" style="width: auto; height: 20px; margin-right: 6px;">
+                    <span  style="color: var(--color-red-300); font-weight: bold;">Not quite.</span> <span>Try again!</span>
+                </span>`,
+                false
+            );
 
             // Undo the move visually
             setTimeout(() => {
@@ -295,8 +313,9 @@ export class MistakeLearner {
             // Restore the original feedback message
             const classification = this.currentMistakeMove.classification;
             const moveNotation = mistakeMoveNode?.move?.san || 'the move';
+            const classificationColor = this.getClassificationColor(classification);
             MoveInformation.showLearningFeedback(
-                `${moveNotation} was ${this.getArticle(classification)} <strong>${classification}</strong>. Find the best move!`,
+                `${moveNotation} was ${this.getArticle(classification)} <strong style="color: ${classificationColor}">${classification}</strong>. Find the best move!`,
                 null
             );
             
@@ -339,10 +358,13 @@ export class MistakeLearner {
     showCompletionMessage() {
         MoveInformation.showLearningFeedback(
             `🎉 Congratulations! You've learned from all ${this.mistakeMoves.length} mistake${this.mistakeMoves.length > 1 ? 's' : ''}.`,
-            true
+            null
         );
         // Keep next button visible but disabled since we're done
         this.chessUI.moveNavigator.updateNextBackButton(true);
+        
+        // Big confetti for completion
+        this.triggerCompletionConfetti();
     }
 
     /**
@@ -371,6 +393,18 @@ export class MistakeLearner {
 
         // Update arrows based on settings
         this.chessUI.moveNavigator.updateBoardArrows(currentNode);
+
+        // Re-render the graph
+        setTimeout(async () => {
+            try {
+                const { GameGraph } = await import('../report/GameGraph.js');
+                if (GameGraph && typeof GameGraph.render === 'function') {
+                    GameGraph.render();
+                }
+            } catch (e) {
+                console.warn('Could not re-render graph:', e);
+            }
+        }, 100);
     }
 
     /**
@@ -381,14 +415,33 @@ export class MistakeLearner {
     }
 
     /**
-     * Triggers confetti animation
+     * Gets the color for a classification type
+     */
+    getClassificationColor(classificationType) {
+        const colors = {
+            'blunder': '#fa412d',
+            'mistake': '#ffa459',
+            'inaccuracy': '#f7c631',
+            'good': '#81b64c',
+            'excellent': '#81b64c',
+            'perfect': '#81b64c',
+            'great': '#749bbf',
+            'brilliant': '#26c2a3',
+            'theory': '#d5a47d',
+            'forced': '#81b64c'
+        };
+        return colors[classificationType.toLowerCase()] || 'var(--text-primary)';
+    }
+
+    /**
+     * Triggers confetti animation for correct moves
      */
     triggerConfetti() {
         if (typeof confetti === 'undefined') return;
 
-        const duration = 1000;
+        const duration = 1500;
         const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 10000 };
+        const defaults = { startVelocity: 35, spread: 360, ticks: 80, zIndex: 10000 };
 
         function randomInRange(min, max) {
             return Math.random() * (max - min) + min;
@@ -401,7 +454,7 @@ export class MistakeLearner {
                 return clearInterval(interval);
             }
 
-            const particleCount = 50 * (timeLeft / duration);
+            const particleCount = 100 * (timeLeft / duration);
 
             confetti({
                 ...defaults,
@@ -413,7 +466,43 @@ export class MistakeLearner {
                 particleCount,
                 origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
             });
-        }, 250);
+        }, 150);
+    }
+
+    /**
+     * Triggers big confetti animation for completion
+     */
+    triggerCompletionConfetti() {
+        if (typeof confetti === 'undefined') return;
+
+        const duration = 3000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 45, spread: 360, ticks: 100, zIndex: 10000 };
+
+        function randomInRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        const interval = setInterval(function() {
+            const timeLeft = animationEnd - Date.now();
+
+            if (timeLeft <= 0) {
+                return clearInterval(interval);
+            }
+
+            const particleCount = 150 * (timeLeft / duration);
+
+            confetti({
+                ...defaults,
+                particleCount,
+                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+            });
+            confetti({
+                ...defaults,
+                particleCount,
+                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+            });
+        }, 150);
     }
 }
 

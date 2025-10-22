@@ -2,6 +2,7 @@ import { Chess } from '../../libs/chess.js';
 import { EvaluationBar } from '../components/board/EvaluationBar.js';
 import { chessOpeningTree } from '../data/openings.js';
 import { MoveAnnotator } from './MoveAnnotator.js';
+import { AccuracyCalculator } from '../evaluation/AccuracyCalculator.js';
 
 export const ClasifCss = {
 	MOVE_THEORY: "theory-move",
@@ -532,6 +533,8 @@ export class MoveClassifier {
                 }
             }
             move.classification = classification;
+            const color1 = move.fen.includes(' b ') ? 'white' : 'black';
+            move.dynamicAccuracy = AccuracyCalculator.getMoveAccuracy(move, previous, color1);
             
             return classification;
         }
@@ -548,6 +551,8 @@ export class MoveClassifier {
             classification = Classification.THEORY;
             move.classification = classification;
             move.centipawnLoss = 0;
+            const color2 = move.fen.includes(' b ') ? 'white' : 'black';
+            move.dynamicAccuracy = AccuracyCalculator.getMoveAccuracy(move, previous, color2);
             return classification;
         }
 
@@ -570,6 +575,8 @@ export class MoveClassifier {
                 move.classification = classification;
                 move.commentType = CommentType.FORCED;
                 move.centipawnLoss = 0;
+                const color3 = move.fen.includes(' b ') ? 'white' : 'black';
+                move.dynamicAccuracy = AccuracyCalculator.getMoveAccuracy(move, previous, color3);
                 return classification;
             }
         }
@@ -579,6 +586,8 @@ export class MoveClassifier {
             classification = Classification.GOOD;
             move.classification = classification;
             move.centipawnLoss = 0;
+            const color4 = move.fen.includes(' b ') ? 'white' : 'black';
+            move.dynamicAccuracy = AccuracyCalculator.getMoveAccuracy(move, previous, color4);
             return classification;
         }
 
@@ -705,6 +714,8 @@ export class MoveClassifier {
 
         if (!secondLine) {
             move.classification = classification;
+            const color5 = move.fen.includes(' b ') ? 'white' : 'black';
+            move.dynamicAccuracy = AccuracyCalculator.getMoveAccuracy(move, previous, color5);
             return classification;
         }
 
@@ -765,6 +776,11 @@ export class MoveClassifier {
         // Store the classification on the move object for reference
         move.classification = classification;
         
+        // Calculate and attach dynamic accuracy based on Win% methodology
+        // This provides a more nuanced accuracy value than the fixed classification.accuracy
+        const color = move.fen.includes(' b ') ? 'white' : 'black';
+        const dynamicAccuracy = AccuracyCalculator.getMoveAccuracy(move, previous, color);
+        move.dynamicAccuracy = dynamicAccuracy;
         
         // Return the classification object
         return classification;

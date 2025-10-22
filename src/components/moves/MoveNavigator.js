@@ -575,21 +575,10 @@ export class MoveNavigator {
     hideLearningControls() {
         $('.bottom-content .controls').removeClass('learning-mode');
         
-        // Restore original button order
-        const controls = $('.bottom-content .controls');
-        const restart = $('#restart');
-        const backward = $('#backward');
-        const quickMenu = $('#popup-quick-menu');
-        const forward = $('#forward');
-        const skipToEnd = $('#skip-to-end');
+        // Remove inline flex styling
+        $('.bottom-content .controls').css('display', '');
         
-        // Restore order: restart, backward, quick-menu, forward, skip-to-end
-        controls.empty();
-        controls.append(restart, backward, quickMenu, forward, skipToEnd);
-        
-        // Add back hidden learning controls for next time
-        controls.append($('#hint, #next-mistake, #leave-learning'));
-        
+        // Hide learning controls and show normal ones
         $('#hint, #next-mistake, #leave-learning').hide();
         $('#restart, #skip-to-end, #popup-quick-menu').show();
     }

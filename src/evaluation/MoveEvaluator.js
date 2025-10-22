@@ -3,6 +3,7 @@ import { GamePhase } from "../classification/GamePhase.js";
 import { MoveAnnotator } from "../classification/MoveAnnotator.js";
 import { MoveClassifier, Classification } from "../classification/MoveClassifier.js";
 import { Engine } from "./Engine.js";
+import { AccuracyCalculator } from "./AccuracyCalculator.js";
 
 
 // import { Engine } from './Engine.js';
@@ -287,6 +288,8 @@ export class MoveEvaluator {
         // Loop through moves and assign classifications
         moves[0].classification = Classification.THEORY;
         moves[0].graph = 50; // 0.0 eval is 50% eval bar basically
+        moves[0].dynamicAccuracy = 100; // First move is always considered perfect
+        
         for (let i = 1; i < moves.length; i++) {
             const move = moves[i];
             const previous = moves[i - 1];
@@ -297,11 +300,14 @@ export class MoveEvaluator {
 
         MoveAnnotator.annotateMoves(moves, 'w');
         
-        // Calculate accuracy
+        // Separate moves by color
         const whiteMoves = moves.filter(move => move.fen.includes(' b '));
         const blackMoves = moves.filter(move => move.fen.includes(' w '));
-        const whiteAccuracy = whiteMoves.reduce((sum, move) => sum + move.classification.accuracy, 0) / whiteMoves.length;
-        const blackAccuracy = blackMoves.reduce((sum, move) => sum + move.classification.accuracy, 0) / blackMoves.length;
+        
+        // Calculate accuracy using the new Win% based system
+        const accuracies = AccuracyCalculator.calculateBothPlayerAccuracies(moves);
+        const whiteAccuracy = accuracies.white / 100; // Convert from 0-100 to 0-1 for compatibility
+        const blackAccuracy = accuracies.black / 100;
 
         // Calculate counts of each classification type
         const whiteCounts = whiteMoves.reduce((counts, move) => {
@@ -345,14 +351,9 @@ export class MoveEvaluator {
         const phases = GamePhase.getPhases(moves.map(m => m.move));
         const hasEndgame = phases[1] !== undefined;
         
-        // Helper function to calculate accuracy for a set of moves
-        const calculateAccuracy = (movesArray) => {
-            if (movesArray.length === 0) return 0;
-            return movesArray.reduce((sum, move) => sum + move.classification.accuracy, 0) / movesArray.length;
-        };
-        
         // Helper function to determine classification based on accuracy and special moves
         const getClassification = (accuracy, hasBrilliant, hasGreat) => {
+            // accuracy is in 0-1 range (from percentage / 100)
             if (accuracy > 0.8 && hasBrilliant) return Classification.BRILLIANT;
             if (accuracy > 0.8 && hasGreat) return Classification.GREAT;
             if (accuracy > 0.8) return Classification.PERFECT;
@@ -377,8 +378,9 @@ export class MoveEvaluator {
             const whiteMoves = phaseMovesArray.filter(m => m.fen.includes(' b '));
             const blackMoves = phaseMovesArray.filter(m => m.fen.includes(' w '));
             
-            const whiteAccuracy = calculateAccuracy(whiteMoves);
-            const blackAccuracy = calculateAccuracy(blackMoves);
+            // Calculate phase accuracy using the new Win% system
+            const whitePhaseAccuracy = AccuracyCalculator.calculateGameAccuracy(phaseMovesArray, 'white') / 100;
+            const blackPhaseAccuracy = AccuracyCalculator.calculateGameAccuracy(phaseMovesArray, 'black') / 100;
             
             const whiteBrilliant = whiteMoves.some(m => m.classification.type === 'brilliant');
             const blackBrilliant = blackMoves.some(m => m.classification.type === 'brilliant');
@@ -386,12 +388,12 @@ export class MoveEvaluator {
             const blackGreat = blackMoves.some(m => m.classification.type === 'great');
             
             phaseAnalysis[phaseName] = {
-                white: { accuracy: whiteAccuracy, brilliant: whiteBrilliant, great: whiteGreat },
-                black: { accuracy: blackAccuracy, brilliant: blackBrilliant, great: blackGreat }
+                white: { accuracy: whitePhaseAccuracy, brilliant: whiteBrilliant, great: whiteGreat },
+                black: { accuracy: blackPhaseAccuracy, brilliant: blackBrilliant, great: blackGreat }
             };
             
-            phaseClassifications.white[phaseName] = getClassification(whiteAccuracy, whiteBrilliant, whiteGreat);
-            phaseClassifications.black[phaseName] = getClassification(blackAccuracy, blackBrilliant, blackGreat);
+            phaseClassifications.white[phaseName] = getClassification(whitePhaseAccuracy, whiteBrilliant, whiteGreat);
+            phaseClassifications.black[phaseName] = getClassification(blackPhaseAccuracy, blackBrilliant, blackGreat);
         });
 
         return {

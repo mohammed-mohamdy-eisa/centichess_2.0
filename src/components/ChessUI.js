@@ -163,6 +163,18 @@ export class ChessUI {
             this.mistakeLearner.start();
         });
 
+        // Wire up the "Start Review" button
+        $('#start-review').off('click').on('click', () => {
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Navigate to the first move
+            if (this.moveTree.mainline.length > 1) {
+                const firstMove = this.moveTree.mainline[1]; // mainline[0] is root
+                this.moveNavigator.handleTreeNodeClick(firstMove);
+            }
+        });
+
         this.moveTree.render('move-tree', (node) => {
             this.moveNavigator.handleTreeNodeClick(node);
         });
