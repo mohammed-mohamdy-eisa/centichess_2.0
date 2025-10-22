@@ -1127,6 +1127,54 @@ export class Chessboard {
 	}
 
 	/**
+	 * Highlights a specific square with a custom color
+	 * @param {string} square - Algebraic notation (e.g., "e4")
+	 * @param {string} color - CSS color value
+	 * @param {number} opacity - Opacity value (0-1)
+	 */
+	highlightSquare(square, color = '#38a5ff', opacity = 0.5) {
+		const index = this.algebraicToIndex(square, this.flipped);
+		const squareElement = this.getSquare(index, this.flipped);
+		if (squareElement) {
+			// Add a highlight overlay
+			const overlay = document.createElement('div');
+			overlay.className = 'custom-highlight';
+			overlay.style.cssText = `
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-color: ${color};
+				opacity: ${opacity};
+				pointer-events: none;
+				border-radius: 4px;
+			`;
+			squareElement.appendChild(overlay);
+		}
+	}
+
+	/**
+	 * Clears all custom highlights
+	 */
+	clearHighlights() {
+		const highlights = document.querySelectorAll(`#squares-${this.id} .custom-highlight`);
+		highlights.forEach(h => h.remove());
+	}
+
+	/**
+	 * Adds a custom arrow between two squares
+	 * @param {string} from - Starting square in algebraic notation
+	 * @param {string} to - Ending square in algebraic notation
+	 * @param {string} color - Arrow color
+	 * @param {number} opacity - Arrow opacity
+	 */
+	addMoveArrow(from, to, color = '#d44242', opacity = 0.6) {
+		// Use the existing arrow system but with custom color
+		this.addBestMoveArrow(from + to, color, opacity);
+	}
+
+	/**
 	 * Checks if best move arrows should be shown based on settings
 	 * @returns {boolean}
 	 */

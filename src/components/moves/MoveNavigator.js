@@ -56,6 +56,11 @@ export class MoveNavigator {
 
         // Set up new chessboard event listeners
         this.chessUI.board.on('usermove', (moveObj) => this.handleUserMove(moveObj));
+
+        // Learning mode event handlers
+        $("#hint").on("click", () => this.handleHint());
+        $("#next-mistake").on("click", () => this.handleNextMistake());
+        $("#leave-learning").on("click", () => this.handleLeaveLearning());
     }
 
     handleCopyFenToClipboard() {
@@ -204,6 +209,11 @@ export class MoveNavigator {
 
         this.chessUI.moveTree.navigateTo(nextNode.id);
         this.updateAfterMove(nextNode);
+        
+        // Update learning mode navigation if active
+        if (this.chessUI.mistakeLearner?.isActive) {
+            this.chessUI.mistakeLearner.updateNavigationButton();
+        }
     }
 
     handleBackwardMove() {
@@ -220,6 +230,11 @@ export class MoveNavigator {
         this.chessUI.moveTree.updateNodeClassification(prevNode, this.chessUI.board);
 
         this.updateAfterMove(prevNode);
+        
+        // Update learning mode navigation if active
+        if (this.chessUI.mistakeLearner?.isActive) {
+            this.chessUI.mistakeLearner.updateNavigationButton();
+        }
     }
 
     handleFlipBoard() {
@@ -265,6 +280,11 @@ export class MoveNavigator {
     }
 
     handleUserMove(moveObj) {
+        // If in learning mode, delegate to MistakeLearner
+        if (this.chessUI.mistakeLearner?.isActive) {
+            return this.chessUI.mistakeLearner.handleUserMove(moveObj);
+        }
+
         // Check if the move exists in the mainline next
         const currentIndex = this.chessUI.moveTree.getNodeIndex(this.chessUI.moveTree.currentNode);
         if (currentIndex !== -1 && currentIndex + 1 < this.chessUI.moveTree.mainline.length) {
@@ -531,5 +551,93 @@ export class MoveNavigator {
         setTimeout(() => {
             notification.fadeOut(300, () => notification.remove());
         }, 3000);
+    }
+
+    /**
+     * Shows learning mode controls
+     */
+    showLearningControls() {
+        $('.bottom-content .controls').addClass('learning-mode');
+        
+        // Use flexbox to reorder - leave button will use CSS order: -1 to go first
+        const controls = $('.bottom-content .controls');
+        controls.css('display', 'flex');
+        
+        // Show learning controls, hide only specific normal ones
+        $('#hint, #next-mistake, #leave-learning').show();
+        $('#restart, #skip-to-end, #popup-quick-menu').hide();
+        // Keep backward and forward visible - they're the same in both modes
+    }
+
+    /**
+     * Hides learning mode controls
+     */
+    hideLearningControls() {
+        $('.bottom-content .controls').removeClass('learning-mode');
+        
+        // Restore original button order
+        const controls = $('.bottom-content .controls');
+        const restart = $('#restart');
+        const backward = $('#backward');
+        const quickMenu = $('#popup-quick-menu');
+        const forward = $('#forward');
+        const skipToEnd = $('#skip-to-end');
+        
+        // Restore order: restart, backward, quick-menu, forward, skip-to-end
+        controls.empty();
+        controls.append(restart, backward, quickMenu, forward, skipToEnd);
+        
+        // Add back hidden learning controls for next time
+        controls.append($('#hint, #next-mistake, #leave-learning'));
+        
+        $('#hint, #next-mistake, #leave-learning').hide();
+        $('#restart, #skip-to-end, #popup-quick-menu').show();
+    }
+
+    /**
+     * Updates the next/back button based on position
+     * @param {boolean} isAtMistake - Whether currently at the mistake position
+     */
+    updateNextBackButton(isAtMistake) {
+        if (isAtMistake) {
+            $('#next-mistake .next-text').show();
+            $('#next-mistake .back-text').hide();
+        } else {
+            $('#next-mistake .next-text').hide();
+            $('#next-mistake .back-text').show();
+        }
+    }
+
+    /**
+     * Handles hint button click
+     */
+    handleHint() {
+        if (this.chessUI.mistakeLearner?.isActive) {
+            this.chessUI.mistakeLearner.showHint();
+        }
+    }
+
+    /**
+     * Handles next mistake button click (or back to mistake)
+     */
+    handleNextMistake() {
+        if (this.chessUI.mistakeLearner?.isActive) {
+            // Check if we're showing "Back" or "Next"
+            const isShowingBack = $('#next-mistake .back-text').is(':visible');
+            if (isShowingBack) {
+                this.chessUI.mistakeLearner.backToCurrentMistake();
+            } else {
+                this.chessUI.mistakeLearner.nextMistake();
+            }
+        }
+    }
+
+    /**
+     * Handles leave learning button click
+     */
+    handleLeaveLearning() {
+        if (this.chessUI.mistakeLearner?.isActive) {
+            this.chessUI.mistakeLearner.exit();
+        }
     }
 }

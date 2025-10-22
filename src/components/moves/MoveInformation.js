@@ -38,7 +38,7 @@ export class MoveInformation {
         // Show placeholder when at the root node or have no move data
         if (!node || node.id === 'root' || !node.move) {
             $("<div>").addClass("move-info-placeholder")
-                .text("Welcome to CentiChess!")
+                .text("Make a move to see analysis")
                 .appendTo($moveInfo);
             $moveInfo.addClass('is-empty');
             return;
@@ -110,5 +110,26 @@ export class MoveInformation {
 
         // Add the container to the move-info div
         $moveInfo.append($moveInfoContainer);
+    }
+
+    /**
+     * Shows learning mode feedback in the move info box
+     * @param {string} message - The feedback message to display
+     * @param {boolean|null} isCorrect - True for correct, false for incorrect, null for neutral
+     */
+    static showLearningFeedback(message, isCorrect) {
+        const $moveInfo = $(".move-info").empty();
+        $moveInfo.removeClass('is-empty');
+
+        const feedbackClass = isCorrect === true ? 'learning-correct' : 
+                            isCorrect === false ? 'learning-incorrect' : 
+                            'learning-neutral';
+
+        const $feedback = $("<div>")
+            .addClass("learning-feedback")
+            .addClass(feedbackClass)
+            .html(message);
+
+        $moveInfo.append($feedback);
     }
 }

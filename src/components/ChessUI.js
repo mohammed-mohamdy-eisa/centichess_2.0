@@ -18,6 +18,7 @@ import { Classification } from '../classification/MoveClassifier.js';
 import { SidebarOverlay } from './report/SidebarOverlay.js';
 import { GameClassifier } from '../classification/GameClassifier.js';
 import { SettingsMenu } from './settings/SettingsMenu.js';
+import { MistakeLearner } from './training/MistakeLearner.js';
 
 /**
  * Manages UI interactions and board state
@@ -48,6 +49,7 @@ export class ChessUI {
         this.moveTree = new MoveTree();
         this.moveNavigator = new MoveNavigator(this);
         this.evaluationQueue = new EvaluationQueue(this.settingsMenu);
+        this.mistakeLearner = new MistakeLearner(this);
 
         this.gamesList = new GamesList();
 
@@ -155,6 +157,11 @@ export class ChessUI {
         MoveEvaluator.applyClassificationsToMoveTree(this.moveTree, analysis.moves, this.game.pgn);
         GameGraph.setAnalysis(analysis);
         GameStats.render('.game-stats', analysis, game.white.name, game.black.name);
+
+        // Wire up the "Learn from Mistakes" button
+        $('#learn-from-mistakes').off('click').on('click', () => {
+            this.mistakeLearner.start();
+        });
 
         this.moveTree.render('move-tree', (node) => {
             this.moveNavigator.handleTreeNodeClick(node);

@@ -3631,3 +3631,86 @@ body.lock-scroll {
     border-right: 7px solid transparent;
     border-top: 7px solid var(--dark-border);
 }
+
+/* ==================== Learn from Mistakes Mode ==================== */
+
+/* Learn from Mistakes Button */
+.learn-button {
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--sidebar-base);
+    color: var(--text-primary);
+    border: 1px solid var(--dark-border);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.learn-button:hover {
+    background: var(--hover-dark);
+    border-color: var(--light-btn);
+}
+
+.learn-button:active {
+    background: var(--light-btn);
+    color: white;
+}
+
+.learn-button svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+}
+
+/* Learning Feedback in Move Info Box */
+.learning-feedback {
+    font-size: 15px;
+    font-weight: 500;
+    text-align: center;
+    animation: feedbackSlideIn 0.3s ease;
+}
+
+.learning-feedback.learning-correct {
+    color: var(--color-green-300);
+}
+
+.learning-feedback.learning-incorrect {
+    color: var(--color-red-300);
+}
+
+/* Next/Back button text size and width */
+#next-mistake {
+    font-size: 16px;
+    min-width: 100px;
+    font-weight: bolder;
+}
+
+/* Leave button styling */
+#leave-learning {
+    background: #e02828 !important;
+    color: white !important;
+    order: -1; /* Move to leftmost position */
+}
+
+/* Ensure controls use flexbox in learning mode */
+.controls.learning-mode {
+    display: flex !important;
+}
+
+@keyframes feedbackSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

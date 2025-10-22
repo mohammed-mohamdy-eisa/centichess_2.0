@@ -119,6 +119,14 @@ export class SettingsMenu {
                                     { value: 'best-response', label: 'Best Response' },
                                     { value: 'both', label: 'Both (Smart)' }
                                 ]
+                            },
+                            {
+                                key: 'autoAdvanceToNextMistake',
+                                type: 'toggle',
+                                label: 'Auto-Advance in Learning Mode',
+                                description: 'Automatically move to next mistake after finding correct move',
+                                defaultValue: true,
+                                path: 'autoAdvanceToNextMistake'
                             }
                         ]
                     }
