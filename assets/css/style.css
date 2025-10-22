@@ -1618,6 +1618,7 @@ select {
     justify-content: center;
     align-items: center;
     gap: 10px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
 
 /* Wrapper for move-info and avatar */
@@ -1650,7 +1651,7 @@ select {
     max-width: fit-content;
     text-align: left;
     font-weight: 500;
-    transition: width 0.3s ease, max-width 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .move-info::after {
