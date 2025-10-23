@@ -69,7 +69,9 @@ export class EvaluationQueue {
             
             if (!lines || lines.length < 2) {
                 const engineType = this.settingsMenu?.getSettingValue('engineType') || 'stockfish-17.1-lite';
-                engine = new Engine({ engineType: engineType });
+                const threadCount = this.settingsMenu?.getSettingValue('engineThreads') ?? 0; // 0 = auto
+                const multiPV = this.settingsMenu?.getSettingValue('multiPV') || 1;
+                engine = new Engine({ engineType: engineType, threadCount: threadCount, multiPV: multiPV });
                 const depth = this.settingsMenu?.getSettingValue('engineDepth') || 16;
                 const maxMoveTime = this.settingsMenu?.getSettingValue('maxMoveTime') || 5;
                 lines = await this.evaluateWithEngine(item.fen, depth, 0, 100, engine, maxMoveTime);
@@ -125,9 +127,11 @@ export class EvaluationQueue {
      */
     async evaluateWithEngine(fen, depth, startProgress, endProgress, engine = null, maxMoveTime = null) {
         if (!engine) {
-            // Get engine type from settings
+            // Get engine settings
             const engineType = this.settingsMenu?.getSettingValue('engineType') || 'stockfish-17.1-lite';
-            engine = new Engine({ engineType: engineType });
+            const threadCount = this.settingsMenu?.getSettingValue('engineThreads') ?? 0; // 0 = auto
+            const multiPV = this.settingsMenu?.getSettingValue('multiPV') || 1;
+            engine = new Engine({ engineType: engineType, threadCount: threadCount, multiPV: multiPV });
         }
 
         if (maxMoveTime === null) {

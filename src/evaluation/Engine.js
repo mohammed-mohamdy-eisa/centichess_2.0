@@ -9,6 +9,8 @@ const engines = {
     'stockfish-17.1-nnue': {
         name: "Stockfish 17.1 NNUE",
         path: "./src/engines/stockfish/stockfish-17.1-single-a496a04.js",
+        // multi-threaded path (faster when WASM threads + COOP/COEP are enabled)
+        multiPath: "./src/engines/stockfish/stockfish-17.1-8e4d048.js",
         // asm.js fallback for mobile devices (no WASM multi-part support)
         mobilePath: "./src/engines/stockfish/stockfish-17.1-asm-341ff22.js",
     },
@@ -54,13 +56,23 @@ function isMobileDevice() {
 
 export class Engine {
     currentDepth = 0;
-    multiPV = 3;
     busy = false;
     currentResolve = null;
     currentReject = null;
 
-    constructor({ engineType = 'stockfish-17.1-lite' } = {}) {
+    constructor({ engineType = 'stockfish-17.1-lite', threadCount = 0, multiPV = 1 } = {}) {
         this.engine = engines[engineType];
+        this.multiPV = multiPV;
+        
+        // Auto mode: detect optimal thread count
+        if (threadCount <= 0) {
+            const hardwareCores = navigator.hardwareConcurrency || 4;
+            // Use half of available cores, capped at 4 for browser stability
+            threadCount = Math.min(Math.max(Math.floor(hardwareCores / 2), 1), 4);
+            console.log(`Auto CPU mode: Detected ${hardwareCores} cores, using ${threadCount} threads`);
+        }
+        
+        this.threadCount = threadCount;
 
         // Determine worker path based on capabilities
         let workerPath = this.engine.path;
@@ -70,19 +82,28 @@ export class Engine {
             console.log('Mobile device detected: Using asm.js for Stockfish 17.1 NNUE');
             workerPath = this.engine.mobilePath;
         }
-        // For 17.1 Lite, prefer multi-threaded when WASM threads are supported
+        // For engines with multiPath support, use multi-threaded when threads > 1 and WASM threads are supported
         else if (
-            engineType === 'stockfish-17.1-lite' &&
+            (engineType === 'stockfish-17.1-lite' || engineType === 'stockfish-17.1-nnue') &&
             this.engine.multiPath &&
+            threadCount > 1 &&
             supportsWasmThreads()
         ) {
             workerPath = this.engine.multiPath;
+            console.log(`Using multi-threaded ${this.engine.name} with ${threadCount} CPUs`);
+        } else if (threadCount > 1 && !supportsWasmThreads()) {
+            console.warn('Multi-CPU mode requested but WebAssembly threads not supported. Falling back to single CPU.');
         }
 
         this.worker = new Worker(workerPath);
         
         this.worker.postMessage("uci");
         this.worker.postMessage(`setoption name MultiPV value ${this.multiPV}`);
+        
+        // Set thread count if using multi-threaded version
+        if (threadCount > 1 && workerPath === this.engine.multiPath) {
+            this.worker.postMessage(`setoption name Threads value ${threadCount}`);
+        }
         
         // Setup global message handler for reuse
         this.worker.addEventListener("error", this.handleError.bind(this));

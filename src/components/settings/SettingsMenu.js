@@ -68,13 +68,34 @@ export class SettingsMenu {
                             {
                                 key: 'maxMoveTime',
                                 type: 'slider',
-                                label: 'Max Time per Move',
-                                description: 'Limit engine thinking time per move (31 = ∞)',
+                                label: 'Search Time',
+                                description: 'Limit engine search time per move (31 = ∞)',
                                 defaultValue: 31,
                                 min: 2,
                                 max: 31,
                                 step: 1,
                                 format: (v) => (v >= 31 ? '∞' : `${v}s`)
+                            },
+                            {
+                                key: 'engineThreads',
+                                type: 'slider',
+                                label: 'CPUs',
+                                description: 'Auto = detect optimal CPUs, 1 = single-threaded, 2+ = multi-threaded',
+                                defaultValue: 0,
+                                min: 0,
+                                max: 8,
+                                step: 1,
+                                format: (v) => (v === 0 ? 'Auto' : `${v} CPU${v > 1 ? 's' : ''}`)
+                            },
+                            {
+                                key: 'multiPV',
+                                type: 'slider',
+                                label: 'Multile Lines',
+                                description: 'Number of best move lines to analyze simultaneously (1-3)',
+                                defaultValue: 3,
+                                min: 1,
+                                max: 3,
+                                step: 1,
                             },
                         ]
                     },

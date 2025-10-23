@@ -191,7 +191,8 @@ export class MoveNavigator {
                         const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
                         const prevBest = prevAnalysis?.lines?.find(l => l.id === 1);
                         if (prevBest?.uciMove) {
-                            this.chessUI.board.addBestMoveArrow(prevBest.uciMove, null, 0.85);
+                            // Use red color for opponent's arrows
+                            this.chessUI.board.addBestMoveArrow(prevBest.uciMove, 'rgba(231, 76, 60, 0.59)', 0.85);
                         }
                     }
                 }
