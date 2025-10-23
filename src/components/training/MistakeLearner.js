@@ -185,8 +185,8 @@ export class MistakeLearner {
 
             // Show success message with icon
             MoveInformation.showLearningFeedback(
-                `<span style="display: inline-flex; align-items: center;">
-                    <img src="/assets/classifications/excellent.svg" class="move-icon" style="width: 20px; height: 20px; margin-right: 6px;">
+                `<span style="display: inline-flex;">
+                    <img src="/assets/classifications/excellent.svg" class="move-icon" style="width: auto; height: 18px; margin-right: 6px;">
                     <span style="font-weight: bold; color: var(--color-green-300);">Well done! </span> <span>You found the best move!</span>
                 </span>`,
                 true
@@ -212,8 +212,8 @@ export class MistakeLearner {
             const classificationColor = this.getClassificationColor(classification);
             
             MoveInformation.showLearningFeedback(
-                `<span style="display: inline-flex; align-items: center;">
-                    <img src="/assets/classifications/blunder.svg" class="move-icon" style="width: auto; height: 20px; margin-right: 6px;">
+                `<span style="display: inline-flex;">
+                    <img src="/assets/classifications/blunder.svg" class="move-icon" style="width: auto; height: 18px; margin-right: 6px;">
                     <span  style="color: var(--color-red-300); font-weight: bold;">Not quite.</span> <span>Try again!</span>
                 </span>`,
                 false

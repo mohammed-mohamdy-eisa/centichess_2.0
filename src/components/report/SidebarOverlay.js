@@ -119,13 +119,26 @@ export class SidebarOverlay {
             this.isAnalysisOverlayActive = true;
             $('.analysis-overlay, .board-overlay').addClass('active');
             $('.tab-content, .bottom-content').addClass('blur-content');
-            
-            // Scroll to the bottom of the page when analysis starts
+
+            // Scroll to center the analysis overlay
             setTimeout(() => {
-                window.scrollTo({ 
-                    top: document.documentElement.scrollHeight, 
-                    behavior: 'smooth' 
-                });
+                const analysisOverlay = document.querySelector('.analysis-overlay');
+                const header = document.querySelector('.header');
+                if (analysisOverlay) {
+                    const headerHeight = header ? header.offsetHeight : 0;
+                    const viewportHeight = window.innerHeight;
+                    const overlayRect = analysisOverlay.getBoundingClientRect();
+                    const overlayHeight = overlayRect.height;
+                    const overlayTop = overlayRect.top + window.pageYOffset;
+                    
+                    // Calculate position to center the overlay in viewport
+                    const centerPosition = overlayTop - (viewportHeight / 2) + (overlayHeight / 2) + headerHeight;
+                    
+                    window.scrollTo({
+                        top: centerPosition,
+                        behavior: 'smooth'
+                    });
+                }
             }, 100);
 
             // Initialize progress bar and show random fact

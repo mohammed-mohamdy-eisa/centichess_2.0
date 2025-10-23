@@ -89,10 +89,19 @@ $(document).ready(async () => {
         
         // On mobile, scroll down to show tab content
         if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
-            const sidebar = document.querySelector('.sidebar');
-            if (sidebar && typeof sidebar.scrollIntoView === 'function') {
+            const sidebarHeader = document.querySelector('.sidebar-header');
+            const header = document.querySelector('.header');
+            if (sidebarHeader) {
                 setTimeout(() => {
-                    sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Get the header height to offset the scroll
+                    const headerHeight = header ? header.offsetHeight : 0;
+                    const elementPosition = sidebarHeader.getBoundingClientRect().top + window.pageYOffset;
+                    const offsetPosition = elementPosition - headerHeight - 10; // 10px extra padding
+                    
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
                 }, 100);
             }
         }

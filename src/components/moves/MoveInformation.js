@@ -38,12 +38,10 @@ export class MoveInformation {
         // Show placeholder when at the root node or have no move data
         if (!node || node.id === 'root' || !node.move) {
             $("<div>").addClass("move-info-placeholder")
-                .text("♟ Select a move to see its classification.")
+                .text("🔍 Select a move to see its classification.")
                 .appendTo($moveInfo);
-            $moveInfo.addClass('is-empty');
             return;
         }
-        $moveInfo.removeClass('is-empty');
 
         // Create container for move classification info
         const $moveInfoContainer = $("<div>").addClass("move-classification-info");
@@ -53,10 +51,8 @@ export class MoveInformation {
 			$("<div>").addClass("move-info-placeholder")
 				.text("Analysing...")
 				.appendTo($moveInfo);
-            $moveInfo.addClass('is-empty');
 			return;
 		}
-        $moveInfo.removeClass('is-empty');
 
         // Add the current move classification if available
 		if (node.classification) {
@@ -103,6 +99,24 @@ export class MoveInformation {
                         }
                     }
                 }
+            }
+
+            // Add evaluation score box
+            if (node.evalScore !== undefined) {
+                const isMate = node.evalType === 'mate';
+                let scoreText;
+                
+                if (isMate) {
+                    scoreText = (node.evalScore > 0) ? "M" + node.evalScore : "M" + Math.abs(node.evalScore);
+                } else {
+                    let evalValue = node.evalScore / 100;
+                    scoreText = evalValue > 0 ? "+" + evalValue.toFixed(2) : evalValue.toFixed(2);
+                }
+                
+                $("<div>").addClass("move-eval-score")
+                    .addClass(node.evalScore >= 0 ? "white-score" : "black-score")
+                    .text(scoreText)
+                    .appendTo($moveInfoLine);
             }
 
             $moveInfoContainer.append($moveInfoLine);

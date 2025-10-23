@@ -168,6 +168,12 @@ export class ChessUI {
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
             
+            // Switch to moves tab
+            $('.tab-button').removeClass('active');
+            $('.tab-panel').removeClass('active');
+            $('.tab-button[data-tab="moves"]').addClass('active');
+            $('#moves-tab').addClass('active');
+            
             // Navigate to the first move
             if (this.moveTree.mainline.length > 1) {
                 const firstMove = this.moveTree.mainline[1]; // mainline[0] is root
@@ -181,6 +187,22 @@ export class ChessUI {
 
         $('.analysis-overlay').removeClass('active');
         $('.tab-content, .bottom-content').removeClass('blur-content');
+
+        // Scroll to show tab buttons after analysis completes
+        setTimeout(() => {
+            const sidebarHeader = document.querySelector('.sidebar-header');
+            const header = document.querySelector('.header');
+            if (sidebarHeader) {
+                const headerHeight = header ? header.offsetHeight : 0;
+                const elementPosition = sidebarHeader.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = elementPosition - headerHeight - 10; // 10px extra padding
+                
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        }, 500); // Wait for overlay fade-out and UI updates to complete
 
         // Initialize clocks
         Clock.updateFromMoveTree(this.moveTree, this.board.flipped, this.game?.pgn);
