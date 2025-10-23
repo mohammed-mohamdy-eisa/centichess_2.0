@@ -773,6 +773,10 @@ export class MistakeLearner {
      */
     triggerConfetti() {
         if (typeof confetti === 'undefined') return;
+        
+        // Check if confetti is enabled in settings
+        const confettiEnabled = this.chessUI.settingsMenu.getSettingValue('enableConfetti') !== false;
+        if (!confettiEnabled) return;
 
         const duration = 1000;
         const animationEnd = Date.now() + duration;
@@ -800,6 +804,10 @@ export class MistakeLearner {
      */
     triggerCompletionConfetti() {
         if (typeof confetti === 'undefined') return;
+        
+        // Check if confetti is enabled in settings
+        const confettiEnabled = this.chessUI.settingsMenu.getSettingValue('enableConfetti') !== false;
+        if (!confettiEnabled) return;
 
         const fireConfetti = (origin) => {
             confetti({

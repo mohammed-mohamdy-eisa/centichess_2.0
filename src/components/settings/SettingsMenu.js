@@ -119,22 +119,41 @@ export class SettingsMenu {
                                     { value: 'best-response', label: 'Best Response' },
                                     { value: 'both', label: 'Both (Smart)' }
                                 ]
-                            },
+                            }
+                        ]
+                    }
+                },
+            },
+            'Learn Mode Settings': {
+                settings: {
+                    'learnModeSettings': {
+                        type: 'group',
+                        label: 'Learn Mode Settings',
+                        description: 'Configure learning mode behavior',
+                        settings: [
                             {
                                 key: 'autoAdvanceToNextMistake',
                                 type: 'toggle',
-                                label: 'Auto-Advance in Learning Mode',
-                                description: 'Automatically move to next mistake after finding correct move',
+                                label: 'Move to next mistake automatically',
+                                description: 'Automatically move to next mistake after solving the current mistake',
                                 defaultValue: true,
                                 path: 'autoAdvanceToNextMistake'
                             },
                             {
                                 key: 'includeInaccuraciesInLearning',
                                 type: 'toggle',
-                                label: 'Include Inaccuracies in Learning Mode',
+                                label: 'Include Inaccuracies',
                                 description: 'Include inaccuracy moves in mistake learning mode',
                                 defaultValue: true,
                                 path: 'includeInaccuraciesInLearning'
+                            },
+                            {
+                                key: 'enableConfetti',
+                                type: 'toggle',
+                                label: 'Enable Confetti',
+                                description: 'Show confetti animation when solving mistakes correctly',
+                                defaultValue: true,
+                                path: 'enableConfetti'
                             }
                         ]
                     }
