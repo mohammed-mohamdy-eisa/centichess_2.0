@@ -136,7 +136,7 @@ export class SettingsMenu {
                                 type: 'toggle',
                                 label: 'Move to next mistake automatically',
                                 description: 'Automatically move to next mistake after solving the current mistake',
-                                defaultValue: true,
+                                defaultValue: false,
                                 path: 'autoAdvanceToNextMistake'
                             },
                             {
@@ -161,110 +161,6 @@ export class SettingsMenu {
             },
             'Board Appearance': {
                 settings: {
-                    'boardTheme': {
-                        type: 'visual-list',
-                        label: 'Board Theme',
-                        description: 'Choose your preferred board style',
-                        defaultValue: 'grey',
-                        path: 'theme.boardColors',
-                        options: [
-                            { 
-                                value: 'classic', 
-                                label: 'Classic',
-                                preview: { type: 'board', light: '#f0d9b5', dark: '#b58863' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#f0d9b5' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#b58863' }
-                                ]
-                            },
-                            { 
-                                value: 'green', 
-                                label: 'Green',
-                                preview: { type: 'board', light: '#e0e0e0', dark: '#6ea176' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#e0e0e0' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#6ea176' }
-                                ]
-                            },
-                            { 
-                                value: 'blue', 
-                                label: 'Blue',
-                                preview: { type: 'board', light: '#dee3e6', dark: '#8ca2ad' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#dee3e6' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#8ca2ad' }
-                                ]
-                            },
-                            { 
-                                value: 'purple', 
-                                label: 'Purple',
-                                preview: { type: 'board', light: '#e8e4f0', dark: '#9b7aa0' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#e8e4f0' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#9b7aa0' }
-                                ]
-                            },
-                            { 
-                                value: 'pink', 
-                                label: 'Pink',
-                                preview: { type: 'board', light: '#ffe8f0', dark: '#ff9cae' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#ffe8f0' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#ff9cae' }
-                                ]
-                            },
-                            { 
-                                value: 'red', 
-                                label: 'Red',
-                                preview: { type: 'board', light: '#ffe6e6', dark: '#cc5555' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#ffe6e6' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#cc5555' }
-                                ]
-                            },
-                            { 
-                                value: 'orange', 
-                                label: 'Orange',
-                                preview: { type: 'board', light: '#ffe6e6', dark: '#cd8042' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#ffe6e6' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#cd8042' }
-                                ]
-                            },
-                            { 
-                                value: 'grey', 
-                                label: 'Grey',
-                                preview: { type: 'board', light: '#c2c2c2', dark: '#7d7d7d' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#c2c2c2' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#7d7d7d' }
-                                ]
-                            }
-                        ]
-                    },
-                    'boardColors': {
-                        type: 'group',
-                        label: 'Custom Board Colors',
-                        description: 'Customize light and dark square colors manually',
-                        settings: [
-                            {
-                                key: 'boardLightSquareColor',
-                                type: 'color',
-                                label: 'Light Squares',
-                                defaultValue: '#f0d9b5',
-                                path: 'theme.boardLightSquareColor',
-                                preview: { target: '.color-preview-box' }
-                            },
-                            {
-                                key: 'boardDarkSquareColor',
-                                type: 'color',
-                                label: 'Dark Squares',
-                                defaultValue: '#b58863',
-                                path: 'theme.boardDarkSquareColor',
-                                preview: { target: '.color-preview-box' }
-                            }
-                        ]
-                    },
                     'pieceTheme': {
                         type: 'visual-list',
                         label: 'Piece Set',
@@ -451,6 +347,110 @@ export class SettingsMenu {
                                 value: 'xkcd', 
                                 label: 'XKCD', 
                                 preview: { type: 'pieces', folder: 'xkcd' }
+                            }
+                        ]
+                    },
+                    'boardTheme': {
+                        type: 'visual-list',
+                        label: 'Board Theme',
+                        description: 'Choose your preferred board style',
+                        defaultValue: 'grey',
+                        path: 'theme.boardColors',
+                        options: [
+                            { 
+                                value: 'classic', 
+                                label: 'Classic',
+                                preview: { type: 'board', light: '#f0d9b5', dark: '#b58863' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#f0d9b5' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#b58863' }
+                                ]
+                            },
+                            { 
+                                value: 'green', 
+                                label: 'Green',
+                                preview: { type: 'board', light: '#e0e0e0', dark: '#6ea176' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#e0e0e0' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#6ea176' }
+                                ]
+                            },
+                            { 
+                                value: 'blue', 
+                                label: 'Blue',
+                                preview: { type: 'board', light: '#dee3e6', dark: '#8ca2ad' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#dee3e6' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#8ca2ad' }
+                                ]
+                            },
+                            { 
+                                value: 'purple', 
+                                label: 'Purple',
+                                preview: { type: 'board', light: '#e8e4f0', dark: '#9b7aa0' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#e8e4f0' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#9b7aa0' }
+                                ]
+                            },
+                            { 
+                                value: 'pink', 
+                                label: 'Pink',
+                                preview: { type: 'board', light: '#ffe8f0', dark: '#ff9cae' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#ffe8f0' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#ff9cae' }
+                                ]
+                            },
+                            { 
+                                value: 'red', 
+                                label: 'Red',
+                                preview: { type: 'board', light: '#ffe6e6', dark: '#cc5555' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#ffe6e6' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#cc5555' }
+                                ]
+                            },
+                            { 
+                                value: 'orange', 
+                                label: 'Orange',
+                                preview: { type: 'board', light: '#ffe6e6', dark: '#cd8042' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#ffe6e6' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#cd8042' }
+                                ]
+                            },
+                            { 
+                                value: 'grey', 
+                                label: 'Grey',
+                                preview: { type: 'board', light: '#c2c2c2', dark: '#7d7d7d' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#c2c2c2' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#7d7d7d' }
+                                ]
+                            }
+                        ]
+                    },
+                    'boardColors': {
+                        type: 'group',
+                        label: 'Custom Board Colors',
+                        description: 'Customize light and dark square colors manually',
+                        settings: [
+                            {
+                                key: 'boardLightSquareColor',
+                                type: 'color',
+                                label: 'Light Squares',
+                                defaultValue: '#f0d9b5',
+                                path: 'theme.boardLightSquareColor',
+                                preview: { target: '.color-preview-box' }
+                            },
+                            {
+                                key: 'boardDarkSquareColor',
+                                type: 'color',
+                                label: 'Dark Squares',
+                                defaultValue: '#b58863',
+                                path: 'theme.boardDarkSquareColor',
+                                preview: { target: '.color-preview-box' }
                             }
                         ]
                     },
