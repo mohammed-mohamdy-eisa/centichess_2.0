@@ -389,7 +389,7 @@ select {
     padding-block: 12px;
     background: var(--bg-secondary);
     box-shadow: var(--shadow-1);
-    z-index: 26;
+    z-index: 99999999;
 }
 
 .header .inner {
@@ -2211,6 +2211,16 @@ body.lock-scroll {
         width: 14px;
         height: 14px;
     }
+
+    /* Learning actions container mobile adjustments */
+    .learning-actions {
+        order: -1; /* Place at the top of sidebar on mobile */
+        margin-top: 16px;
+    }
+    
+    .learning-actions-counter {
+        margin-top: 5px; /* Remove large top margin on mobile */
+    }
 }
 
 /* Game Stats Styles */
@@ -3625,12 +3635,12 @@ body.lock-scroll {
 .learn-button {
     width: 100%;
     margin-top: 16px;
-    padding: 16px;
+    padding: 12px;
     background: none;
     color: var(--pure-white);
     border: 1px solid var(--color-vibrant-purple-500);
     border-radius: 6px;
-    font-size: large;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -3663,11 +3673,10 @@ body.lock-scroll {
     text-align: center;
 }
 
-/* Next/Back button text size and width */
-#next-mistake {
-    font-size: 16px;
-    min-width: 100px;
-    font-weight: bolder;
+/* Ensure move-info is above confetti */
+.move-info {
+    position: relative;
+    z-index: 1000;
 }
 
 /* Leave button styling */
@@ -3680,6 +3689,61 @@ body.lock-scroll {
 /* Ensure controls use flexbox in learning mode */
 .controls.learning-mode {
     display: flex !important;
+}
+
+/* Learning Actions Container (in sidebar on desktop, under chessboard on mobile) */
+.learning-actions {
+    background-color: transparent;
+    border-radius: 0;
+    padding: 0;
+    margin-top: 0;
+    text-align: center;
+    box-shadow: none;
+    border: none;
+    width: 100%;
+}
+
+.learning-actions-message {
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-top: 12px;
+    font-weight: 500;
+}
+
+.learning-actions-counter {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 60%; /* Add spacing from top on PC */
+}
+
+.learning-actions-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.learning-action-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    padding: 5px 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-family: "Roboto", sans-serif;
+    text-align: center;
+    font-weight: 600;
+}
+
+.learning-action-btn:hover {
+    color: var(--text-secondary);
+}
+
+
+
+.learning-action-btn.primary:hover {
+    color: var(--text-secondary);
 }
 
 @keyframes feedbackSlideIn {

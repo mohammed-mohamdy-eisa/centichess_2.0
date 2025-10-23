@@ -13,6 +13,8 @@ export class MistakeLearner {
         this.currentMistakeMove = null;
         this.correctMoveMade = false;
         this.currentMistakeNodeId = null; // Track the node we should be at
+        this.solvedCorrectly = 0; // Track mistakes solved without hints/solutions
+        this.usedHintOrSolution = false; // Track if current mistake used help
     }
 
     /**
@@ -58,6 +60,9 @@ export class MistakeLearner {
         const mistakes = [];
         const userIsBlack = this.chessUI.game.username.toLowerCase() === this.chessUI.game.black?.name?.toLowerCase();
 
+        // Check if inaccuracies should be included (default: true)
+        const includeInaccuracies = this.chessUI.settingsMenu.getSettingValue('includeInaccuraciesInLearning') !== false;
+
         this.chessUI.analysis.moves.forEach((move, index) => {
             // Check if this move is by the user
             const moveIsBlack = move.fen.includes(' w '); // After black's move, it's white's turn
@@ -65,7 +70,9 @@ export class MistakeLearner {
 
             if (isUserMove && move.classification) {
                 const classification = move.classification.type;
-                if (classification === 'inaccuracy' || classification === 'mistake' || classification === 'blunder') {
+                // Filter based on setting - always include mistake and blunder
+                if (classification === 'mistake' || classification === 'blunder' || 
+                    (classification === 'inaccuracy' && includeInaccuracies)) {
                     mistakes.push({
                         moveIndex: index,
                         move: move,
@@ -91,6 +98,7 @@ export class MistakeLearner {
         this.currentMistakeMove = this.mistakeMoves[index];
         this.hintLevel = 0;
         this.correctMoveMade = false;
+        this.usedHintOrSolution = false; // Reset for new mistake
 
         // Get the position BEFORE the mistake was made
         const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
@@ -104,12 +112,43 @@ export class MistakeLearner {
         // Track this position
         this.currentMistakeNodeId = positionBeforeMistake.id;
 
-        // Navigate to that position
-        this.chessUI.moveNavigator.handleTreeNodeClick(positionBeforeMistake);
-        
-        // Update button to show "Next" since we're at the mistake position
-        this.updateNavigationButton();
+        // Get the opponent's move that led to this position (if exists)
+        const positionBeforeOpponentMove = mistakeMainlineIndex >= 2 ? 
+            this.chessUI.moveTree.mainline[mistakeMainlineIndex - 2] : null;
 
+        // Navigate to position before opponent's move
+        if (positionBeforeOpponentMove && positionBeforeMistake.move) {
+            // Navigate to the position before opponent's move first
+            this.chessUI.moveNavigator.handleTreeNodeClick(positionBeforeOpponentMove);
+            
+            // Then animate opponent's move WITHOUT showing classification
+            setTimeout(() => {
+                this.chessUI.board.move(
+                    positionBeforeMistake.move, 
+                    true,  // animate = true
+                    undefined,  // classification = undefined (no badge)
+                    positionBeforeMistake.move.before, 
+                    false, 
+                    positionBeforeMistake.move.promotion, 
+                    false
+                );
+                
+                // After animation, update the UI
+                setTimeout(() => {
+                    this.setupMistakePosition(mistakeMainlineIndex);
+                }, 200);
+            }, 50);
+        } else {
+            // No opponent move to show, navigate directly
+        this.chessUI.moveNavigator.handleTreeNodeClick(positionBeforeMistake);
+            this.setupMistakePosition(mistakeMainlineIndex);
+        }
+    }
+
+    /**
+     * Sets up the mistake position UI (arrows and feedback)
+     */
+    setupMistakePosition(mistakeMainlineIndex) {
         // Clear any arrows from normal mode
         this.chessUI.board.clearBestMoveArrows();
         this.chessUI.board.clearHighlights();
@@ -125,7 +164,7 @@ export class MistakeLearner {
             );
         }
 
-        // Update move info box
+        // Update move info box - don't mention opponent's classification
         const classification = this.currentMistakeMove.classification;
         const moveNotation = mistakeMoveNode?.move?.san || 'the move';
         const classificationColor = this.getClassificationColor(classification);
@@ -133,6 +172,166 @@ export class MistakeLearner {
             `${moveNotation} was ${this.getArticle(classification)} <strong style="color: ${classificationColor}">${classification}</strong>. Find the best move!`,
             null
         );
+
+        // Show initial learning actions (View Solution, Skip)
+        this.showInitialActions();
+    }
+
+    /**
+     * Shows initial learning actions under the chessboard
+     */
+    showInitialActions() {
+        const current = this.currentMistakeIndex + 1;
+        const total = this.mistakeMoves.length;
+        
+        $('#learning-actions').html(`
+            <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
+            <div class="learning-actions-buttons">
+                <button class="learning-action-btn" id="view-solution">View Solution</button>
+                <button class="learning-action-btn" id="skip-mistake">Skip this move</button>
+            </div>
+        `).show();
+
+        // Bind event handlers
+        $('#view-solution').off('click').on('click', () => this.viewSolution());
+        $('#skip-mistake').off('click').on('click', () => this.nextMistake());
+    }
+
+    /**
+     * Shows incorrect move actions
+     */
+    showIncorrectMoveActions() {
+        const current = this.currentMistakeIndex + 1;
+        const total = this.mistakeMoves.length;
+        
+        $('#learning-actions').html(`
+            <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
+            <div class="learning-actions-buttons">
+                <button class="learning-action-btn" id="view-solution">View Solution</button>
+                <button class="learning-action-btn" id="skip-mistake">Skip this move</button>
+            </div>
+        `).show();
+
+        // Bind event handlers
+        $('#view-solution').off('click').on('click', () => this.viewSolution());
+        $('#skip-mistake').off('click').on('click', () => this.nextMistake());
+    }
+
+    /**
+     * Shows "moved away" actions
+     */
+    showMovedAwayActions() {
+        const current = this.currentMistakeIndex + 1;
+        const total = this.mistakeMoves.length;
+        
+        $('#learning-actions').html(`
+            <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
+            <div class="learning-actions-message">You moved away</div>
+            <div class="learning-actions-buttons">
+                <button class="learning-action-btn primary" id="resume-learning">Resume learning</button>
+            </div>
+        `).show();
+
+        // Bind event handler
+        $('#resume-learning').off('click').on('click', () => this.backToCurrentMistake());
+    }
+
+    /**
+     * Shows correct move actions
+     */
+    showCorrectMoveActions() {
+        const current = this.currentMistakeIndex + 1;
+        const total = this.mistakeMoves.length;
+        const isLast = current >= total;
+        
+        $('#learning-actions').html(`
+            <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
+            <div class="learning-actions-message">Well done! You found the best move.</div>
+            <div class="learning-actions-buttons">
+                <button class="learning-action-btn primary" id="next-solution">${isLast ? 'Complete' : 'Next'}</button>
+            </div>
+        `).show();
+
+        // Bind event handler
+        $('#next-solution').off('click').on('click', () => this.nextMistake());
+    }
+
+    /**
+     * Shows alternative move actions (good/excellent but not best)
+     */
+    showAlternativeMoveActions() {
+        const current = this.currentMistakeIndex + 1;
+        const total = this.mistakeMoves.length;
+        
+        $('#learning-actions').html(`
+            <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
+            <div class="learning-actions-buttons">
+                <button class="learning-action-btn primary" id="try-again-action">Try again</button>
+                <button class="learning-action-btn" id="next-anyway">Next anyway</button>
+            </div>
+        `).show();
+
+        // Bind event handlers
+        $('#try-again-action').off('click').on('click', () => {
+            const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
+            const positionBeforeMistake = this.chessUI.moveTree.mainline[mistakeMainlineIndex - 1];
+            
+            // Reset to mistake position
+            this.chessUI.board.fen(positionBeforeMistake.fen || positionBeforeMistake.move?.after);
+            this.setupMistakePosition(mistakeMainlineIndex);
+        });
+        $('#next-anyway').off('click').on('click', () => this.nextMistake());
+    }
+
+    /**
+     * Shows the solution by making the best move on the board
+     */
+    viewSolution() {
+        // Mark that help was used
+        this.usedHintOrSolution = true;
+
+        const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
+        const positionBeforeMistake = this.chessUI.moveTree.mainline[mistakeMainlineIndex - 1];
+        
+        const prevFen = positionBeforeMistake.fen || positionBeforeMistake.move?.after;
+        const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
+        const bestLine = prevAnalysis?.lines?.find(l => l.id === 1);
+
+        if (bestLine) {
+            // Extract move details from UCI
+            const from = bestLine.uciMove.substring(0, 2);
+            const to = bestLine.uciMove.substring(2, 4);
+            const promotion = bestLine.uciMove.length > 4 ? bestLine.uciMove.substring(4, 5) : undefined;
+
+            // Make the move on the board
+            const tempChess = new (this.chessUI.board.chess.constructor)();
+            tempChess.load(prevFen);
+            const moveObj = tempChess.move({ from, to, promotion });
+
+            if (moveObj) {
+                // Animate the solution move
+                this.chessUI.board.move(moveObj, true, 'excellent', prevFen, false, promotion, false);
+                
+                // Mark as correct and show success
+                this.correctMoveMade = true;
+                this.hintLevel = 0;
+
+                // Clear highlights and arrows
+                this.chessUI.board.clearHighlights();
+                this.chessUI.board.clearBestMoveArrows();
+
+                // Show success message
+                MoveInformation.showLearningFeedback(
+                    `<span style="display: inline-flex;">
+                        <span style="font-weight: bold;">Here's the solution!</span>
+                    </span>`,
+                    null
+                );
+
+                // Show correct move actions
+                this.showCorrectMoveActions();
+            }
+        }
     }
 
     /**
@@ -151,81 +350,238 @@ export class MistakeLearner {
             return false; // Not in learning mode or already correct
         }
 
-        // Get the best move from the previous position
+        // Get the position before mistake
         const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
         const positionBeforeMistake = this.chessUI.moveTree.mainline[mistakeMainlineIndex - 1];
-        
         const prevFen = positionBeforeMistake.fen || positionBeforeMistake.move?.after;
-        const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
-        const bestLine = prevAnalysis?.lines?.find(l => l.id === 1);
-
-        if (!bestLine) {
-            console.error('Could not find best move');
+        
+        // Create temporary chess instance to get the resulting FEN
+        const tempChess = new (this.chessUI.board.chess.constructor)();
+        tempChess.load(prevFen);
+        const moveResult = tempChess.move(moveObj);
+        
+        if (!moveResult) {
+            // Invalid move - shouldn't happen but handle it
+            this.handleIncorrectMove(positionBeforeMistake, null);
             return false;
         }
-
-        // Extract from/to from UCI move (e.g., "e2e4" -> from: "e2", to: "e4")
-        const bestFrom = bestLine.uciMove.substring(0, 2);
-        const bestTo = bestLine.uciMove.substring(2, 4);
-        const bestPromotion = bestLine.uciMove.length > 4 ? bestLine.uciMove.substring(4, 5) : undefined;
-
-        // Check if the user's move matches the best move
-        const isCorrect = moveObj.from === bestFrom && 
-                         moveObj.to === bestTo && 
-                         moveObj.promotion === bestPromotion;
-
-        if (isCorrect) {
-            // Correct move!
-            this.correctMoveMade = true;
-            this.hintLevel = 0;
-
-            // Clear highlights
-            this.chessUI.board.clearHighlights();
-            this.chessUI.board.clearBestMoveArrows();
-
-            // Show success message with icon
-            MoveInformation.showLearningFeedback(
-                `<span style="display: inline-flex;">
-                    <img src="/assets/classifications/excellent.svg" class="move-icon" style="width: auto; height: 18px; margin-right: 6px;">
-                    <span style="font-weight: bold; color: var(--color-green-300);">Well done! </span> <span>You found the best move!</span>
-                </span>`,
-                true
-            );
-
-            // Trigger confetti
-            this.triggerConfetti();
-
-            // Auto-advance to next mistake if enabled
-            const autoAdvance = this.chessUI.settingsMenu.getSettingValue('autoAdvanceToNextMistake');
-            if (autoAdvance !== false) { // Default to true if not set
-                setTimeout(() => {
-                    this.nextMistake();
-                }, 1500); // Wait 1.5 seconds before advancing
-            }
-
-            return true; // Allow the move
-        } else {
-            // Incorrect move - undo it
-            const classification = this.currentMistakeMove.classification;
-            const mistakeMoveNode = this.chessUI.moveTree.mainline[this.currentMistakeMove.mainlineIndex];
-            const moveNotation = mistakeMoveNode?.move?.san || 'the move';
-            const classificationColor = this.getClassificationColor(classification);
-            
-            MoveInformation.showLearningFeedback(
-                `<span style="display: inline-flex;">
-                    <img src="/assets/classifications/blunder.svg" class="move-icon" style="width: auto; height: 18px; margin-right: 6px;">
-                    <span  style="color: var(--color-red-300); font-weight: bold;">Not quite.</span> <span>Try again!</span>
-                </span>`,
-                false
-            );
-
-            // Undo the move visually
+        
+        const resultFen = tempChess.fen();
+        
+        // Animate the attempted move first (without classification initially)
+        const currentFen = this.chessUI.board.chess.fen();
+        this.chessUI.board.move(moveObj, true, undefined, currentFen, false, moveObj.promotion, false);
+        
+        // Show "evaluating" message
+        MoveInformation.showLearningFeedback('Evaluating move...', null);
+        
+        // Check if we already have analysis for this position
+        const existingAnalysis = this.chessUI.analysis?.moves?.find(m => m.fen === resultFen);
+        
+        if (existingAnalysis?.classification) {
+            // We already have the classification - show result after animation
             setTimeout(() => {
-                this.chessUI.board.fen(positionBeforeMistake.fen || positionBeforeMistake.move?.after);
-            }, 500);
-
-            return false; // Prevent the move from being added to tree
+                // Add classification to the board
+                const fromIdx = this.chessUI.board.algebraicToIndex(moveObj.from, this.chessUI.board.flipped);
+                const toIdx = this.chessUI.board.algebraicToIndex(moveObj.to, this.chessUI.board.flipped);
+                this.chessUI.board.addClassification(
+                    existingAnalysis.classification.type,
+                    this.chessUI.board.getSquare(fromIdx, this.chessUI.board.flipped),
+                    this.chessUI.board.getSquare(toIdx, this.chessUI.board.flipped)
+                );
+                
+                this.handleEvaluationResult({ classification: existingAnalysis.classification }, positionBeforeMistake, moveResult);
+            }, 300);
+        } else {
+            // Queue evaluation
+            setTimeout(() => {
+                this.evaluateUserMove(moveObj, positionBeforeMistake, moveResult, resultFen);
+            }, 300);
         }
+
+        return false; // Prevent default handling
+    }
+
+    /**
+     * Evaluates a user's move to determine if it's an alternative solution
+     */
+    evaluateUserMove(moveObj, positionBeforeMistake, moveResult, resultFen) {
+        const prevFen = positionBeforeMistake.fen || positionBeforeMistake.move?.after;
+        
+        let evaluationComplete = false;
+        
+        // Set a timeout fallback in case evaluation gets stuck
+        const timeoutId = setTimeout(() => {
+            if (!evaluationComplete) {
+                console.warn('Evaluation timeout - treating move as incorrect');
+                this.handleIncorrectMove(positionBeforeMistake, moveResult);
+            }
+        }, 5000); // 5 second timeout
+        
+        // Queue evaluation
+        this.chessUI.evaluationQueue.addToQueue(
+            { id: 'temp_learning_eval_' + Date.now(), move: moveResult },
+            resultFen,
+            prevFen,
+            (evaluatedMove) => {
+                evaluationComplete = true;
+                clearTimeout(timeoutId);
+                
+                // Add classification to the board
+                if (evaluatedMove.classification) {
+                    const fromIdx = this.chessUI.board.algebraicToIndex(moveObj.from, this.chessUI.board.flipped);
+                    const toIdx = this.chessUI.board.algebraicToIndex(moveObj.to, this.chessUI.board.flipped);
+                    this.chessUI.board.addClassification(
+                        evaluatedMove.classification.type,
+                        this.chessUI.board.getSquare(fromIdx, this.chessUI.board.flipped),
+                        this.chessUI.board.getSquare(toIdx, this.chessUI.board.flipped)
+                    );
+                }
+                
+                this.handleEvaluationResult(evaluatedMove, positionBeforeMistake, moveResult);
+            },
+            this.chessUI.moveTree
+        );
+    }
+
+    /**
+     * Handles the evaluation result
+     */
+    handleEvaluationResult(evaluatedMove, positionBeforeMistake, moveResult) {
+        const classification = evaluatedMove.classification?.type;
+        
+        // Check if it's the best move (optimal classifications that only occur for top moves)
+        const topOnlyMoves = ['perfect', 'brilliant', 'great', 'forced'];
+        
+        if (topOnlyMoves.includes(classification)) {
+            // Best move found!
+            this.handleCorrectMove();
+        } else if (classification === 'excellent') {
+            // Excellent can be either top move or alternative
+            // Check if this is actually the top engine move
+            const prevFen = positionBeforeMistake.fen || positionBeforeMistake.move?.after;
+            const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
+            const bestLine = prevAnalysis?.lines?.find(l => l.id === 1);
+            
+            if (bestLine && evaluatedMove.move) {
+                const isTopMove = evaluatedMove.move.from === bestLine.uciMove.substring(0, 2) && 
+                                 evaluatedMove.move.to === bestLine.uciMove.substring(2, 4);
+                
+                if (isTopMove) {
+                    this.handleCorrectMove();
+                } else {
+                    this.handleAlternativeMove(classification, positionBeforeMistake);
+                }
+            } else {
+                // Can't determine, treat as alternative
+                this.handleAlternativeMove(classification, positionBeforeMistake);
+            }
+        } else if (classification === 'good') {
+            // Alternative good move - show options
+            this.handleAlternativeMove(classification, positionBeforeMistake);
+        } else {
+            // Not a good alternative - treat as incorrect
+            this.handleIncorrectMove(positionBeforeMistake, moveResult);
+        }
+    }
+
+    /**
+     * Handles when the correct (best) move is made
+     */
+    handleCorrectMove() {
+        this.correctMoveMade = true;
+        this.hintLevel = 0;
+
+        // Track if solved without help
+        if (!this.usedHintOrSolution) {
+            this.solvedCorrectly++;
+        }
+
+        // Clear highlights
+        this.chessUI.board.clearHighlights();
+        this.chessUI.board.clearBestMoveArrows();
+
+        // Show success message with icon
+        MoveInformation.showLearningFeedback(
+            `<span style="display: inline-flex;">
+                <span style="font-weight: bold; color: var(--color-green-300);">Well done! </span>
+            </span>`,
+            true
+        );
+
+        // Show correct move actions
+        this.showCorrectMoveActions();
+
+        // Trigger confetti
+        this.triggerConfetti();
+
+        // Auto-advance to next mistake if enabled
+        const autoAdvance = this.chessUI.settingsMenu.getSettingValue('autoAdvanceToNextMistake');
+        if (autoAdvance !== false) { // Default to true if not set
+            setTimeout(() => {
+                this.nextMistake();
+            }, 1500); // Wait 1.5 seconds before advancing
+        }
+    }
+
+    /**
+     * Handles alternative good/excellent moves
+     */
+    handleAlternativeMove(classification, positionBeforeMistake) {
+        // Simple text without spans, all black
+        const moveType = classification === 'excellent' ? 'Excellent' : 'Good';
+        MoveInformation.showLearningFeedback(
+            `${moveType}, but there's better!`,
+            null
+        );
+
+        // Show alternative move actions
+        this.showAlternativeMoveActions();
+    }
+
+    /**
+     * Handles incorrect moves
+     */
+    handleIncorrectMove(positionBeforeMistake, incorrectMove) {
+        // Show feedback immediately
+        MoveInformation.showLearningFeedback(
+            `<span style="display: inline-flex;">
+                <img src="/assets/classifications/blunder.svg" class="move-icon" style="width: auto; height: 18px; margin-right: 6px;">
+                <span  style="color: var(--color-red-300); font-weight: bold;">Not quite.</span> <span>Try again!</span>
+            </span>`,
+            false
+        );
+
+        // Show incorrect move actions with message
+        this.showIncorrectMoveActions();
+
+        // Undo the move with animation after a longer delay
+        setTimeout(() => {
+            // Animate the undo by moving the piece back
+            if (incorrectMove) {
+                this.chessUI.board.unmove(true, incorrectMove, positionBeforeMistake.fen || positionBeforeMistake.move?.after);
+            } else {
+                // Fallback to instant FEN load if no move object
+                this.chessUI.board.fen(positionBeforeMistake.fen || positionBeforeMistake.move?.after);
+            }
+            
+            // Restore the original feedback message after undo
+            setTimeout(() => {
+                const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
+                const mistakeMoveNode = this.chessUI.moveTree.mainline[mistakeMainlineIndex];
+                const classification = this.currentMistakeMove.classification;
+                const moveNotation = mistakeMoveNode?.move?.san || 'the move';
+                const classificationColor = this.getClassificationColor(classification);
+                
+                MoveInformation.showLearningFeedback(
+                    `${moveNotation} was ${this.getArticle(classification)} <strong style="color: ${classificationColor}">${classification}</strong>. Find the best move!`,
+                    null
+                );
+                
+                // Restore initial learning actions
+                this.showInitialActions();
+            }, 300);
+        }, 1200); // Longer delay before undo (1.2 seconds)
     }
 
     /**
@@ -235,6 +591,9 @@ export class MistakeLearner {
         if (!this.isActive || this.correctMoveMade) {
             return;
         }
+
+        // Mark that help was used
+        this.usedHintOrSolution = true;
 
         const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
         const positionBeforeMistake = this.chessUI.moveTree.mainline[mistakeMainlineIndex - 1];
@@ -253,12 +612,12 @@ export class MistakeLearner {
         if (this.hintLevel === 0) {
             // First hint: Highlight the piece to move
             this.chessUI.board.clearHighlights();
-            this.chessUI.board.highlightSquare(bestFrom, '#c636ff', 0.59);
+            this.chessUI.board.highlightSquare(bestFrom, '#710099', 0.59);
             this.hintLevel = 1;
         } else if (this.hintLevel === 1) {
             // Second hint: Show the best move arrow
             this.chessUI.board.clearHighlights();
-            this.chessUI.board.addBestMoveArrow(bestLine.uciMove, '#c636ff', 0.59);
+            this.chessUI.board.addBestMoveArrow(bestLine.uciMove, '#710099', 0.59);
             this.hintLevel = 2;
         }
         // No more hints after level 2
@@ -269,14 +628,6 @@ export class MistakeLearner {
      */
     isAtMistakePosition() {
         return this.chessUI.moveTree.currentNode.id === this.currentMistakeNodeId;
-    }
-
-    /**
-     * Updates the next/back button text based on current position
-     */
-    updateNavigationButton() {
-        const isAtMistake = this.isAtMistakePosition();
-        this.chessUI.moveNavigator.updateNextBackButton(isAtMistake);
     }
 
     /**
@@ -294,32 +645,10 @@ export class MistakeLearner {
             // Reset hint level when returning to mistake
             this.hintLevel = 0;
             
-            // Clear any hints/highlights
-            this.chessUI.board.clearHighlights();
-            this.chessUI.board.clearBestMoveArrows();
-            
-            // Re-show the mistake arrow
-            const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
-            const mistakeMoveNode = this.chessUI.moveTree.mainline[mistakeMainlineIndex];
-            if (mistakeMoveNode?.move?.from && mistakeMoveNode?.move?.to) {
-                this.chessUI.board.addMoveArrow(
-                    mistakeMoveNode.move.from,
-                    mistakeMoveNode.move.to,
-                    '#d44242',
-                    0.6
-                );
-            }
-            
-            // Restore the original feedback message
-            const classification = this.currentMistakeMove.classification;
-            const moveNotation = mistakeMoveNode?.move?.san || 'the move';
-            const classificationColor = this.getClassificationColor(classification);
-            MoveInformation.showLearningFeedback(
-                `${moveNotation} was ${this.getArticle(classification)} <strong style="color: ${classificationColor}">${classification}</strong>. Find the best move!`,
-                null
-            );
-            
-            this.updateNavigationButton();
+            // Use setupMistakePosition to properly restore the UI
+            setTimeout(() => {
+                this.setupMistakePosition(this.currentMistakeMove.mainlineIndex);
+            }, 100);
         }
     }
 
@@ -331,23 +660,12 @@ export class MistakeLearner {
             return;
         }
 
-        // If at the mistake position but haven't made the correct move yet
-        if (this.isAtMistakePosition() && !this.correctMoveMade) {
-            this.showMessage('Find the correct move first!');
-            return;
-        }
-
-        // If not at mistake position (showing "Back" button), shouldn't reach here
-        // as the handler should call backToCurrentMistake instead
-        if (!this.correctMoveMade) {
-            return;
-        }
-
+        // Can always move to next mistake (removed the check for correctMoveMade)
         if (this.currentMistakeIndex < this.mistakeMoves.length - 1) {
             // Go to next mistake
             this.navigateToMistake(this.currentMistakeIndex + 1);
         } else {
-            // Completed all mistakes!
+            // At last mistake - show completion
             this.showCompletionMessage();
         }
     }
@@ -357,11 +675,23 @@ export class MistakeLearner {
      */
     showCompletionMessage() {
         MoveInformation.showLearningFeedback(
-            `🎉 Congratulations! You've learned from all ${this.mistakeMoves.length} mistake${this.mistakeMoves.length > 1 ? 's' : ''}.`,
+            `🎉 Congratulations! You've learned from all mistakes.`,
             null
         );
-        // Keep next button visible but disabled since we're done
-        this.chessUI.moveNavigator.updateNextBackButton(true);
+        
+        // Show completion actions with score
+        const total = this.mistakeMoves.length;
+        const solved = this.solvedCorrectly;
+        $('#learning-actions').html(`
+            <div class="learning-actions-message">🎉 All ${total} mistake${total > 1 ? 's' : ''} completed!</div>
+            <div class="learning-actions-message">You completed ${solved} out of ${total} mistake${total > 1 ? 's' : ''}</div>
+            <div class="learning-actions-buttons">
+                <button class="learning-action-btn primary" id="finish-learning">Finish</button>
+            </div>
+        `).show();
+
+        // Bind event handler
+        $('#finish-learning').off('click').on('click', () => this.exit());
         
         // Big confetti for completion
         this.triggerCompletionConfetti();
@@ -376,11 +706,16 @@ export class MistakeLearner {
         this.currentMistakeIndex = 0;
         this.hintLevel = 0;
         this.correctMoveMade = false;
+        this.solvedCorrectly = 0;
+        this.usedHintOrSolution = false;
 
         // Restore normal UI
         this.chessUI.moveNavigator.hideLearningControls();
         this.chessUI.board.clearHighlights();
         this.chessUI.board.clearBestMoveArrows();
+
+        // Hide learning actions container
+        $('#learning-actions').hide();
 
         // Show sidebar content again
         $('.sidebar-header').show();
@@ -434,18 +769,14 @@ export class MistakeLearner {
     }
 
     /**
-     * Triggers confetti animation for correct moves
+     * Triggers confetti animation for correct moves (simplified)
      */
     triggerConfetti() {
         if (typeof confetti === 'undefined') return;
 
-        const duration = 1500;
+        const duration = 1000;
         const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 35, spread: 360, ticks: 80, zIndex: 10000 };
-
-        function randomInRange(min, max) {
-            return Math.random() * (max - min) + min;
-        }
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 500 };
 
         const interval = setInterval(function() {
             const timeLeft = animationEnd - Date.now();
@@ -454,55 +785,44 @@ export class MistakeLearner {
                 return clearInterval(interval);
             }
 
-            const particleCount = 100 * (timeLeft / duration);
+            const particleCount = 40 * (timeLeft / duration);
 
             confetti({
                 ...defaults,
                 particleCount,
-                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
-            });
-            confetti({
-                ...defaults,
-                particleCount,
-                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+                origin: { x: 0.5, y: 0.5 }
             });
         }, 150);
     }
 
     /**
-     * Triggers big confetti animation for completion
+     * Triggers big confetti animation for completion (3 distinct shots)
      */
     triggerCompletionConfetti() {
         if (typeof confetti === 'undefined') return;
 
-        const duration = 3000;
-        const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 45, spread: 360, ticks: 100, zIndex: 10000 };
-
-        function randomInRange(min, max) {
-            return Math.random() * (max - min) + min;
-        }
-
-        const interval = setInterval(function() {
-            const timeLeft = animationEnd - Date.now();
-
-            if (timeLeft <= 0) {
-                return clearInterval(interval);
-            }
-
-            const particleCount = 150 * (timeLeft / duration);
-
+        const fireConfetti = (origin) => {
             confetti({
-                ...defaults,
-                particleCount,
-                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+                particleCount: 100,
+                spread: 70,
+                startVelocity: 50,
+                origin: origin,
+                zIndex: 500
             });
-            confetti({
-                ...defaults,
-                particleCount,
-                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-            });
-        }, 150);
+        };
+
+        // First shot
+        fireConfetti({ x: 0.5, y: 0.5 });
+
+        // Second shot after 500ms
+        setTimeout(() => {
+            fireConfetti({ x: 0.3, y: 0.6 });
+        }, 500);
+
+        // Third shot after 1000ms
+        setTimeout(() => {
+            fireConfetti({ x: 0.7, y: 0.6 });
+        }, 1000);
     }
 }
 

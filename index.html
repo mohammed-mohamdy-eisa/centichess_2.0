@@ -140,6 +140,11 @@
 				</div>
 
 				<div class="sidebar">
+					<!-- Learning Actions Container -->
+					<div id="learning-actions" class="learning-actions" style="display: none;">
+						<!-- Content will be dynamically updated by MistakeLearner -->
+					</div>
+					
 					<div class="sidebar-header">
 						<div class="tab-buttons">
 							<button class="tab-button active" data-tab="report">Report</button>
@@ -309,15 +314,11 @@
 										d="M52.5 440.6c-9.5 7.9-22.8 9.7-34.1 4.4S0 428.4 0 416L0 96C0 83.6 7.2 72.3 18.4 67s24.5-3.6 34.1 4.4l192 160L256 241l0-145c0-17.7 14.3-32 32-32s32 14.3 32 32l0 320c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-145-11.5 9.6-192 160z"
 										fill="currentColor" />
 								</svg></button>
-							<button id="hint" class="learning-control" style="display:none;">
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" fill="currentColor">
-									<path d="M297.2 248.9C311.6 228.3 320 203.2 320 176c0-70.7-57.3-128-128-128S64 105.3 64 176c0 27.2 8.4 52.3 22.8 72.9c3.7 5.3 8.1 11.3 12.8 17.7l0 12.8c0 10.3 4.9 19.9 13.2 25.8l-8.4 33.9c-2.5 10.1 5.4 19.9 15.8 19.9l149.7 0c10.5 0 18.3-9.7 15.8-19.9l-8.4-33.9c8.3-5.9 13.2-15.6 13.2-25.8l0-12.8c4.8-6.4 9.1-12.4 12.8-17.7zM192 128c-26.5 0-48 21.5-48 48c0 8.8-7.2 16-16 16s-16-7.2-16-16c0-44.2 35.8-80 80-80c8.8 0 16 7.2 16 16s-7.2 16-16 16zm0 384c-44.2 0-80-35.8-80-80l0-16 160 0 0 16c0 44.2-35.8 80-80 80z"/>
-								</svg>
-							</button>
-							<button id="next-mistake" class="learning-control" style="display:none;">
-								<span class="next-text">Next</span>
-								<span class="back-text" style="display:none;">Back</span>
-							</button>
+						<button id="hint" class="learning-control" style="display:none;">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" fill="currentColor">
+								<path d="M297.2 248.9C311.6 228.3 320 203.2 320 176c0-70.7-57.3-128-128-128S64 105.3 64 176c0 27.2 8.4 52.3 22.8 72.9c3.7 5.3 8.1 11.3 12.8 17.7l0 12.8c0 10.3 4.9 19.9 13.2 25.8l-8.4 33.9c-2.5 10.1 5.4 19.9 15.8 19.9l149.7 0c10.5 0 18.3-9.7 15.8-19.9l-8.4-33.9c8.3-5.9 13.2-15.6 13.2-25.8l0-12.8c4.8-6.4 9.1-12.4 12.8-17.7zM192 128c-26.5 0-48 21.5-48 48c0 8.8-7.2 16-16 16s-16-7.2-16-16c0-44.2 35.8-80 80-80c8.8 0 16 7.2 16 16s-7.2 16-16 16zm0 384c-44.2 0-80-35.8-80-80l0-16 160 0 0 16c0 44.2-35.8 80-80 80z"/>
+							</svg>
+						</button>
 							<button id="leave-learning" class="learning-control" style="display:none;">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
 									<path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"/>

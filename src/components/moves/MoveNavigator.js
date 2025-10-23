@@ -59,7 +59,6 @@ export class MoveNavigator {
 
         // Learning mode event handlers
         $("#hint").on("click", () => this.handleHint());
-        $("#next-mistake").on("click", () => this.handleNextMistake());
         $("#leave-learning").on("click", () => this.handleLeaveLearning());
     }
 
@@ -204,7 +203,8 @@ export class MoveNavigator {
         const nextNode = this.chessUI.moveTree.getNextMove();
         if (!nextNode || !nextNode.move) return;
 
-        const classification = nextNode.classification;
+        // In learning mode, don't show classifications on the board
+        const classification = this.chessUI.mistakeLearner?.isActive ? undefined : nextNode.classification;
         this.chessUI.board.move(nextNode.move, true, classification, nextNode.move.before, false, nextNode.move.promotion, false);
 
         this.chessUI.moveTree.navigateTo(nextNode.id);
@@ -212,7 +212,10 @@ export class MoveNavigator {
         
         // Update learning mode navigation if active
         if (this.chessUI.mistakeLearner?.isActive) {
-            this.chessUI.mistakeLearner.updateNavigationButton();
+            // Check if moved away from mistake position
+            if (!this.chessUI.mistakeLearner.isAtMistakePosition()) {
+                this.chessUI.mistakeLearner.showMovedAwayActions();
+            }
         }
     }
 
@@ -233,7 +236,10 @@ export class MoveNavigator {
         
         // Update learning mode navigation if active
         if (this.chessUI.mistakeLearner?.isActive) {
-            this.chessUI.mistakeLearner.updateNavigationButton();
+            // Check if moved away from mistake position
+            if (!this.chessUI.mistakeLearner.isAtMistakePosition()) {
+                this.chessUI.mistakeLearner.showMovedAwayActions();
+            }
         }
     }
 
@@ -363,14 +369,16 @@ export class MoveNavigator {
     navigateToExistingMove(moveNode) {
         this.chessUI.moveTree.navigateTo(moveNode.id);
 
-        // Add classification to the board
-        const fromIdx = this.chessUI.board.algebraicToIndex(moveNode.move.from, this.chessUI.board.flipped);
-        const toIdx = this.chessUI.board.algebraicToIndex(moveNode.move.to, this.chessUI.board.flipped);
-        this.chessUI.board.addClassification(
-            moveNode.classification,
-            this.chessUI.board.getSquare(fromIdx, this.chessUI.board.flipped),
-            this.chessUI.board.getSquare(toIdx, this.chessUI.board.flipped)
-        );
+        // Add classification to the board (skip in learning mode)
+        if (!this.chessUI.mistakeLearner?.isActive) {
+            const fromIdx = this.chessUI.board.algebraicToIndex(moveNode.move.from, this.chessUI.board.flipped);
+            const toIdx = this.chessUI.board.algebraicToIndex(moveNode.move.to, this.chessUI.board.flipped);
+            this.chessUI.board.addClassification(
+                moveNode.classification,
+                this.chessUI.board.getSquare(fromIdx, this.chessUI.board.flipped),
+                this.chessUI.board.getSquare(toIdx, this.chessUI.board.flipped)
+            );
+        }
 
         this.updateAfterMove(moveNode);
 
@@ -395,7 +403,9 @@ export class MoveNavigator {
         
         this.chessUI.board.fen(targetNode.move.before);
         if (targetNode.move) {
-            this.chessUI.board.move(targetNode.move, true, targetNode.classification, targetNode.move.before, false, targetNode.move.promotion);
+            // In learning mode, don't show classifications on the board
+            const classification = this.chessUI.mistakeLearner?.isActive ? undefined : targetNode.classification;
+            this.chessUI.board.move(targetNode.move, true, classification, targetNode.move.before, false, targetNode.move.promotion);
         }
 
         // Update move tree and UI
@@ -564,7 +574,7 @@ export class MoveNavigator {
         controls.css('display', 'flex');
         
         // Show learning controls, hide only specific normal ones
-        $('#hint, #next-mistake, #leave-learning').show();
+        $('#hint, #leave-learning').show();
         $('#restart, #skip-to-end, #popup-quick-menu').hide();
         // Keep backward and forward visible - they're the same in both modes
     }
@@ -579,22 +589,11 @@ export class MoveNavigator {
         $('.bottom-content .controls').css('display', '');
         
         // Hide learning controls and show normal ones
-        $('#hint, #next-mistake, #leave-learning').hide();
+        $('#hint, #leave-learning').hide();
         $('#restart, #skip-to-end, #popup-quick-menu').show();
-    }
-
-    /**
-     * Updates the next/back button based on position
-     * @param {boolean} isAtMistake - Whether currently at the mistake position
-     */
-    updateNextBackButton(isAtMistake) {
-        if (isAtMistake) {
-            $('#next-mistake .next-text').show();
-            $('#next-mistake .back-text').hide();
-        } else {
-            $('#next-mistake .next-text').hide();
-            $('#next-mistake .back-text').show();
-        }
+        
+        // Restore navigation buttons
+        $('#backward, #forward').show();
     }
 
     /**
@@ -603,21 +602,6 @@ export class MoveNavigator {
     handleHint() {
         if (this.chessUI.mistakeLearner?.isActive) {
             this.chessUI.mistakeLearner.showHint();
-        }
-    }
-
-    /**
-     * Handles next mistake button click (or back to mistake)
-     */
-    handleNextMistake() {
-        if (this.chessUI.mistakeLearner?.isActive) {
-            // Check if we're showing "Back" or "Next"
-            const isShowingBack = $('#next-mistake .back-text').is(':visible');
-            if (isShowingBack) {
-                this.chessUI.mistakeLearner.backToCurrentMistake();
-            } else {
-                this.chessUI.mistakeLearner.nextMistake();
-            }
         }
     }
 

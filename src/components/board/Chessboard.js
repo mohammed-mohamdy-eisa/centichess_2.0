@@ -1132,7 +1132,7 @@ export class Chessboard {
 	 * @param {string} color - CSS color value
 	 * @param {number} opacity - Opacity value (0-1)
 	 */
-	highlightSquare(square, color = '#c636ff', opacity = 0.59) {
+	highlightSquare(square, color = '#710099', opacity = 0.59) {
 		const index = this.algebraicToIndex(square, this.flipped);
 		const squareElement = this.getSquare(index, this.flipped);
 		if (squareElement) {

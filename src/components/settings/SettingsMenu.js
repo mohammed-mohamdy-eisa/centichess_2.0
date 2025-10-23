@@ -127,6 +127,14 @@ export class SettingsMenu {
                                 description: 'Automatically move to next mistake after finding correct move',
                                 defaultValue: true,
                                 path: 'autoAdvanceToNextMistake'
+                            },
+                            {
+                                key: 'includeInaccuraciesInLearning',
+                                type: 'toggle',
+                                label: 'Include Inaccuracies in Learning Mode',
+                                description: 'Include inaccuracy moves in mistake learning mode',
+                                defaultValue: true,
+                                path: 'includeInaccuraciesInLearning'
                             }
                         ]
                     }
