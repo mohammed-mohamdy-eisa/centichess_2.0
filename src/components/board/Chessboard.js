@@ -226,7 +226,7 @@ export class Chessboard {
 				droppableHoverBorderWidth: '5px',
 				captureIndicatorSize: 'calc(1.1vmin)',
 				captureIndicatorColor: 'rgba(0, 0, 0, 0.15)',
-				draggedPieceScale: 1.3,
+				draggedPieceScale: 1.1,
 				hoverCursor: 'grab',
 				grabCursor: 'grabbing',
 				promotionPanelBackground: 'rgba(61, 61, 61, 0.75)',
@@ -260,7 +260,7 @@ export class Chessboard {
 			draggingEnabled: true,
 			clickingEnabled: true,
 
-			pieceDragThreshold: 5,
+			pieceDragThreshold: -1,
 			pieceClickThreshold: 40,
 
 			pieceAnimationDuration: 0.1,
@@ -1912,10 +1912,8 @@ export class Chessboard {
 
 		event.preventDefault();
 
-
-
 		if (event.type === 'touchstart' || event.button === 0) {
-			this._startDrag(square);
+			this._startDrag(square, event);
 		}
 	}
 
@@ -1971,7 +1969,7 @@ export class Chessboard {
 	/**
 	 * @private
 	 */
-	_startDrag(square) {
+	_startDrag(square, event) {
 		if (!this.settings.isInteractive || this.isDestroyed) return;
 
 		const index = this.getSquareIndex(square);
@@ -1995,6 +1993,9 @@ export class Chessboard {
 
 		this.dragPiece = square.firstChild;
 		this.startDragIndex = index;
+
+		const { x, y } = this._getEventCoordinates(event);
+		this._continueDrag(x, y);
 
 		// Add document listeners for dragging outside board
 		['mousemove', 'touchmove'].forEach(type => this._addTrackedEventListener(document, type, this.boundDocumentMouseMove, { passive: false }));
