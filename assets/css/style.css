@@ -91,6 +91,13 @@
     --color-fuchsia-500: #940c45;
     --color-fuchsia-600: #610734;
     --color-fuchsia-700: #49052d;
+    --color-vibrant-purple-100: #f464ff;
+    --color-vibrant-purple-200: #c636ff;
+    --color-vibrant-purple-300: #c200ff;
+    --color-vibrant-purple-400: #9900cc;
+    --color-vibrant-purple-500: #710099;
+    --color-vibrant-purple-600: #4c0066;
+    --color-vibrant-purple-700: #330044;
     --color-red-25: #ffe0ca;
     --color-red-50: #ffcbb2;
     --color-red-75: #ffb196;
@@ -3638,9 +3645,9 @@ body.lock-scroll {
 .learn-button {
     width: 100%;
     margin-top: 16px;
-    padding: 16px 16px;
-    background: var(--sidebar-base);
-    color: var(--text-primary);
+    padding: 16px;
+    background: var(--color-vibrant-purple-500);
+    color: var(--pure-white);
     border: 1px solid var(--dark-border);
     border-radius: 6px;
     font-size: large;

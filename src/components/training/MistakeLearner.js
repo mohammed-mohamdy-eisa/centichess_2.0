@@ -253,12 +253,12 @@ export class MistakeLearner {
         if (this.hintLevel === 0) {
             // First hint: Highlight the piece to move
             this.chessUI.board.clearHighlights();
-            this.chessUI.board.highlightSquare(bestFrom, '#38a5ff', 0.5);
+            this.chessUI.board.highlightSquare(bestFrom, '#c636ff', 0.59);
             this.hintLevel = 1;
         } else if (this.hintLevel === 1) {
             // Second hint: Show the best move arrow
             this.chessUI.board.clearHighlights();
-            this.chessUI.board.addBestMoveArrow(bestLine.uciMove, '#38a5ff', 0.85);
+            this.chessUI.board.addBestMoveArrow(bestLine.uciMove, '#c636ff', 0.59);
             this.hintLevel = 2;
         }
         // No more hints after level 2
