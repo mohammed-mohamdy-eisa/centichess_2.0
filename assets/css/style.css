@@ -1911,16 +1911,17 @@ body.lock-scroll {
 @media (max-width: 1280px) {
     .main-panel {
         flex-direction: column;
+        padding-top: 70px;
     }
 
     .sidebar {
         width: calc(var(--board-scale) * 1vmin + 30px);
         max-width: calc(var(--board-scale) * 1vw + 30px);
         margin: 0 auto;
-        height: 92vh;
-        max-height: 92vh;
+        height: auto;
+        max-height: calc(92vh - 70px);
         flex-direction: column;
-        padding-bottom: 100px; /* Add space for sticky nav */
+        padding-bottom: 80px; /* Add space for sticky nav */
     }
 
     .bottom-content {
@@ -1941,6 +1942,7 @@ body.lock-scroll {
     .controls {
         margin: 0 auto;
         gap: 8px;
+        max-width: calc(var(--board-scale) * 1vmin);
     }
 
     .controls button {
@@ -1959,8 +1961,15 @@ body.lock-scroll {
     }
     
     .moves-container {
-        overflow-y: visible;
+        overflow-y: auto;
         overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        max-height: calc(100% - 120px);
+    }
+    
+    .tab-content {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 }
 
@@ -1968,16 +1977,17 @@ body.lock-scroll {
 @media (max-width: 768px) {
     .main-panel {
         flex-direction: column;
+        padding-top: 70px;
     }
 
     .sidebar {
         width: calc(var(--board-scale) * 1vmin + 30px);
         max-width: calc(var(--board-scale) * 1vw + 30px);
         margin: 0 auto;
-        height: 92vh;
-        max-height: 92vh;
+        height: auto;
+        max-height: calc(92vh - 70px);
         flex-direction: column;
-        padding-bottom: 100px;
+        padding-bottom: 80px;
     }
 
     .bottom-content {
@@ -1998,6 +2008,7 @@ body.lock-scroll {
     .controls {
         margin: 0 auto;
         gap: 8px;
+        max-width: calc(var(--board-scale) * 1vmin);
     }
 
     .controls button {
@@ -2016,8 +2027,10 @@ body.lock-scroll {
     }
     
     .moves-container {
-        overflow-y: visible;
+        overflow-y: auto;
         overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        max-height: calc(100% - 120px);
     }
 
     /* Quick menu responsive adjustments */
@@ -2218,6 +2231,9 @@ body.lock-scroll {
         margin-top: 16px;
     }
     
+    .learning-actions-counter {
+        margin-top: 5px; /* Remove large top margin on mobile */
+    }
 }
 
 /* Game Stats Styles */
@@ -3704,41 +3720,10 @@ body.lock-scroll {
     }
 }
 
-/* Show move-info in sidebar during learn mode on PC */
-@media (min-width: 769px) {
-    /* Show tab-content and moves-tab during learning mode */
-    body:has(.learning-mode) .tab-content,
-    body:has(.learning-mode) #moves-tab {
-        display: block !important;
-        visibility: visible !important;
-    }
-    
-    /* Hide other tab content during learning mode */
-    body:has(.learning-mode) #report-tab,
-    body:has(.learning-mode) #games-tab,
-    body:has(.learning-mode) #settings-tab {
-        display: none !important;
-    }
-    
-    /* Keep sidebar-header hidden during learning mode */
-    body:has(.learning-mode) .sidebar-header {
-        display: none !important;
-    }
-    
-    /* Position move-info-sidebar at top of sidebar during learning mode */
-    body:has(.learning-mode) .move-info-sidebar {
-        display: block !important;
-        position: relative;
-        width: 80%;
-        margin: 20px auto;
-        z-index: 100;
-    }
-    
-    /* Hide other moves tab content during learning mode */
-    body:has(.learning-mode) .moves-container,
-    body:has(.learning-mode) #moves-tab .top-content {
-        display: none !important;
-    }
+/* Hide move-info completely during learning mode */
+.learning-mode ~ * .move-info,
+body:has(.learning-mode) .move-info {
+    display: none !important;
 }
 
 /* Leave button styling */
@@ -3766,14 +3751,16 @@ body.lock-scroll {
 }
 
 .learning-actions-message {
-    font-size: small;
-    color: var(--text-secondary);
-    margin-top: 10px;
-    font-weight: 500;
+    font-size: 16px;
+    color: var(--text-primary);
+    margin: 12px 0;
+    text-align: center;
+    line-height: 1.5;
+    font-weight: 600;
 }
 
 .learning-actions-counter {
-    font-size: 10px;
+    font-size: 12px;
     color: var(--text-secondary);
     @media (min-width: 768px) {
         margin-top: 60%; /* Add spacing from top on PC */
@@ -3783,21 +3770,21 @@ body.lock-scroll {
 .learning-actions-buttons {
     display: flex;
     flex-direction: column;
-    margin-top: 5px;
+    gap: 8px;
+    margin-top: 10px;
 }
 
 .learning-action-btn {
     background: transparent;
     border: none;
-    color: var(--text-primary);
+    color: var(--analysis-text);
     padding: 5px 16px;
     cursor: pointer;
     border-radius: 6px;
     transition: all 0.2s ease;
     font-family: "Roboto", sans-serif;
     text-align: center;
-    font-weight: 600;
-    font-size: small;
+    font-weight: 400;
 }
 
 .learning-action-btn:hover {

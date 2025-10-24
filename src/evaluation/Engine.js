@@ -56,20 +56,21 @@ function isMobileDevice() {
 
 export class Engine {
     currentDepth = 0;
+    multiPV = 3;
     busy = false;
     currentResolve = null;
     currentReject = null;
 
-    constructor({ engineType = 'stockfish-17.1-lite', threadCount = 0, multiPV = 1 } = {}) {
+    constructor({ engineType = 'stockfish-17.1-lite', threadCount = 0 } = {}) {
         this.engine = engines[engineType];
-        this.multiPV = multiPV;
         
-        // Auto mode: detect optimal thread count
+        // Auto-detect CPU count if threadCount is 0 or less
         if (threadCount <= 0) {
-            const hardwareCores = navigator.hardwareConcurrency || 4;
-            // Use half of available cores, capped at 4 for browser stability
-            threadCount = Math.min(Math.max(Math.floor(hardwareCores / 2), 1), 4);
-            console.log(`Auto CPU mode: Detected ${hardwareCores} cores, using ${threadCount} threads`);
+            // Use hardware concurrency, but cap at 4 for reasonable performance
+            // Most browsers report logical cores (hyperthreading), so we limit it
+            const detectedCPUs = navigator.hardwareConcurrency || 1;
+            threadCount = Math.min(Math.max(1, Math.floor(detectedCPUs / 2)), 4);
+            console.log(`Auto-detected ${detectedCPUs} logical cores, using ${threadCount} CPUs for engine`);
         }
         
         this.threadCount = threadCount;

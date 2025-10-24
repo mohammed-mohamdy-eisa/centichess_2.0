@@ -118,14 +118,13 @@ export class MoveEvaluator {
 
         const depth = settings.engineDepth || 16;
         const engineType = settings.engineType || 'stockfish-17.1-lite';
-        const threadCount = settings.engineThreads ?? 0; // 0 = auto
-        const multiPV = settings.multiPV || 1;
+        const threadCount = settings.engineThreads ?? 0;
         const maxMoveTime = settings.maxMoveTime || 5;
         const maxWorkers = navigator.hardwareConcurrency || 8; // Use hardware concurrency when available
         const moves = new Array(history.length);
         
         // Create a pool of workers upfront and reuse them
-        const workerPool = Array.from({ length: Math.min(maxWorkers, queue.length) }, () => new Engine({ engineType, threadCount, multiPV }));
+        const workerPool = Array.from({ length: Math.min(maxWorkers, queue.length) }, () => new Engine({ engineType, threadCount }));
         MoveEvaluator.workerPool = workerPool;
         MoveEvaluator.cancelRequested = false;
         

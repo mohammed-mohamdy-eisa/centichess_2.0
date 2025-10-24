@@ -80,22 +80,12 @@ export class SettingsMenu {
                                 key: 'engineThreads',
                                 type: 'slider',
                                 label: 'CPUs',
-                                description: 'Auto = detect optimal CPUs, 1 = single-threaded, 2+ = multi-threaded',
+                                description: 'Auto = detect automatically, 1 CPU = single-threaded, 2+ CPUs = multi-threaded (requires browser support)',
                                 defaultValue: 0,
                                 min: 0,
-                                max: 8,
+                                max: 5,
                                 step: 1,
-                                format: (v) => (v === 0 ? 'Auto' : `${v} CPU${v > 1 ? 's' : ''}`)
-                            },
-                            {
-                                key: 'multiPV',
-                                type: 'slider',
-                                label: 'Multile Lines',
-                                description: 'Number of best move lines to analyze simultaneously (1-3)',
-                                defaultValue: 3,
-                                min: 1,
-                                max: 3,
-                                step: 1,
+                                format: (v) => v === 0 ? 'Auto' : String(v)
                             },
                         ]
                     },

@@ -1,5 +1,3 @@
-import { MoveInformation } from '../moves/MoveInformation.js';
-
 /**
  * Manages the "Learn from Mistakes" training mode
  */
@@ -164,28 +162,25 @@ export class MistakeLearner {
             );
         }
 
-        // Update move info box - don't mention opponent's classification
+        // Show initial learning actions with mistake message
         const classification = this.currentMistakeMove.classification;
         const moveNotation = mistakeMoveNode?.move?.san || 'the move';
         const classificationColor = this.getClassificationColor(classification);
-        MoveInformation.showLearningFeedback(
-            `${moveNotation} was ${this.getArticle(classification)} <strong style="color: ${classificationColor}">${classification}</strong>. Find the best move!`,
-            null
-        );
-
-        // Show initial learning actions (View Solution, Skip)
-        this.showInitialActions();
+        const message = `${moveNotation} was ${this.getArticle(classification)} <strong style="color: ${classificationColor}">${classification}</strong>. Find the best move!`;
+        
+        this.showInitialActions(message);
     }
 
     /**
      * Shows initial learning actions under the chessboard
      */
-    showInitialActions() {
+    showInitialActions(message) {
         const current = this.currentMistakeIndex + 1;
         const total = this.mistakeMoves.length;
         
         $('#learning-actions').html(`
             <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
+            ${message ? `<div class="learning-actions-message">${message}</div>` : ''}
             <div class="learning-actions-buttons">
                 <button class="learning-action-btn" id="view-solution">View Solution</button>
                 <button class="learning-action-btn" id="skip-mistake">Skip this move</button>
@@ -239,14 +234,16 @@ export class MistakeLearner {
     /**
      * Shows correct move actions
      */
-    showCorrectMoveActions() {
+    showCorrectMoveActions(message = null) {
         const current = this.currentMistakeIndex + 1;
         const total = this.mistakeMoves.length;
         const isLast = current >= total;
         
+        const defaultMessage = `<span style="font-weight: bold; color: var(--color-green-300);">Well done!</span>`;
+        
         $('#learning-actions').html(`
             <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
-            <div class="learning-actions-message">Well done! You found the best move.</div>
+            <div class="learning-actions-message">${message || defaultMessage}</div>
             <div class="learning-actions-buttons">
                 <button class="learning-action-btn primary" id="next-solution">${isLast ? 'Complete' : 'Next'}</button>
             </div>
@@ -259,12 +256,13 @@ export class MistakeLearner {
     /**
      * Shows alternative move actions (good/excellent but not best)
      */
-    showAlternativeMoveActions() {
+    showAlternativeMoveActions(message) {
         const current = this.currentMistakeIndex + 1;
         const total = this.mistakeMoves.length;
         
         $('#learning-actions').html(`
             <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
+            <div class="learning-actions-message">${message}</div>
             <div class="learning-actions-buttons">
                 <button class="learning-action-btn primary" id="try-again-action">Try again</button>
                 <button class="learning-action-btn" id="next-anyway">Next anyway</button>
@@ -320,16 +318,8 @@ export class MistakeLearner {
                 this.chessUI.board.clearHighlights();
                 this.chessUI.board.clearBestMoveArrows();
 
-                // Show success message
-                MoveInformation.showLearningFeedback(
-                    `<span style="display: inline-flex;">
-                        <span style="font-weight: bold;">Here's the solution!</span>
-                    </span>`,
-                    null
-                );
-
-                // Show correct move actions
-                this.showCorrectMoveActions();
+                // Show correct move actions with solution message
+                this.showCorrectMoveActions(`<span style="font-weight: bold;">Here's the solution!</span>`);
             }
         }
     }
@@ -372,8 +362,13 @@ export class MistakeLearner {
         const currentFen = this.chessUI.board.chess.fen();
         this.chessUI.board.move(moveObj, true, undefined, currentFen, false, moveObj.promotion, false);
         
-        // Show "evaluating" message
-        MoveInformation.showLearningFeedback('Evaluating move...', null);
+        // Show "evaluating" message in learning actions
+        const current = this.currentMistakeIndex + 1;
+        const total = this.mistakeMoves.length;
+        $('#learning-actions').html(`
+            <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
+            <div class="learning-actions-message">Evaluating move...</div>
+        `).show();
         
         // Check if we already have analysis for this position
         const existingAnalysis = this.chessUI.analysis?.moves?.find(m => m.fen === resultFen);
@@ -501,15 +496,7 @@ export class MistakeLearner {
         this.chessUI.board.clearHighlights();
         this.chessUI.board.clearBestMoveArrows();
 
-        // Show success message with icon
-        MoveInformation.showLearningFeedback(
-            `<span style="display: inline-flex;">
-                <span style="font-weight: bold; color: var(--color-green-300);">Well done! </span>
-            </span>`,
-            true
-        );
-
-        // Show correct move actions
+        // Show correct move actions (with default "Well done!" message)
         this.showCorrectMoveActions();
 
         // Trigger confetti
@@ -530,30 +517,28 @@ export class MistakeLearner {
     handleAlternativeMove(classification, positionBeforeMistake) {
         // Simple text without spans, all black
         const moveType = classification === 'excellent' ? 'Excellent' : 'Good';
-        MoveInformation.showLearningFeedback(
-            `${moveType}, but there's better!`,
-            null
-        );
+        const message = `${moveType}, but there's better!`;
 
-        // Show alternative move actions
-        this.showAlternativeMoveActions();
+        // Show alternative move actions with message
+        this.showAlternativeMoveActions(message);
     }
 
     /**
      * Handles incorrect moves
      */
     handleIncorrectMove(positionBeforeMistake, incorrectMove) {
-        // Show feedback immediately
-        MoveInformation.showLearningFeedback(
-            `<span style="display: inline-flex;">
-                <img src="/assets/classifications/blunder.svg" class="move-icon" style="width: auto; height: 18px; margin-right: 6px;">
-                <span  style="color: var(--color-red-300); font-weight: bold;">Not quite.</span> <span>Try again!</span>
-            </span>`,
-            false
-        );
-
-        // Show incorrect move actions with message
-        this.showIncorrectMoveActions();
+        // Show "Not quite" feedback immediately in learning actions
+        const current = this.currentMistakeIndex + 1;
+        const total = this.mistakeMoves.length;
+        $('#learning-actions').html(`
+            <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
+            <div class="learning-actions-message">
+                <span style="display: inline-flex; align-items: center;">
+                    <img src="/assets/classifications/blunder.svg" class="move-icon" style="width: auto; height: 18px; margin-right: 6px;">
+                    <span style="font-weight: bold; color: var(--color-red-300);">Not quite</span>
+                </span>
+            </div>
+        `).show();
 
         // Undo the move with animation after a longer delay
         setTimeout(() => {
@@ -572,14 +557,10 @@ export class MistakeLearner {
                 const classification = this.currentMistakeMove.classification;
                 const moveNotation = mistakeMoveNode?.move?.san || 'the move';
                 const classificationColor = this.getClassificationColor(classification);
+                const message = `${moveNotation} was ${this.getArticle(classification)} <strong style="color: ${classificationColor}">${classification}</strong>. Find the best move!`;
                 
-                MoveInformation.showLearningFeedback(
-                    `${moveNotation} was ${this.getArticle(classification)} <strong style="color: ${classificationColor}">${classification}</strong>. Find the best move!`,
-                    null
-                );
-                
-                // Restore initial learning actions
-                this.showInitialActions();
+                // Restore initial learning actions with message
+                this.showInitialActions(message);
             }, 300);
         }, 1200); // Longer delay before undo (1.2 seconds)
     }
@@ -674,17 +655,11 @@ export class MistakeLearner {
      * Shows completion message after all mistakes are learned
      */
     showCompletionMessage() {
-        MoveInformation.showLearningFeedback(
-            `🎉 Congratulations! You've learned from all mistakes.`,
-            null
-        );
-        
         // Show completion actions with score
         const total = this.mistakeMoves.length;
         const solved = this.solvedCorrectly;
         $('#learning-actions').html(`
-            <div class="learning-actions-message">🎉 All ${total} mistake${total > 1 ? 's' : ''} completed!</div>
-            <div class="learning-actions-message">You completed ${solved} out of ${total} mistake${total > 1 ? 's' : ''}</div>
+            <div class="learning-actions-message">🎉 Congratulations! You've learned from all mistakes.<br>You completed ${solved} out of ${total} mistake${total > 1 ? 's' : ''}</div>
             <div class="learning-actions-buttons">
                 <button class="learning-action-btn primary" id="finish-learning">Finish</button>
             </div>
