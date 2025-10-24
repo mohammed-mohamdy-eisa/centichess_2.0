@@ -145,8 +145,9 @@ export class GameStats {
         const collapsedClassifications = [
             Classification.BRILLIANT, 
             Classification.GREAT, 
-            Classification.PERFECT, 
-            Classification.MISTAKE, 
+            Classification.BEST, 
+            Classification.MISTAKE,
+            Classification.MISS,
             Classification.BLUNDER
         ];
 
@@ -162,12 +163,13 @@ export class GameStats {
         const allClassifications = [
             Classification.BRILLIANT, 
             Classification.GREAT, 
-            Classification.PERFECT, 
+            Classification.BEST, 
             Classification.EXCELLENT, 
             Classification.GOOD, 
             Classification.THEORY,
             Classification.INACCURACY, 
-            Classification.MISTAKE, 
+            Classification.MISTAKE,
+            Classification.MISS,
             Classification.BLUNDER
         ];
 

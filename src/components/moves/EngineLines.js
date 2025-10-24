@@ -6,7 +6,7 @@ import { EvaluationBar } from "../board/EvaluationBar.js";
 export const IgnoredSuggestionTypes = [
     Classification.BRILLIANT.type,
     Classification.GREAT.type,
-    Classification.PERFECT.type,
+    Classification.BEST.type,
     Classification.THEORY.type,
     Classification.FORCED.type
 ];

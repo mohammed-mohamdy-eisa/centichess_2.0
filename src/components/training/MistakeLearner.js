@@ -13,6 +13,9 @@ export class MistakeLearner {
         this.currentMistakeNodeId = null; // Track the node we should be at
         this.solvedCorrectly = 0; // Track mistakes solved without hints/solutions
         this.usedHintOrSolution = false; // Track if current mistake used help
+        this.currentEvaluationId = null; // Track current evaluation to prevent race conditions
+        this.lastIncorrectMove = null; // Store last incorrect move for "Try again" button
+        this.lastPositionBeforeMistake = null; // Store position for undo
     }
 
     /**
@@ -23,6 +26,13 @@ export class MistakeLearner {
             this.showMessage('No analysis available. Please analyze a game first.');
             return;
         }
+
+        // Reset all state
+        this.solvedCorrectly = 0;
+        this.usedHintOrSolution = false;
+        this.currentEvaluationId = null;
+        this.lastIncorrectMove = null;
+        this.lastPositionBeforeMistake = null;
 
         // Get all user mistakes
         this.mistakeMoves = this.getMistakeMoves();
@@ -403,24 +413,34 @@ export class MistakeLearner {
     evaluateUserMove(moveObj, positionBeforeMistake, moveResult, resultFen) {
         const prevFen = positionBeforeMistake.fen || positionBeforeMistake.move?.after;
         
-        let evaluationComplete = false;
+        // Store evaluation state to prevent race conditions
+        const evaluationId = 'learning_eval_' + Date.now();
+        this.currentEvaluationId = evaluationId;
         
-        // Set a timeout fallback in case evaluation gets stuck
+        // Set a timeout fallback in case evaluation gets stuck (10 seconds)
         const timeoutId = setTimeout(() => {
-            if (!evaluationComplete) {
+            // Only proceed if this evaluation is still current
+            if (this.currentEvaluationId === evaluationId) {
                 console.warn('Evaluation timeout - treating move as incorrect');
                 this.handleIncorrectMove(positionBeforeMistake, moveResult);
+                this.currentEvaluationId = null;
             }
-        }, 5000); // 5 second timeout
+        }, 10000); // 10 second timeout (increased from 5)
         
         // Queue evaluation
         this.chessUI.evaluationQueue.addToQueue(
-            { id: 'temp_learning_eval_' + Date.now(), move: moveResult },
+            { id: evaluationId, move: moveResult },
             resultFen,
             prevFen,
             (evaluatedMove) => {
-                evaluationComplete = true;
+                // Only proceed if this evaluation is still current (prevent race conditions)
+                if (this.currentEvaluationId !== evaluationId) {
+                    clearTimeout(timeoutId);
+                    return; // This evaluation is stale, ignore it
+                }
+                
                 clearTimeout(timeoutId);
+                this.currentEvaluationId = null;
                 
                 // Add classification to the board
                 if (evaluatedMove.classification) {
@@ -446,7 +466,7 @@ export class MistakeLearner {
         const classification = evaluatedMove.classification?.type;
         
         // Check if it's the best move (optimal classifications that only occur for top moves)
-        const topOnlyMoves = ['perfect', 'brilliant', 'great', 'forced'];
+        const topOnlyMoves = ['perfect', 'best', 'brilliant', 'great', 'forced'];
         
         if (topOnlyMoves.includes(classification)) {
             // Best move found!
@@ -527,7 +547,11 @@ export class MistakeLearner {
      * Handles incorrect moves
      */
     handleIncorrectMove(positionBeforeMistake, incorrectMove) {
-        // Show "Not quite" feedback immediately in learning actions
+        // Store the incorrect move for the "Try again" button
+        this.lastIncorrectMove = incorrectMove;
+        this.lastPositionBeforeMistake = positionBeforeMistake;
+        
+        // Show "Not quite" feedback with "Try again" button
         const current = this.currentMistakeIndex + 1;
         const total = this.mistakeMoves.length;
         $('#learning-actions').html(`
@@ -538,19 +562,22 @@ export class MistakeLearner {
                     <span style="font-weight: bold; color: var(--color-red-300);">Not quite</span>
                 </span>
             </div>
+            <div class="learning-actions-buttons">
+                <button class="learning-action-btn primary" id="try-again-incorrect">Try again</button>
+                <button class="learning-action-btn" id="view-solution-incorrect">View Solution</button>
+            </div>
         `).show();
 
-        // Undo the move with animation after a longer delay
-        setTimeout(() => {
-            // Animate the undo by moving the piece back
-            if (incorrectMove) {
-                this.chessUI.board.unmove(true, incorrectMove, positionBeforeMistake.fen || positionBeforeMistake.move?.after);
+        // Bind event handlers
+        $('#try-again-incorrect').off('click').on('click', () => {
+            // Undo the incorrect move
+            if (this.lastIncorrectMove) {
+                this.chessUI.board.unmove(true, this.lastIncorrectMove, this.lastPositionBeforeMistake.fen || this.lastPositionBeforeMistake.move?.after);
             } else {
-                // Fallback to instant FEN load if no move object
-                this.chessUI.board.fen(positionBeforeMistake.fen || positionBeforeMistake.move?.after);
+                this.chessUI.board.fen(this.lastPositionBeforeMistake.fen || this.lastPositionBeforeMistake.move?.after);
             }
             
-            // Restore the original feedback message after undo
+            // Restore initial actions after brief delay
             setTimeout(() => {
                 const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
                 const mistakeMoveNode = this.chessUI.moveTree.mainline[mistakeMainlineIndex];
@@ -559,10 +586,22 @@ export class MistakeLearner {
                 const classificationColor = this.getClassificationColor(classification);
                 const message = `${moveNotation} was ${this.getArticle(classification)} <strong style="color: ${classificationColor}">${classification}</strong>. Find the best move!`;
                 
-                // Restore initial learning actions with message
                 this.showInitialActions(message);
             }, 300);
-        }, 1200); // Longer delay before undo (1.2 seconds)
+        });
+        
+        $('#view-solution-incorrect').off('click').on('click', () => {
+            // Undo first, then show solution
+            if (this.lastIncorrectMove) {
+                this.chessUI.board.unmove(false, this.lastIncorrectMove, this.lastPositionBeforeMistake.fen || this.lastPositionBeforeMistake.move?.after);
+            } else {
+                this.chessUI.board.fen(this.lastPositionBeforeMistake.fen || this.lastPositionBeforeMistake.move?.after);
+            }
+            
+            setTimeout(() => {
+                this.viewSolution();
+            }, 100);
+        });
     }
 
     /**
@@ -683,14 +722,17 @@ export class MistakeLearner {
         this.correctMoveMade = false;
         this.solvedCorrectly = 0;
         this.usedHintOrSolution = false;
+        this.currentEvaluationId = null; // Cancel any pending evaluations
+        this.lastIncorrectMove = null;
+        this.lastPositionBeforeMistake = null;
 
         // Restore normal UI
         this.chessUI.moveNavigator.hideLearningControls();
         this.chessUI.board.clearHighlights();
         this.chessUI.board.clearBestMoveArrows();
 
-        // Hide learning actions container
-        $('#learning-actions').hide();
+        // Hide learning actions container and unbind all event handlers
+        $('#learning-actions').hide().off().empty();
 
         // Show sidebar content again
         $('.sidebar-header').show();
@@ -731,10 +773,11 @@ export class MistakeLearner {
         const colors = {
             'blunder': '#fa412d',
             'mistake': '#ffa459',
+            'miss': '#ff7769',
             'inaccuracy': '#f7c631',
             'good': '#81b64c',
             'excellent': '#81b64c',
-            'perfect': '#81b64c',
+            'best': '#81b64c',
             'great': '#749bbf',
             'brilliant': '#26c2a3',
             'theory': '#d5a47d',

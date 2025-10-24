@@ -4,8 +4,8 @@
 
 :root {
     /* Board Colors */
-    --theme-light: #e0e0e0;
-    --theme-dark: #6ea176;
+    --theme-light: #c2c2c2;
+    --theme-dark: #7d7d7d;
     
     /* Layout */
     --board-scale: 80;
@@ -178,6 +178,8 @@
     --inaccuracy-bg-end: rgba(227, 170, 36, 0.9);
     --mistake-bg-start: rgba(255, 164, 89, 0.6);
     --mistake-bg-end: rgba(250, 116, 44, 0.9);
+    --miss-bg-start: rgba(255, 119, 105, 0.7);
+    --miss-bg-end: rgba(255, 87, 69, 0.9);
     --blunder-bg-start: rgba(250, 65, 45, 0.7);
     --blunder-bg-end: rgba(173, 31, 36, 0.9);
     
@@ -1089,9 +1091,9 @@ select {
     color: var(--color-classification-great);
 }
 
-.moves-container .move[data-node-id*="perfect"],
+.moves-container .move[data-node-id*="best"],
 .moves-container .move[data-node-id*="excellent"],
-.moves-container .perfect-move,
+.moves-container .best-move,
 .moves-container .excellent-move {
     color: var(--pure-white);
 }
@@ -1112,10 +1114,13 @@ select {
     color: var(--color-classification-mistake);
 }
 
-.moves-container .move[data-node-id*="blunder"],
 .moves-container .move[data-node-id*="miss"],
-.moves-container .blunder-move,
 .moves-container .miss-move {
+    color: var(--color-classification-miss);
+}
+
+.moves-container .move[data-node-id*="blunder"],
+.moves-container .blunder-move {
     color: var(--color-classification-blunder);
 }
 
@@ -1135,7 +1140,7 @@ select {
 }
 
 /* Hide move icons for specific classifications in moves-container only */
-.moves-container .perfect-container .move-icon,
+.moves-container .best-container .move-icon,
 .moves-container .excellent-container .move-icon,
 .moves-container .theory-container .move-icon,
 .moves-container .forced-container .move-icon,
@@ -1154,9 +1159,9 @@ select {
     color: var(--color-classification-great);
 }
 
-.move[data-node-id*="perfect"]:not(.moves-container .move),
+.move[data-node-id*="best"]:not(.moves-container .move),
 .move[data-node-id*="excellent"]:not(.moves-container .move),
-.perfect-move:not(.moves-container .perfect-move),
+.best-move:not(.moves-container .best-move),
 .excellent-move:not(.moves-container .excellent-move) {
     color: var(--color-classification-excellent);
 }
@@ -1177,10 +1182,13 @@ select {
     color: var(--color-classification-mistake);
 }
 
-.move[data-node-id*="blunder"]:not(.moves-container .move),
 .move[data-node-id*="miss"]:not(.moves-container .move),
-.blunder-move:not(.moves-container .blunder-move),
 .miss-move:not(.moves-container .miss-move) {
+    color: var(--color-classification-miss);
+}
+
+.move[data-node-id*="blunder"]:not(.moves-container .move),
+.blunder-move:not(.moves-container .blunder-move) {
     color: var(--color-classification-blunder);
 }
 
@@ -1280,7 +1288,7 @@ select {
 	background-image: linear-gradient(var(--great-bg-start) 100%, var(--great-bg-end) 50%);
 }
 
-.board-classification.perfect-move,
+.board-classification.best-move,
 .board-classification.excellent-move {
 	background-image: linear-gradient(var(--excellent-bg-start) 100%, var(--excellent-bg-end) 0%);
 }
@@ -1301,7 +1309,10 @@ select {
 	background-image: linear-gradient(var(--mistake-bg-start) 100%, var(--mistake-bg-end) 50%);
 }
 
-.board-classification.miss-move,
+.board-classification.miss-move {
+	background-image: linear-gradient(var(--miss-bg-start) 100%, var(--miss-bg-end) 50%);
+}
+
 .board-classification.blunder-move {
 	background-image: linear-gradient(var(--blunder-bg-start) 100%, var(--blunder-bg-end) 50%);
 }
@@ -1633,6 +1644,19 @@ select {
     align-self: center;
 }
 
+.move-info-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.placeholder-icon {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
 .move-info::after {
     content: "";
     position: absolute;
@@ -1657,7 +1681,7 @@ select {
     flex: 0 1 auto;
 }
 
-.perfect-move-alternative {
+.best-move-alternative {
     font-style: italic;
     color: var(--text-secondary);
     font-size: 14px;
@@ -2250,6 +2274,7 @@ body.lock-scroll {
     background-size: cover;
     background-position: center;
     border-radius: 0;
+    margin-bottom: 20px;
 }
 
 .stats-players {
@@ -3784,7 +3809,8 @@ body:has(.learning-mode) .move-info {
     transition: all 0.2s ease;
     font-family: "Roboto", sans-serif;
     text-align: center;
-    font-weight: 400;
+    font-weight: 500;
+    font-size: 14px;
 }
 
 .learning-action-btn:hover {

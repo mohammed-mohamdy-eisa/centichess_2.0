@@ -111,7 +111,7 @@ export class MoveNavigator {
         // Helper function to check if a move classification is optimal
         const isOptimalMove = (classification) => {
             if (!classification) return false;
-            const optimal = ['brilliant', 'great', 'perfect', 'theory', 'excellent'];
+            const optimal = ['brilliant', 'great', 'best', 'theory', 'excellent'];
             return optimal.includes(classification.toLowerCase());
         };
 
@@ -372,13 +372,13 @@ export class MoveNavigator {
 
         // Add classification to the board (skip in learning mode)
         if (!this.chessUI.mistakeLearner?.isActive) {
-            const fromIdx = this.chessUI.board.algebraicToIndex(moveNode.move.from, this.chessUI.board.flipped);
-            const toIdx = this.chessUI.board.algebraicToIndex(moveNode.move.to, this.chessUI.board.flipped);
-            this.chessUI.board.addClassification(
-                moveNode.classification,
-                this.chessUI.board.getSquare(fromIdx, this.chessUI.board.flipped),
-                this.chessUI.board.getSquare(toIdx, this.chessUI.board.flipped)
-            );
+        const fromIdx = this.chessUI.board.algebraicToIndex(moveNode.move.from, this.chessUI.board.flipped);
+        const toIdx = this.chessUI.board.algebraicToIndex(moveNode.move.to, this.chessUI.board.flipped);
+        this.chessUI.board.addClassification(
+            moveNode.classification,
+            this.chessUI.board.getSquare(fromIdx, this.chessUI.board.flipped),
+            this.chessUI.board.getSquare(toIdx, this.chessUI.board.flipped)
+        );
         }
 
         this.updateAfterMove(moveNode);
@@ -575,9 +575,9 @@ export class MoveNavigator {
         controls.css('display', 'flex');
         
         // Show learning controls, hide only specific normal ones
-        $('#hint, #leave-learning').show();
-        $('#restart, #skip-to-end, #popup-quick-menu').hide();
-        // Keep backward and forward visible - they're the same in both modes
+        $('#hint, #leave-learning, #popup-quick-menu').show();
+        $('#restart, #skip-to-end').hide();
+        // Keep backward, forward, and popup-quick-menu visible - they work in both modes
     }
 
     /**
@@ -591,10 +591,10 @@ export class MoveNavigator {
         
         // Hide learning controls and show normal ones
         $('#hint, #leave-learning').hide();
-        $('#restart, #skip-to-end, #popup-quick-menu').show();
+        $('#restart, #skip-to-end').show();
         
-        // Restore navigation buttons
-        $('#backward, #forward').show();
+        // Restore navigation buttons (popup-quick-menu stays visible)
+        $('#backward, #forward, #popup-quick-menu').show();
     }
 
     /**

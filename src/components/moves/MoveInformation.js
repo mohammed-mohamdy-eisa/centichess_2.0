@@ -4,7 +4,7 @@ import { Classification } from "../../classification/MoveClassifier.js";
 export const IgnoredSuggestionTypes = [
     Classification.BRILLIANT.type,
     Classification.GREAT.type,
-    Classification.PERFECT.type,
+    Classification.BEST.type,
     Classification.THEORY.type,
     Classification.FORCED.type
 ];
@@ -37,22 +37,48 @@ export class MoveInformation {
 
         // Show placeholder when at the root node or have no move data
         if (!node || node.id === 'root' || !node.move) {
-            $("<div>").addClass("move-info-placeholder")
-                .text("🔍 Select a move to see its classification.")
-                .appendTo($moveInfo);
+            const $placeholder = $("<div>").addClass("move-info-placeholder");
+            
+            // Add brilliant icon
+            const brilliantClass = Classification.BRILLIANT;
+            if (brilliantClass?.cachedImg) {
+                const clone = brilliantClass.cachedImg.cloneNode(true);
+                $(clone).addClass("placeholder-icon").appendTo($placeholder);
+            } else {
+                $("<img>").addClass("placeholder-icon")
+                    .attr("src", brilliantClass.src)
+                    .attr("alt", "brilliant")
+                    .appendTo($placeholder);
+            }
+            
+            $("<span>").text("Select a move to see its classification.").appendTo($placeholder);
+            $placeholder.appendTo($moveInfo);
             return;
         }
 
         // Create container for move classification info
         const $moveInfoContainer = $("<div>").addClass("move-classification-info");
 
-		// If we have a move selected but classification isn't ready yet, show a loading message
+	// If we have a move selected but classification isn't ready yet, show a loading message
         if (!node.classification) {
-			$("<div>").addClass("move-info-placeholder")
-				.text("Analysing...")
-				.appendTo($moveInfo);
-			return;
+		const $analysing = $("<div>").addClass("move-info-placeholder");
+		
+		// Add great icon
+		const greatClass = Classification.GREAT;
+		if (greatClass?.cachedImg) {
+			const clone = greatClass.cachedImg.cloneNode(true);
+			$(clone).addClass("placeholder-icon").appendTo($analysing);
+		} else {
+			$("<img>").addClass("placeholder-icon")
+				.attr("src", greatClass.src)
+				.attr("alt", "great")
+				.appendTo($analysing);
 		}
+		
+		$("<span>").text("Analysing...").appendTo($analysing);
+		$analysing.appendTo($moveInfo);
+		return;
+	}
 
         // Add the current move classification if available
 		if (node.classification) {
@@ -93,7 +119,7 @@ export class MoveInformation {
 
                         if (bestMoveUci) {
                             const san = MoveInformation.convertUCIToSAN(bestMoveUci, prevNode.fen);
-                            $("<div>").addClass("perfect-move-alternative")
+                            $("<div>").addClass("best-move-alternative")
                                 .text("Best was " + san)
                                 .appendTo($moveInfoLine);
                         }

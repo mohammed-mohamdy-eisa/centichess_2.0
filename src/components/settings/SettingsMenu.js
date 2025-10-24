@@ -33,10 +33,66 @@ export class SettingsMenu {
                         description: 'Engine settings',
                         settings: [
                             {
+                                key: 'engineStrength',
+                                type: 'dropdown',
+                                label: 'Strength Preset',
+                                description: 'Quick presets for engine analysis strength',
+                                defaultValue: 'standard',
+                                options: [
+                                    {
+                                        value: 'fast',
+                                        label: 'Fast'
+                                    },
+                                    {
+                                        value: 'standard',
+                                        label: 'Standard'
+                                    },
+                                    {
+                                        value: 'deep',
+                                        label: 'Deep'
+                                    },
+                                    {
+                                        value: 'maximum',
+                                        label: 'Maximum'
+                                    },
+                                    {
+                                        value: 'custom',
+                                        label: 'Custom'
+                                    }
+                                ],
+                                presetActions: {
+                                    'fast': [
+                                        { key: 'engineType', value: 'stockfish-17.1-nnue' },
+                                        { key: 'engineDepth', value: 9 },
+                                        { key: 'maxMoveTime', value: 31 },
+                                        { key: 'engineThreads', value: 0 }
+                                    ],
+                                    'standard': [
+                                        { key: 'engineType', value: 'stockfish-17.1-lite' },
+                                        { key: 'engineDepth', value: 16 },
+                                        { key: 'maxMoveTime', value: 10 },
+                                        { key: 'engineThreads', value: 1 }
+                                    ],
+                                    'deep': [
+                                        { key: 'engineType', value: 'stockfish-17.1-nnue' },
+                                        { key: 'engineDepth', value: 20 },
+                                        { key: 'maxMoveTime', value: 16 },
+                                        { key: 'engineThreads', value: 0 }
+                                    ],
+                                    'maximum': [
+                                        { key: 'engineType', value: 'stockfish-17.1-nnue' },
+                                        { key: 'engineDepth', value: 24 },
+                                        { key: 'maxMoveTime', value: 31 },
+                                        { key: 'engineThreads', value: 0 }
+                                    ]
+                                }
+                            },
+                            {
                                 key: 'engineType',
                                 type: 'dropdown',
                                 label: 'Engine Type',
                                 defaultValue: 'stockfish-17.1-lite',
+                                affectsPreset: 'engineStrength',
                                 options: [
                                     {
                                         value: 'stockfish-17.1-lite',
@@ -64,28 +120,31 @@ export class SettingsMenu {
                                 defaultValue: 16,
                                 min: 2,
                                 max: 24,
+                                affectsPreset: 'engineStrength',
                             },
                             {
                                 key: 'maxMoveTime',
                                 type: 'slider',
                                 label: 'Search Time',
                                 description: 'Limit engine search time per move (31 = ∞)',
-                                defaultValue: 31,
+                                defaultValue: 10,
                                 min: 2,
                                 max: 31,
                                 step: 1,
-                                format: (v) => (v >= 31 ? '∞' : `${v}s`)
+                                format: (v) => (v >= 31 ? '∞' : `${v}s`),
+                                affectsPreset: 'engineStrength',
                             },
                             {
                                 key: 'engineThreads',
                                 type: 'slider',
                                 label: 'CPUs',
                                 description: 'Auto = detect automatically, 1 CPU = single-threaded, 2+ CPUs = multi-threaded (requires browser support)',
-                                defaultValue: 0,
+                                defaultValue: 1,
                                 min: 0,
                                 max: 5,
                                 step: 1,
-                                format: (v) => v === 0 ? 'Auto' : String(v)
+                                format: (v) => v === 0 ? 'Auto' : String(v),
+                                affectsPreset: 'engineStrength',
                             },
                         ]
                     },
@@ -927,6 +986,16 @@ export class SettingsMenu {
         const value = this._extractValueFromElement(element);
         
         if (settingKey && path) {
+            // Check if this setting affects a preset and switch to custom if needed
+            const config = this._findSettingConfig(settingKey);
+            if (config && config.affectsPreset && settingKey !== config.affectsPreset) {
+                // Switch to custom when individual engine setting is changed
+                const currentPreset = this.getSettingValue(config.affectsPreset);
+                if (currentPreset !== 'custom') {
+                    this._switchToCustomPreset(config.affectsPreset);
+                }
+            }
+            
             this._handleValueChange(settingKey, path, value, element);
         } else {
             console.warn('Missing settingKey or path for element:', element, {
@@ -1302,6 +1371,44 @@ export class SettingsMenu {
                 config.defaultValue = savedValue;
             }
         });
+        
+        // Auto-detect presets after loading all settings
+        this._autoDetectPresets();
+    }
+
+    /**
+     * Auto-detect which preset matches current settings
+     */
+    _autoDetectPresets() {
+        this._traverseSettings((settingKey, config) => {
+            if (config.presetActions) {
+                const currentPreset = this.getSettingValue(settingKey);
+                
+                // If preset is not saved or is custom, try to detect matching preset
+                if (!currentPreset || currentPreset === 'custom') {
+                    // Check each preset to see if it matches current values
+                    for (const [presetValue, presetActions] of Object.entries(config.presetActions)) {
+                        const allMatch = presetActions.every(action => {
+                            const currentValue = this.getSettingValue(action.key);
+                            return currentValue === action.value;
+                        });
+                        
+                        if (allMatch) {
+                            // Found a matching preset, update it
+                            this.saveSettingToCookie(settingKey, presetValue);
+                            config.defaultValue = presetValue;
+                            return;
+                        }
+                    }
+                    
+                    // No preset matches, set to custom
+                    if (!currentPreset) {
+                        this.saveSettingToCookie(settingKey, 'custom');
+                        config.defaultValue = 'custom';
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -1425,7 +1532,24 @@ export class SettingsMenu {
         const config = this._findSettingConfig(settingKey);
         const option = this._findOptionByValue(config, value);
         
-        if (option && option.actions) {
+        // Handle preset actions (for engine strength presets)
+        if (config && config.presetActions && config.presetActions[value]) {
+            const presetActions = config.presetActions[value];
+            presetActions.forEach(action => {
+                // Update the related setting
+                const relatedConfig = this._findSettingConfig(action.key);
+                if (relatedConfig) {
+                    // Update UI
+                    this._updateSettingUI(action.key, action.value);
+                    // Save to cookie
+                    this.saveSettingToCookie(action.key, action.value);
+                    // Update chessboard if path exists
+                    if (relatedConfig.path) {
+                        this._updateChessboardSetting(relatedConfig.path, action.value);
+                    }
+                }
+            });
+        } else if (option && option.actions) {
             // Execute multiple actions (for board theme presets)
             option.actions.forEach(action => {
                 this._updateChessboardSetting(action.path, action.value);
@@ -1464,5 +1588,31 @@ export class SettingsMenu {
             // Handle visual-list deselection when individual settings change
             this._handleVisualListDeselection(path, value);
         });
+    }
+
+    /**
+     * Check if current values match a preset
+     */
+    _valuesMatchPreset(presetKey, presetValue) {
+        const presetConfig = this._findSettingConfig(presetKey);
+        if (!presetConfig || !presetConfig.presetActions || !presetConfig.presetActions[presetValue]) {
+            return true; // If no preset actions, assume it matches
+        }
+
+        const presetActions = presetConfig.presetActions[presetValue];
+        return presetActions.every(action => {
+            const currentValue = this.getSettingValue(action.key);
+            return currentValue === action.value;
+        });
+    }
+
+    /**
+     * Switch preset dropdown to "custom"
+     */
+    _switchToCustomPreset(presetKey) {
+        // Update UI
+        this._updateSettingUI(presetKey, 'custom');
+        // Save to cookie
+        this.saveSettingToCookie(presetKey, 'custom');
     }
 }

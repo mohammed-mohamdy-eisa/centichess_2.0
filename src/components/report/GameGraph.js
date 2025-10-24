@@ -184,7 +184,7 @@ export class GameGraph {
             ctx.fillRect(0, height / 2 - 1, width, 2 * this.scaleFactor);
 
             // Always show classification dots for specific move types
-            const importantClassifications = ['brilliant', 'great', 'blunder', 'mistake'];
+            const importantClassifications = ['brilliant', 'great', 'mistake', 'miss', 'blunder'];
             
             for (let i = 0; i < total; i++) {
                 const move = moves[i];

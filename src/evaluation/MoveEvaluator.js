@@ -356,7 +356,7 @@ export class MoveEvaluator {
         const getClassification = (accuracy, hasBrilliant, hasGreat) => {
             if (accuracy > 0.8 && hasBrilliant) return Classification.BRILLIANT;
             if (accuracy > 0.8 && hasGreat) return Classification.GREAT;
-            if (accuracy > 0.8) return Classification.PERFECT;
+            if (accuracy > 0.8) return Classification.BEST;
             if (accuracy > 0.7) return Classification.EXCELLENT;
             if (accuracy > 0.65) return Classification.GOOD;
             if (accuracy > 0.6) return Classification.MISTAKE;
