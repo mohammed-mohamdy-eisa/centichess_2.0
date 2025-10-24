@@ -16,6 +16,13 @@ export class MistakeLearner {
         this.currentEvaluationId = null; // Track current evaluation to prevent race conditions
         this.lastIncorrectMove = null; // Store last incorrect move for "Try again" button
         this.lastPositionBeforeMistake = null; // Store position for undo
+        
+        // Initialize audio for learning sounds
+        this.sounds = {
+            correct: new Audio('/assets/sounds/learning/correct.mp3'),
+            wrong: new Audio('/assets/sounds/learning/wrong.mp3'),
+            completed: new Audio('/assets/sounds/learning/completed.mp3')
+        };
     }
 
     /**
@@ -355,6 +362,41 @@ export class MistakeLearner {
         const positionBeforeMistake = this.chessUI.moveTree.mainline[mistakeMainlineIndex - 1];
         const prevFen = positionBeforeMistake.fen || positionBeforeMistake.move?.after;
         
+        // Check if this move is the top engine move (no need to evaluate)
+        const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
+        const bestLine = prevAnalysis?.lines?.find(l => l.id === 1);
+        
+        if (bestLine) {
+            // Build UCI move from user's move
+            let userUciMove = moveObj.from + moveObj.to;
+            if (moveObj.promotion) {
+                userUciMove += moveObj.promotion;
+            }
+            
+            // Compare with best move
+            if (userUciMove === bestLine.uciMove) {
+                // This is the top engine move! Handle immediately without evaluation
+                const currentFen = this.chessUI.board.chess.fen();
+                this.chessUI.board.move(moveObj, true, 'excellent', currentFen, false, moveObj.promotion, false);
+                
+                // Add classification to the board
+                setTimeout(() => {
+                    const fromIdx = this.chessUI.board.algebraicToIndex(moveObj.from, this.chessUI.board.flipped);
+                    const toIdx = this.chessUI.board.algebraicToIndex(moveObj.to, this.chessUI.board.flipped);
+                    this.chessUI.board.addClassification(
+                        'excellent',
+                        this.chessUI.board.getSquare(fromIdx, this.chessUI.board.flipped),
+                        this.chessUI.board.getSquare(toIdx, this.chessUI.board.flipped)
+                    );
+                    
+                    this.handleCorrectMove();
+                }, 300);
+                
+                return false;
+            }
+        }
+        
+        // Not the top move - proceed with evaluation
         // Create temporary chess instance to get the resulting FEN
         const tempChess = new (this.chessUI.board.chess.constructor)();
         tempChess.load(prevFen);
@@ -395,12 +437,12 @@ export class MistakeLearner {
                     this.chessUI.board.getSquare(toIdx, this.chessUI.board.flipped)
                 );
                 
-                this.handleEvaluationResult({ classification: existingAnalysis.classification }, positionBeforeMistake, moveResult);
+                this.handleEvaluationResult({ classification: existingAnalysis.classification, move: moveResult }, positionBeforeMistake, moveResult, bestLine);
             }, 300);
         } else {
             // Queue evaluation
             setTimeout(() => {
-                this.evaluateUserMove(moveObj, positionBeforeMistake, moveResult, resultFen);
+                this.evaluateUserMove(moveObj, positionBeforeMistake, moveResult, resultFen, bestLine);
             }, 300);
         }
 
@@ -410,7 +452,7 @@ export class MistakeLearner {
     /**
      * Evaluates a user's move to determine if it's an alternative solution
      */
-    evaluateUserMove(moveObj, positionBeforeMistake, moveResult, resultFen) {
+    evaluateUserMove(moveObj, positionBeforeMistake, moveResult, resultFen, bestLine) {
         const prevFen = positionBeforeMistake.fen || positionBeforeMistake.move?.after;
         
         // Store evaluation state to prevent race conditions
@@ -453,7 +495,7 @@ export class MistakeLearner {
                     );
                 }
                 
-                this.handleEvaluationResult(evaluatedMove, positionBeforeMistake, moveResult);
+                this.handleEvaluationResult(evaluatedMove, positionBeforeMistake, moveResult, bestLine);
             },
             this.chessUI.moveTree
         );
@@ -462,7 +504,7 @@ export class MistakeLearner {
     /**
      * Handles the evaluation result
      */
-    handleEvaluationResult(evaluatedMove, positionBeforeMistake, moveResult) {
+    handleEvaluationResult(evaluatedMove, positionBeforeMistake, moveResult, bestLine) {
         const classification = evaluatedMove.classification?.type;
         
         // Check if it's the best move (optimal classifications that only occur for top moves)
@@ -473,14 +515,15 @@ export class MistakeLearner {
             this.handleCorrectMove();
         } else if (classification === 'excellent') {
             // Excellent can be either top move or alternative
-            // Check if this is actually the top engine move
-            const prevFen = positionBeforeMistake.fen || positionBeforeMistake.move?.after;
-            const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
-            const bestLine = prevAnalysis?.lines?.find(l => l.id === 1);
-            
-            if (bestLine && evaluatedMove.move) {
-                const isTopMove = evaluatedMove.move.from === bestLine.uciMove.substring(0, 2) && 
-                                 evaluatedMove.move.to === bestLine.uciMove.substring(2, 4);
+            // Check if this is actually the top engine move by comparing UCI moves
+            if (bestLine && moveResult) {
+                // Build UCI move from the move result
+                let moveUci = moveResult.from + moveResult.to;
+                if (moveResult.promotion) {
+                    moveUci += moveResult.promotion;
+                }
+                
+                const isTopMove = moveUci === bestLine.uciMove;
                 
                 if (isTopMove) {
                     this.handleCorrectMove();
@@ -516,6 +559,9 @@ export class MistakeLearner {
         this.chessUI.board.clearHighlights();
         this.chessUI.board.clearBestMoveArrows();
 
+        // Play correct sound
+        this.playSound('correct');
+
         // Show correct move actions (with default "Well done!" message)
         this.showCorrectMoveActions();
 
@@ -535,6 +581,9 @@ export class MistakeLearner {
      * Handles alternative good/excellent moves
      */
     handleAlternativeMove(classification, positionBeforeMistake) {
+        // Play correct sound for good/excellent moves (there's better)
+        this.playSound('correct');
+        
         // Simple text without spans, all black
         const moveType = classification === 'excellent' ? 'Excellent' : 'Good';
         const message = `${moveType}, but there's better!`;
@@ -547,6 +596,9 @@ export class MistakeLearner {
      * Handles incorrect moves
      */
     handleIncorrectMove(positionBeforeMistake, incorrectMove) {
+        // Play wrong sound
+        this.playSound('wrong');
+        
         // Store the incorrect move for the "Try again" button
         this.lastIncorrectMove = incorrectMove;
         this.lastPositionBeforeMistake = positionBeforeMistake;
@@ -694,11 +746,14 @@ export class MistakeLearner {
      * Shows completion message after all mistakes are learned
      */
     showCompletionMessage() {
+        // Play completion sound
+        this.playSound('completed');
+        
         // Show completion actions with score
         const total = this.mistakeMoves.length;
         const solved = this.solvedCorrectly;
         $('#learning-actions').html(`
-            <div class="learning-actions-message">🎉 Congratulations! You've learned from all mistakes.<br>You completed ${solved} out of ${total} mistake${total > 1 ? 's' : ''}</div>
+            <div class="learning-actions-message">🎉 Congratulations!<br>You completed ${solved} out of ${total} mistake${total > 1 ? 's' : ''}</div>
             <div class="learning-actions-buttons">
                 <button class="learning-action-btn primary" id="finish-learning">Finish</button>
             </div>
@@ -845,10 +900,23 @@ export class MistakeLearner {
             fireConfetti({ x: 0.3, y: 0.6 });
         }, 500);
 
-        // Third shot after 1000ms
+         // Third shot after 1000ms
         setTimeout(() => {
             fireConfetti({ x: 0.7, y: 0.6 });
         }, 1000);
+    }
+
+    /**
+     * Plays a learning mode sound
+     */
+    playSound(soundName) {
+        if (this.sounds[soundName]) {
+            // Reset the sound to allow rapid replays
+            this.sounds[soundName].currentTime = 0;
+            this.sounds[soundName].play().catch(err => {
+                console.warn('Failed to play learning sound:', err);
+            });
+        }
     }
 }
 

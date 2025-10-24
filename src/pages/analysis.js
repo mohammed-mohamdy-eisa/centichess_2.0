@@ -26,6 +26,10 @@ async function loadPlayerData(white, black) {
 // Initialize the application when the document is ready
 $(document).ready(async () => {
     const chessUI = new ChessUI();
+    
+    // Make chessUI globally accessible for GameStats navigation
+    window.chessUI = chessUI;
+    
     let game;
     
     // Check if there's a PGN parameter in the URL

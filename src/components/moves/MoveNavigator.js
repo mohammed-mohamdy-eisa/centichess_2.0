@@ -279,6 +279,10 @@ export class MoveNavigator {
         
         // Update clocks for starting position
         Clock.updateFromMoveTree(this.chessUI.moveTree, this.chessUI.board.flipped, this.chessUI.game?.pgn);
+        
+        // Update move info and board arrows
+        MoveInformation.updateMoveInfo(this.chessUI.moveTree.currentNode, null);
+        this.updateBoardArrows(this.chessUI.moveTree.currentNode);
     }
 
     handleSkipToEnd() {

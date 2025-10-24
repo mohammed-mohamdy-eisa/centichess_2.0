@@ -194,9 +194,9 @@ export class GameStats {
             const label = classif.type.charAt(0).toUpperCase() + classif.type.slice(1);
             const row = $(`<div class="stats-row stats-classification-row">
                 <div class="stats-label">${label}</div>
-                <div class="stats-count ${classif.class}">${whiteCount}</div>
+                <div class="stats-count stats-move ${classif.class}" data-player="white" data-classification="${classif.type}">${whiteCount}</div>
                 <div class="stats-icon"></div>
-                <div class="stats-count ${classif.class}">${blackCount}</div>
+                <div class="stats-count stats-move ${classif.class}" data-player="black" data-classification="${classif.type}">${blackCount}</div>
             </div>`);
             
             // Add classification icon if available
@@ -212,6 +212,22 @@ export class GameStats {
             if (expandedClassifications.includes(classif)) {
                 row.addClass('stats-expandable-row');
             }
+            
+            // Add click handlers to navigate to first move with this classification
+            row.find('.stats-move').each(function() {
+                const $count = $(this);
+                const count = parseInt($count.text());
+                
+                // Only make clickable if count > 0
+                if (count > 0) {
+                    $count.css('cursor', 'pointer');
+                    $count.on('click', function() {
+                        const player = $(this).data('player');
+                        const classificationType = $(this).data('classification');
+                        GameStats.navigateToClassification(classificationType, player);
+                    });
+                }
+            });
             
             movesSection.append(row);
         });
@@ -265,6 +281,56 @@ export class GameStats {
                 Start Review
             </button>
         `);
+    }
+
+    /**
+     * Navigates to the first move with the specified classification for the specified player
+     * @param {string} classificationType - The classification type to search for
+     * @param {string} player - 'white' or 'black'
+     */
+    static navigateToClassification(classificationType, player) {
+        // Get ChessUI instance from window (set by analysis.js)
+        const chessUI = window.chessUI;
+        if (!chessUI || !chessUI.analysis || !chessUI.moveTree) {
+            console.warn('ChessUI not available for navigation');
+            return;
+        }
+
+        const analysis = chessUI.analysis;
+        
+        // Determine if user is playing white or black
+        const username = chessUI.game.username?.toLowerCase();
+        const whiteName = chessUI.game.white?.name?.toLowerCase();
+        const blackName = chessUI.game.black?.name?.toLowerCase();
+        const userIsWhite = username === whiteName;
+        
+        // Determine if we're looking for user's moves or opponent's moves
+        const isUserMove = (player === 'white' && userIsWhite) || (player === 'black' && !userIsWhite);
+        
+        // Find the first move with this classification for the specified player
+        for (let i = 0; i < analysis.moves.length; i++) {
+            const move = analysis.moves[i];
+            
+            // Check if this move belongs to the specified player
+            // After white's move, it's black's turn (FEN contains ' b ')
+            // After black's move, it's white's turn (FEN contains ' w ')
+            const moveIsWhite = move.fen.includes(' b ');
+            const moveIsBlack = move.fen.includes(' w ');
+            
+            const isTargetPlayer = (player === 'white' && moveIsWhite) || (player === 'black' && moveIsBlack);
+            
+            // Check if this move has the target classification
+            if (isTargetPlayer && move.classification?.type === classificationType) {
+                // Navigate to this move (mainline index is i + 1 since mainline[0] is root)
+                const targetNode = chessUI.moveTree.mainline[i + 1];
+                if (targetNode) {
+                    chessUI.moveNavigator.handleTreeNodeClick(targetNode);
+                    return;
+                }
+            }
+        }
+        
+        console.log(`No ${player} move found with classification: ${classificationType}`);
     }
 
     /**

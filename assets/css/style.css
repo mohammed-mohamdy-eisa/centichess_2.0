@@ -2288,6 +2288,10 @@ body.lock-scroll {
     flex: 1;
     text-align: center;
     font-weight: 700;
+    max-width: 15ch; /* Limit to ~15 characters */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .stats-label {
@@ -2321,6 +2325,17 @@ body.lock-scroll {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.stats-move[style*="cursor: pointer"] {
+    transition: all 0.2s ease;
+}
+
+.stats-move[style*="cursor: pointer"]:hover {
+    background-color: var(--hover-bg);
+    transform: scale(1.05);
 }
 
 .stats-icon {
@@ -2350,7 +2365,6 @@ body.lock-scroll {
     background-color: #dddddd;
     border-radius: 4px;
     font-weight: 700;
-    padding: 3px 0;
     font-size: larger;
 }
 
