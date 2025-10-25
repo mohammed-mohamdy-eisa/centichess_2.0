@@ -18,6 +18,11 @@ export class SettingsMenu {
         this.render();
         this.bindEvents();
         this.loadSettingsFromCookies();
+        
+        // Update conditional visibility after loading settings (with small delay to ensure DOM is ready)
+        setTimeout(() => {
+            this._updateConditionalVisibility('engineStrength');
+        }, 0);
     }
 
     /**
@@ -35,7 +40,7 @@ export class SettingsMenu {
                             {
                                 key: 'engineStrength',
                                 type: 'dropdown',
-                                label: 'Strength Preset',
+                                label: 'Strength',
                                 description: 'Quick presets for engine analysis strength',
                                 defaultValue: 'standard',
                                 options: [
@@ -93,6 +98,7 @@ export class SettingsMenu {
                                 label: 'Engine Type',
                                 defaultValue: 'stockfish-17.1-lite',
                                 affectsPreset: 'engineStrength',
+                                visibleWhen: { key: 'engineStrength', value: 'custom' },
                                 options: [
                                     {
                                         value: 'stockfish-17.1-lite',
@@ -121,6 +127,7 @@ export class SettingsMenu {
                                 min: 2,
                                 max: 24,
                                 affectsPreset: 'engineStrength',
+                                visibleWhen: { key: 'engineStrength', value: 'custom' },
                             },
                             {
                                 key: 'maxMoveTime',
@@ -133,6 +140,7 @@ export class SettingsMenu {
                                 step: 1,
                                 format: (v) => (v >= 31 ? '∞' : `${v}s`),
                                 affectsPreset: 'engineStrength',
+                                visibleWhen: { key: 'engineStrength', value: 'custom' },
                             },
                             {
                                 key: 'engineThreads',
@@ -145,6 +153,7 @@ export class SettingsMenu {
                                 step: 1,
                                 format: (v) => v === 0 ? 'Auto' : String(v),
                                 affectsPreset: 'engineStrength',
+                                visibleWhen: { key: 'engineStrength', value: 'custom' },
                             },
                         ]
                     },
@@ -615,6 +624,17 @@ export class SettingsMenu {
         settingDiv.className = 'setting-item';
         settingDiv.setAttribute('data-setting', settingKey);
         
+        // Handle conditional visibility
+        if (config.visibleWhen) {
+            const conditionMet = this._checkVisibilityCondition(config.visibleWhen);
+            if (!conditionMet) {
+                settingDiv.style.display = 'none';
+            }
+            // Store the visibility condition for dynamic updates
+            settingDiv.setAttribute('data-visible-when-key', config.visibleWhen.key);
+            settingDiv.setAttribute('data-visible-when-value', config.visibleWhen.value);
+        }
+        
         const label = document.createElement('div');
         label.className = 'setting-label';
         label.innerHTML = `
@@ -683,6 +703,17 @@ export class SettingsMenu {
             const subSettingDiv = document.createElement('div');
             subSettingDiv.className = 'setting-sub-item';
             subSettingDiv.setAttribute('data-setting', subConfig.key);
+            
+            // Handle conditional visibility for sub-items in groups
+            if (subConfig.visibleWhen) {
+                const conditionMet = this._checkVisibilityCondition(subConfig.visibleWhen);
+                if (!conditionMet) {
+                    subSettingDiv.style.display = 'none';
+                }
+                // Store the visibility condition for dynamic updates
+                subSettingDiv.setAttribute('data-visible-when-key', subConfig.visibleWhen.key);
+                subSettingDiv.setAttribute('data-visible-when-value', subConfig.visibleWhen.value);
+            }
             
             const subLabel = document.createElement('div');
             subLabel.className = 'setting-sub-label';
@@ -896,6 +927,33 @@ export class SettingsMenu {
         button.setAttribute('data-action', config.action || '');
         
         return button;
+    }
+
+    /**
+     * Check if a visibility condition is met
+     */
+    _checkVisibilityCondition(condition) {
+        const currentValue = this.getSettingValue(condition.key);
+        return currentValue === condition.value;
+    }
+
+    /**
+     * Update visibility of conditionally shown settings
+     */
+    _updateConditionalVisibility(changedKey) {
+        const conditionalElements = this.container.querySelectorAll('[data-visible-when-key]');
+        conditionalElements.forEach(element => {
+            const conditionKey = element.getAttribute('data-visible-when-key');
+            if (conditionKey === changedKey) {
+                const conditionValue = element.getAttribute('data-visible-when-value');
+                const currentValue = this.getSettingValue(changedKey);
+                if (currentValue === conditionValue) {
+                    element.style.display = '';
+                } else {
+                    element.style.display = 'none';
+                }
+            }
+        });
     }
 
     /**
@@ -1568,6 +1626,9 @@ export class SettingsMenu {
             // Sync related settings for single path update
             this._syncRelatedSettings([{ path, value }]);
         }
+        
+        // Update conditional visibility when a setting that others depend on changes
+        this._updateConditionalVisibility(settingKey);
     }
 
     /**

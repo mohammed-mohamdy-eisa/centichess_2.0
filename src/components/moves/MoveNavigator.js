@@ -26,6 +26,7 @@ export class MoveNavigator {
         $("#copy-pgn").on("click", () => this.handleCopyPgn());
         $("#flip-board").on("click", () => this.handleFlipBoard());
         $("#download-pgn").on("click", () => this.handleDownloadPgn());
+        $("#show-best").on("click", () => this.handleShowBest());
         
         // Learning settings toggle handlers
         $("#toggle-auto-advance").on("click", () => this.handleToggleLearningSettings('autoAdvanceToNextMistake'));
@@ -93,6 +94,12 @@ export class MoveNavigator {
         
         // Update clocks
         Clock.updateFromMoveTree(this.chessUI.moveTree, this.chessUI.board.flipped, this.chessUI.game?.pgn);
+
+        // Clear any active hint arrow timeout
+        if (this.hintArrowTimeout) {
+            clearTimeout(this.hintArrowTimeout);
+            this.hintArrowTimeout = null;
+        }
 
         // Update board arrows per mode
         this.updateBoardArrows(node);
@@ -547,6 +554,128 @@ export class MoveNavigator {
             this.showNotification('No PGN available');
         }
         $("#quick-menu").removeClass('show');
+    }
+
+    async handleShowBest() {
+        $("#quick-menu").removeClass('show');
+        
+        const currentNode = this.chessUI.moveTree.currentNode;
+        const currentFen = currentNode.fen || (currentNode.move ? currentNode.move.after : null);
+        
+        if (!currentFen) {
+            return;
+        }
+
+        // Check if we already have evaluation for this position
+        let evaluationData = null;
+        
+        // Check in the processed moves from evaluation queue
+        if (this.chessUI.evaluationQueue.processedMoves.has(currentNode.id)) {
+            const processed = this.chessUI.evaluationQueue.processedMoves.get(currentNode.id);
+            if (processed?.move?.lines && processed.move.lines.length > 0) {
+                evaluationData = processed.move;
+            }
+        }
+        
+        // If not found, check in analysis moves (for analyzed games)
+        if (!evaluationData && this.chessUI.analysis?.moves) {
+            const analysisMove = this.chessUI.analysis.moves.find(m => m.fen === currentFen);
+            if (analysisMove?.lines && analysisMove.lines.length > 0) {
+                evaluationData = analysisMove;
+            }
+        }
+        
+        // If still no evaluation, request one
+        if (!evaluationData) {
+            // Show "Analysing..." in move-info
+            const $moveInfo = $(".move-info").empty();
+            const $placeholder = $("<div>").addClass("move-info-placeholder");
+            $("<span>").text("Analysing...").appendTo($placeholder);
+            $placeholder.appendTo($moveInfo);
+            
+            try {
+                // Import Engine class
+                const { Engine } = await import('../../evaluation/Engine.js');
+                const { MoveEvaluator } = await import('../../evaluation/MoveEvaluator.js');
+                
+                // Try cloud evaluation first
+                let lines = await MoveEvaluator.tryCloudEvaluation(currentFen);
+                
+                // If no cloud evaluation, use local engine
+                if (!lines || lines.length === 0) {
+                    const engineType = this.chessUI.settingsMenu?.getSettingValue('engineType') || 'stockfish-17.1-lite';
+                    const threadCount = this.chessUI.settingsMenu?.getSettingValue('engineThreads') ?? 0;
+                    const engine = new Engine({ engineType: engineType, threadCount: threadCount });
+                    const depth = this.chessUI.settingsMenu?.getSettingValue('engineDepth') || 16;
+                    const maxMoveTime = this.chessUI.settingsMenu?.getSettingValue('maxMoveTime') || 5;
+                    
+                    lines = await this.chessUI.evaluationQueue.evaluateWithEngine(
+                        currentFen, 
+                        depth, 
+                        0, 
+                        100, 
+                        engine, 
+                        maxMoveTime
+                    );
+                    
+                    // Clean up engine
+                    if (engine && engine.worker) {
+                        engine.worker.terminate();
+                    }
+                }
+                
+                if (lines && lines.length > 0) {
+                    evaluationData = { lines: lines };
+                    
+                    // Store evaluation in processed moves cache for future use
+                    if (!this.chessUI.evaluationQueue.processedMoves.has(currentNode.id)) {
+                        this.chessUI.evaluationQueue.processedMoves.set(currentNode.id, {
+                            move: { fen: currentFen, lines: lines }
+                        });
+                    }
+                } else {
+                    // Restore move-info display
+                    MoveInformation.updateMoveInfo(currentNode, this.chessUI.moveTree.getPreviousMove());
+                    return;
+                }
+            } catch (error) {
+                console.error('Error evaluating position:', error);
+                // Restore move-info display
+                MoveInformation.updateMoveInfo(currentNode, this.chessUI.moveTree.getPreviousMove());
+                return;
+            }
+        }
+        
+        // Extract the best move (first line, id 1)
+        const bestLine = evaluationData.lines.find(line => line.id === 1);
+        
+        if (!bestLine || !bestLine.uciMove) {
+            // Restore move-info display
+            MoveInformation.updateMoveInfo(currentNode, this.chessUI.moveTree.getPreviousMove());
+            return;
+        }
+        
+        // Restore move-info display
+        MoveInformation.updateMoveInfo(currentNode, this.chessUI.moveTree.getPreviousMove());
+        
+        // Display the hint arrow with a distinct color (yellow/gold for hint)
+        const hintColor = 'rgba(241, 196, 15, 0.75)'; // Gold color for hint
+        this.chessUI.board.clearBestMoveArrows();
+        this.chessUI.board.addBestMoveArrow(bestLine.uciMove, hintColor, 0.9);
+        
+        // Store the hint arrow timeout so we can clear it when user navigates
+        if (this.hintArrowTimeout) {
+            clearTimeout(this.hintArrowTimeout);
+        }
+        
+        // Auto-clear the hint arrow after 5 seconds
+        this.hintArrowTimeout = setTimeout(() => {
+            this.chessUI.board.clearBestMoveArrows();
+            // Restore normal arrows if in a game with analysis
+            if (this.chessUI.analysis?.moves) {
+                this.updateBoardArrows(currentNode);
+            }
+        }, 5000);
     }
 
     showNotification(message) {

@@ -2145,10 +2145,25 @@ export class Chessboard {
 	}
 
 	/**
+	 * Detects if the current device is a mobile device
+	 * @private
+	 * @returns {boolean} True if device is mobile
+	 */
+	_isMobileDevice() {
+		return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+			|| (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+	}
+
+	/**
 	 * @private
 	 */
 	_startDrag(square) {
 		if (!this.settings.isInteractive || this.isDestroyed) return;
+
+		// Disable dragging on mobile devices
+		if (this._isMobileDevice()) {
+			return;
+		}
 
 		const index = this.getSquareIndex(square);
 		const legalDestinations = this._getLegalDestinations(index);
