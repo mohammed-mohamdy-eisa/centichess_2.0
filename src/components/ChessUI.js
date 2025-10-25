@@ -87,6 +87,31 @@ export class ChessUI {
         });
     }
 
+    /**
+     * Format engine name for display
+     * @param {string} engineType - Raw engine type (e.g., "stockfish-17.1-nnue")
+     * @returns {string} Formatted engine name (e.g., "Stockfish 17.1 NNUE")
+     */
+    formatEngineName(engineType) {
+        if (!engineType) return 'Stockfish';
+        
+        // Convert "stockfish-17.1-nnue" to "Stockfish 17.1 NNUE"
+        // Convert "stockfish-17.1-lite" to "Stockfish 17.1 Lite"
+        const parts = engineType.split('-');
+        
+        // Capitalize first part (engine name)
+        const engineName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+        
+        // Join the rest with spaces and capitalize appropriately
+        const rest = parts.slice(1).map(part => {
+            if (part === 'nnue') return '';
+            if (part === 'lite') return 'Lite';
+            return part;
+        }).join(' ');
+        
+        return rest ? `${engineName} ${rest}` : engineName;
+    }
+
     async load(game) {
         this.moveNavigator.handleRestart();
 
@@ -101,9 +126,17 @@ export class ChessUI {
         // Set initial clocks before analysis starts
         Clock.setInitialClocks(this.moveTree, this.game.pgn);
 
+        const engineType = this.settingsMenu.getSettingValue('engineType');
+        const engineDepth = this.settingsMenu.getSettingValue('engineDepth') || 16;
+        const maxMoveTime = this.settingsMenu.getSettingValue('maxMoveTime') || 5;
+        const engineThreads = this.settingsMenu.getSettingValue('engineThreads') ?? 0;
+
+        // Format engine name for display (e.g., "stockfish-17.1-nnue" -> "Stockfish 17.1 NNUE")
+        const engineName = this.formatEngineName(engineType);
+
         SidebarOverlay.show();
         SidebarOverlay.startFactCycling();
-        SidebarOverlay.updateEvaluationProgress(0);
+        SidebarOverlay.updateEvaluationProgress(0, engineName);
 
         this.board.fen(this.moveTree.mainline[0].fen);
 
@@ -128,15 +161,10 @@ export class ChessUI {
             this.board.setOption({ isInteractive: true });
         });
 
-        const engineType = this.settingsMenu.getSettingValue('engineType');
-        const engineDepth = this.settingsMenu.getSettingValue('engineDepth') || 16;
-        const maxMoveTime = this.settingsMenu.getSettingValue('maxMoveTime') || 5;
-        const engineThreads = this.settingsMenu.getSettingValue('engineThreads') ?? 0;
-
         const analysis = await MoveEvaluator.analyzeGame(
             this.game, 
             (progress) => {
-                SidebarOverlay.updateEvaluationProgress(progress);
+                SidebarOverlay.updateEvaluationProgress(progress, engineName);
             },
             { engineType, engineDepth, maxMoveTime, engineThreads }
         );
@@ -168,12 +196,6 @@ export class ChessUI {
         $('#start-review').off('click').on('click', () => {
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            
-            // Switch to moves tab
-            $('.tab-button').removeClass('active');
-            $('.tab-panel').removeClass('active');
-            $('.tab-button[data-tab="moves"]').addClass('active');
-            $('#moves-tab').addClass('active');
             
             // Navigate to the first move
             if (this.moveTree.mainline.length > 1) {

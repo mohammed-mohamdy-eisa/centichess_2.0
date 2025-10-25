@@ -1757,6 +1757,7 @@ body.lock-scroll {
     width: 80%;
     max-width: 350px;
     z-index: 21;
+    height: 350px;
 }
 
 .analysis-content #cancel-analysis {
@@ -1810,6 +1811,8 @@ body.lock-scroll {
     color: var(--analysis-text);
     transition: opacity 0.3s ease;
     opacity: 1;
+    cursor: pointer;
+    user-select: none;
 }
 
 .game-graph {
@@ -2331,11 +2334,6 @@ body.lock-scroll {
 
 .stats-move[style*="cursor: pointer"] {
     transition: all 0.2s ease;
-}
-
-.stats-move[style*="cursor: pointer"]:hover {
-    background-color: var(--hover-bg);
-    transform: scale(1.05);
 }
 
 .stats-icon {
@@ -3686,13 +3684,13 @@ body.lock-scroll {
 /* Learn from Mistakes Button */
 .learn-button {
     width: 100%;
-    margin-top: 16px;
-    padding: 12px;
+    margin: 16px auto;
+    padding: 16px;
     background: none;
     color: var(--pure-white);
     border: 1px solid var(--color-vibrant-purple-500);
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -3704,7 +3702,7 @@ body.lock-scroll {
 
 .learn-button:hover {
     background: var(--hover-dark);
-    border-color: var(--light-btn);
+    border-color: var(--color-vibrant-purple-600);
 }
 
 .learn-button:active {
@@ -3767,7 +3765,7 @@ body:has(.learning-mode) .move-info {
 
 /* Leave button styling */
 #leave-learning {
-    background: #e02828 !important;
+    background: var(--color-vibrant-purple-500) !important;
     color: white !important;
     order: -1; /* Move to leftmost position */
 }
@@ -3816,7 +3814,7 @@ body:has(.learning-mode) .move-info {
 .learning-action-btn {
     background: transparent;
     border: none;
-    color: var(--analysis-text);
+    color: var(--color-vibrant-purple-400);
     padding: 5px 16px;
     cursor: pointer;
     border-radius: 6px;
@@ -3828,13 +3826,13 @@ body:has(.learning-mode) .move-info {
 }
 
 .learning-action-btn:hover {
-    color: var(--text-secondary);
+    color: var(--color-vibrant-purple-500);
 }
 
 
 
 .learning-action-btn.primary:hover {
-    color: var(--text-secondary);
+    color: var(--color-vibrant-purple-500);
 }
 
 @keyframes feedbackSlideIn {

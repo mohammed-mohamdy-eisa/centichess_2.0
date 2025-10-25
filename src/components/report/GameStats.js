@@ -324,7 +324,17 @@ export class GameStats {
                 // Navigate to this move (mainline index is i + 1 since mainline[0] is root)
                 const targetNode = chessUI.moveTree.mainline[i + 1];
                 if (targetNode) {
+                    // Navigate to the move
                     chessUI.moveNavigator.handleTreeNodeClick(targetNode);
+                    
+                    // Scroll to top
+                    setTimeout(() => {
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                    }, 100);
+                    
                     return;
                 }
             }

@@ -256,13 +256,13 @@ export class MistakeLearner {
         const total = this.mistakeMoves.length;
         const isLast = current >= total;
         
-        const defaultMessage = `<span style="font-weight: bold; color: var(--color-green-300);">Well done!</span>`;
+        const defaultMessage = `<span style="font-weight: bold; color: var(--color-green-300);">Well done! That is the correct move.</span>`;
         
         $('#learning-actions').html(`
             <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
             <div class="learning-actions-message">${message || defaultMessage}</div>
             <div class="learning-actions-buttons">
-                <button class="learning-action-btn primary" id="next-solution">${isLast ? 'Complete' : 'Next'}</button>
+                <button class="learning-action-btn primary" id="next-solution">${isLast ? 'Complete Training' : 'Next Mistake'}</button>
             </div>
         `).show();
 
@@ -365,7 +365,7 @@ export class MistakeLearner {
         // Check if this move is the top engine move (no need to evaluate)
         const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
         const bestLine = prevAnalysis?.lines?.find(l => l.id === 1);
-        
+
         if (bestLine) {
             // Build UCI move from user's move
             let userUciMove = moveObj.from + moveObj.to;
@@ -407,7 +407,7 @@ export class MistakeLearner {
             this.handleIncorrectMove(positionBeforeMistake, null);
             return false;
         }
-        
+
         const resultFen = tempChess.fen();
         
         // Animate the attempted move first (without classification initially)
@@ -547,17 +547,17 @@ export class MistakeLearner {
      * Handles when the correct (best) move is made
      */
     handleCorrectMove() {
-        this.correctMoveMade = true;
-        this.hintLevel = 0;
+            this.correctMoveMade = true;
+            this.hintLevel = 0;
 
         // Track if solved without help
         if (!this.usedHintOrSolution) {
             this.solvedCorrectly++;
         }
 
-        // Clear highlights
-        this.chessUI.board.clearHighlights();
-        this.chessUI.board.clearBestMoveArrows();
+            // Clear highlights
+            this.chessUI.board.clearHighlights();
+            this.chessUI.board.clearBestMoveArrows();
 
         // Play correct sound
         this.playSound('correct');
@@ -565,16 +565,16 @@ export class MistakeLearner {
         // Show correct move actions (with default "Well done!" message)
         this.showCorrectMoveActions();
 
-        // Trigger confetti
-        this.triggerConfetti();
+            // Trigger confetti
+            this.triggerConfetti();
 
-        // Auto-advance to next mistake if enabled
-        const autoAdvance = this.chessUI.settingsMenu.getSettingValue('autoAdvanceToNextMistake');
-        if (autoAdvance !== false) { // Default to true if not set
-            setTimeout(() => {
-                this.nextMistake();
-            }, 1500); // Wait 1.5 seconds before advancing
-        }
+            // Auto-advance to next mistake if enabled
+            const autoAdvance = this.chessUI.settingsMenu.getSettingValue('autoAdvanceToNextMistake');
+            if (autoAdvance !== false) { // Default to true if not set
+                setTimeout(() => {
+                    this.nextMistake();
+                }, 1500); // Wait 1.5 seconds before advancing
+            }
     }
 
     /**
@@ -610,12 +610,11 @@ export class MistakeLearner {
             <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
             <div class="learning-actions-message">
                 <span style="display: inline-flex; align-items: center;">
-                    <img src="/assets/classifications/blunder.svg" class="move-icon" style="width: auto; height: 18px; margin-right: 6px;">
-                    <span style="font-weight: bold; color: var(--color-red-300);">Not quite</span>
+                    <span style="font-weight: bold; color: var(--color-red-300);">Incorrect move. Try again!</span>
                 </span>
             </div>
             <div class="learning-actions-buttons">
-                <button class="learning-action-btn primary" id="try-again-incorrect">Try again</button>
+                <button class="learning-action-btn primary" id="try-again-incorrect">Retry</button>
                 <button class="learning-action-btn" id="view-solution-incorrect">View Solution</button>
             </div>
         `).show();
@@ -625,7 +624,7 @@ export class MistakeLearner {
             // Undo the incorrect move
             if (this.lastIncorrectMove) {
                 this.chessUI.board.unmove(true, this.lastIncorrectMove, this.lastPositionBeforeMistake.fen || this.lastPositionBeforeMistake.move?.after);
-            } else {
+        } else {
                 this.chessUI.board.fen(this.lastPositionBeforeMistake.fen || this.lastPositionBeforeMistake.move?.after);
             }
             
@@ -633,9 +632,9 @@ export class MistakeLearner {
             setTimeout(() => {
                 const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
                 const mistakeMoveNode = this.chessUI.moveTree.mainline[mistakeMainlineIndex];
-                const classification = this.currentMistakeMove.classification;
-                const moveNotation = mistakeMoveNode?.move?.san || 'the move';
-                const classificationColor = this.getClassificationColor(classification);
+            const classification = this.currentMistakeMove.classification;
+            const moveNotation = mistakeMoveNode?.move?.san || 'the move';
+            const classificationColor = this.getClassificationColor(classification);
                 const message = `${moveNotation} was ${this.getArticle(classification)} <strong style="color: ${classificationColor}">${classification}</strong>. Find the best move!`;
                 
                 this.showInitialActions(message);
@@ -755,7 +754,7 @@ export class MistakeLearner {
         $('#learning-actions').html(`
             <div class="learning-actions-message">🎉 Congratulations!<br>You completed ${solved} out of ${total} mistake${total > 1 ? 's' : ''}</div>
             <div class="learning-actions-buttons">
-                <button class="learning-action-btn primary" id="finish-learning">Finish</button>
+                <button class="learning-action-btn primary" id="finish-learning">Return to Report</button>
             </div>
         `).show();
 
@@ -846,7 +845,7 @@ export class MistakeLearner {
      */
     triggerConfetti() {
         if (typeof confetti === 'undefined') return;
-        
+
         // Check if confetti is enabled in settings
         const confettiEnabled = this.chessUI.settingsMenu.getSettingValue('enableConfetti') !== false;
         if (!confettiEnabled) return;
@@ -877,7 +876,7 @@ export class MistakeLearner {
      */
     triggerCompletionConfetti() {
         if (typeof confetti === 'undefined') return;
-        
+
         // Check if confetti is enabled in settings
         const confettiEnabled = this.chessUI.settingsMenu.getSettingValue('enableConfetti') !== false;
         if (!confettiEnabled) return;
