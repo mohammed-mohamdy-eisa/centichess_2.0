@@ -209,25 +209,6 @@ export class MistakeLearner {
         $('#skip-mistake').off('click').on('click', () => this.nextMistake());
     }
 
-    /**
-     * Shows incorrect move actions
-     */
-    showIncorrectMoveActions() {
-        const current = this.currentMistakeIndex + 1;
-        const total = this.mistakeMoves.length;
-        
-        $('#learning-actions').html(`
-            <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
-            <div class="learning-actions-buttons">
-                <button class="learning-action-btn" id="view-solution">View Solution</button>
-                <button class="learning-action-btn" id="skip-mistake">Skip this move</button>
-            </div>
-        `).show();
-
-        // Bind event handlers
-        $('#view-solution').off('click').on('click', () => this.viewSolution());
-        $('#skip-mistake').off('click').on('click', () => this.nextMistake());
-    }
 
     /**
      * Shows "moved away" actions
@@ -291,8 +272,12 @@ export class MistakeLearner {
             const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
             const positionBeforeMistake = this.chessUI.moveTree.mainline[mistakeMainlineIndex - 1];
             
-            // Reset to mistake position
+            // Reset to mistake position (clear any alternative moves)
             this.chessUI.board.fen(positionBeforeMistake.fen || positionBeforeMistake.move?.after);
+            
+            // Clear any classification badges from the alternative move
+            this.chessUI.board.clearClassificationBadges?.() || $('.classification-badge').remove();
+            
             this.setupMistakePosition(mistakeMainlineIndex);
         });
         $('#next-anyway').off('click').on('click', () => this.nextMistake());
@@ -508,7 +493,7 @@ export class MistakeLearner {
         const classification = evaluatedMove.classification?.type;
         
         // Check if it's the best move (optimal classifications that only occur for top moves)
-        const topOnlyMoves = ['perfect', 'best', 'brilliant', 'great', 'forced'];
+        const topOnlyMoves = ['perfect', 'best', 'brilliant', 'great', 'forced', 'theory'];
         
         if (topOnlyMoves.includes(classification)) {
             // Best move found!
@@ -538,8 +523,8 @@ export class MistakeLearner {
             // Alternative good move - show options
             this.handleAlternativeMove(classification, positionBeforeMistake);
         } else {
-            // Not a good alternative - treat as incorrect
-            this.handleIncorrectMove(positionBeforeMistake, moveResult);
+            // Not a good alternative (inaccuracy, mistake, blunder, etc.) - treat as incorrect
+            this.handleIncorrectMove(positionBeforeMistake, moveResult, classification);
         }
     }
 
@@ -595,13 +580,24 @@ export class MistakeLearner {
     /**
      * Handles incorrect moves
      */
-    handleIncorrectMove(positionBeforeMistake, incorrectMove) {
+    handleIncorrectMove(positionBeforeMistake, incorrectMove, classification = null) {
         // Play wrong sound
         this.playSound('wrong');
         
         // Store the incorrect move for the "Try again" button
         this.lastIncorrectMove = incorrectMove;
         this.lastPositionBeforeMistake = positionBeforeMistake;
+        
+        // Add classification badge to the board if we have it
+        if (classification && incorrectMove) {
+            const fromIdx = this.chessUI.board.algebraicToIndex(incorrectMove.from, this.chessUI.board.flipped);
+            const toIdx = this.chessUI.board.algebraicToIndex(incorrectMove.to, this.chessUI.board.flipped);
+            this.chessUI.board.addClassification(
+                classification,
+                this.chessUI.board.getSquare(fromIdx, this.chessUI.board.flipped),
+                this.chessUI.board.getSquare(toIdx, this.chessUI.board.flipped)
+            );
+        }
         
         // Show "Not quite" feedback with "Try again" button
         const current = this.currentMistakeIndex + 1;
@@ -624,17 +620,20 @@ export class MistakeLearner {
             // Undo the incorrect move
             if (this.lastIncorrectMove) {
                 this.chessUI.board.unmove(true, this.lastIncorrectMove, this.lastPositionBeforeMistake.fen || this.lastPositionBeforeMistake.move?.after);
-        } else {
+            } else {
                 this.chessUI.board.fen(this.lastPositionBeforeMistake.fen || this.lastPositionBeforeMistake.move?.after);
             }
+            
+            // Clear any classification badges from the incorrect move
+            this.chessUI.board.clearClassificationBadges?.() || $('.classification-badge').remove();
             
             // Restore initial actions after brief delay
             setTimeout(() => {
                 const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
                 const mistakeMoveNode = this.chessUI.moveTree.mainline[mistakeMainlineIndex];
-            const classification = this.currentMistakeMove.classification;
-            const moveNotation = mistakeMoveNode?.move?.san || 'the move';
-            const classificationColor = this.getClassificationColor(classification);
+                const classification = this.currentMistakeMove.classification;
+                const moveNotation = mistakeMoveNode?.move?.san || 'the move';
+                const classificationColor = this.getClassificationColor(classification);
                 const message = `${moveNotation} was ${this.getArticle(classification)} <strong style="color: ${classificationColor}">${classification}</strong>. Find the best move!`;
                 
                 this.showInitialActions(message);
