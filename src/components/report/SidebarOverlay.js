@@ -177,6 +177,7 @@ export class SidebarOverlay {
     static isAnalysisOverlayActive = false;
     static isUserInitiatedLoad = false; // Track if current load is user-initiated (not initial page load)
     static analysisStartTime = null; // Track when analysis started for time estimation
+    static wakeLock = null; // Screen Wake Lock to keep screen awake during analysis
 
     static get $overlay() {
         if (!this.overlay) {
@@ -261,6 +262,40 @@ export class SidebarOverlay {
     }
 
     /**
+     * Request screen wake lock to prevent screen from sleeping during analysis
+     */
+    static async requestWakeLock() {
+        try {
+            if ('wakeLock' in navigator) {
+                this.wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Screen wake lock activated');
+                
+                // Re-request wake lock if the page becomes visible again
+                this.wakeLock.addEventListener('release', () => {
+                    console.log('Screen wake lock released');
+                });
+            }
+        } catch (err) {
+            console.warn('Failed to request wake lock:', err);
+        }
+    }
+
+    /**
+     * Release screen wake lock when analysis is complete
+     */
+    static async releaseWakeLock() {
+        try {
+            if (this.wakeLock !== null) {
+                await this.wakeLock.release();
+                this.wakeLock = null;
+                console.log('Screen wake lock manually released');
+            }
+        } catch (err) {
+            console.warn('Failed to release wake lock:', err);
+        }
+    }
+
+    /**
      * Updates the evaluation progress bar
      * @param {number|object} progress - Progress percentage (0-100) or progress object with depth info
      * @param {string} engineName - Name of the engine analyzing the game (e.g., "Stockfish")
@@ -273,6 +308,9 @@ export class SidebarOverlay {
             this.isAnalysisOverlayActive = true;
             $('.analysis-overlay, .board-overlay').addClass('active');
             $('.tab-content, .bottom-content').addClass('blur-content');
+
+            // Request wake lock to keep screen awake during analysis
+            this.requestWakeLock();
 
             // Scroll to center the analysis overlay
             setTimeout(() => {
@@ -328,6 +366,7 @@ export class SidebarOverlay {
                 $('.tab-content, .bottom-content').removeClass('blur-content');
                 this.isAnalysisOverlayActive = false;
                 this.stopFactCycling();
+                this.releaseWakeLock(); // Release wake lock when analysis completes
             }, 5);
         }
     }
@@ -339,6 +378,7 @@ export class SidebarOverlay {
         this.isAnalysisOverlayActive = false;
         this.isUserInitiatedLoad = false;
         this.stopFactCycling();
+        this.releaseWakeLock(); // Release wake lock when overlay is manually closed
     }
     
     /**
@@ -347,4 +387,19 @@ export class SidebarOverlay {
     static setUserInitiatedLoad(value = true) {
         this.isUserInitiatedLoad = value;
     }
+
+    /**
+     * Setup visibility change handler to re-request wake lock when tab becomes visible
+     */
+    static setupVisibilityChangeHandler() {
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible' && this.isAnalysisOverlayActive) {
+                // Re-request wake lock when tab becomes visible and analysis is still running
+                await this.requestWakeLock();
+            }
+        });
+    }
 }
+
+// Initialize visibility change handler when module loads
+SidebarOverlay.setupVisibilityChangeHandler();

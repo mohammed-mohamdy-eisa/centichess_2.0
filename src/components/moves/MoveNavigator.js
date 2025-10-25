@@ -593,6 +593,8 @@ export class MoveNavigator {
         // Switch quick menu to learning settings
         $('.quick-menu-item:not(.learning-setting-item)').hide();
         $('.learning-setting-item').show();
+        // Hide the inaccuracies toggle in learning mode
+        $('#toggle-include-inaccuracies').hide();
         
         // Update toggle states based on current settings
         this.updateLearningSettingsToggles();

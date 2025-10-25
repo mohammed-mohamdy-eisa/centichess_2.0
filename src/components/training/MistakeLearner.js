@@ -157,6 +157,15 @@ export class MistakeLearner {
         this.chessUI.board.clearBestMoveArrows();
         this.chessUI.board.clearHighlights();
 
+        // Re-highlight opponent's last move squares (if exists)
+        const positionBeforeMistake = this.chessUI.moveTree.mainline[mistakeMainlineIndex - 1];
+        if (positionBeforeMistake?.move) {
+            const fromSquare = positionBeforeMistake.move.from;
+            const toSquare = positionBeforeMistake.move.to;
+            this.chessUI.board.highlightSquare(fromSquare, '#ffeb3b', 0.4);
+            this.chessUI.board.highlightSquare(toSquare, '#ffeb3b', 0.4);
+        }
+
         // Show the mistake move that was made with a red arrow
         const mistakeMoveNode = this.chessUI.moveTree.mainline[mistakeMainlineIndex];
         if (mistakeMoveNode?.move?.from && mistakeMoveNode?.move?.to) {
@@ -178,6 +187,20 @@ export class MistakeLearner {
     }
 
     /**
+     * Enables navigation buttons (hint, backward, forward)
+     */
+    enableNavigationButtons() {
+        $('#hint, #backward, #forward').prop('disabled', false).css('opacity', '1');
+    }
+
+    /**
+     * Disables navigation buttons (hint, backward, forward)
+     */
+    disableNavigationButtons() {
+        $('#hint, #backward, #forward').prop('disabled', true).css('opacity', '0.5');
+    }
+
+    /**
      * Shows initial learning actions under the chessboard
      */
     showInitialActions(message) {
@@ -192,6 +215,9 @@ export class MistakeLearner {
                 <button class="learning-action-btn" id="skip-mistake">Skip this move</button>
             </div>
         `).show();
+
+        // Enable navigation buttons for initial state
+        this.enableNavigationButtons();
 
         // Bind event handlers
         $('#view-solution').off('click').on('click', () => this.viewSolution());
@@ -213,6 +239,9 @@ export class MistakeLearner {
                 <button class="learning-action-btn primary" id="resume-learning">Resume learning</button>
             </div>
         `).show();
+
+        // Enable navigation buttons when moved away
+        this.enableNavigationButtons();
 
         // Bind event handler
         $('#resume-learning').off('click').on('click', () => this.backToCurrentMistake());
@@ -236,6 +265,9 @@ export class MistakeLearner {
             </div>
         `).show();
 
+        // Disable navigation buttons when showing result
+        this.disableNavigationButtons();
+
         // Bind event handler
         $('#next-solution').off('click').on('click', () => this.nextMistake());
     }
@@ -255,6 +287,9 @@ export class MistakeLearner {
                 <button class="learning-action-btn" id="next-anyway">Next anyway</button>
             </div>
         `).show();
+
+        // Disable navigation buttons when showing result
+        this.disableNavigationButtons();
 
         // Bind event handlers
         $('#try-again-action').off('click').on('click', () => {
@@ -607,6 +642,9 @@ export class MistakeLearner {
             </div>
         `).show();
 
+        // Disable navigation buttons when showing result
+        this.disableNavigationButtons();
+
         // Bind event handlers
         $('#try-again-incorrect').off('click').on('click', () => {
             // Undo the incorrect move
@@ -751,6 +789,9 @@ export class MistakeLearner {
             </div>
         `).show();
 
+        // Disable navigation buttons on completion screen
+        this.disableNavigationButtons();
+
         // Bind event handler
         $('#finish-learning').off('click').on('click', () => this.exit());
         
@@ -787,6 +828,9 @@ export class MistakeLearner {
         this.chessUI.moveNavigator.hideLearningControls();
         this.chessUI.board.clearHighlights();
         this.chessUI.board.clearBestMoveArrows();
+
+        // Re-enable navigation buttons
+        this.enableNavigationButtons();
 
         // Hide learning actions container and unbind all event handlers
         $('#learning-actions').hide().off().empty();
