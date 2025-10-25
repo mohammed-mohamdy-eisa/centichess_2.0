@@ -391,7 +391,7 @@ select {
     padding-block: 12px;
     background: var(--bg-secondary);
     box-shadow: var(--shadow-1);
-    z-index: 99999999;
+    z-index: 26;
 }
 
 .header .inner {
@@ -1716,7 +1716,7 @@ select {
     width: 100%;
     height: 100%;
     background-color: var(--dark-overlay);
-    z-index: 9999999999999;
+    z-index: 24;
     display: none;
     align-items: center;
     justify-content: center;
