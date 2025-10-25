@@ -24,7 +24,7 @@ export const Classification = {
         class: ClasifCss.MOVE_BRILLIANT,
         accuracy: 1,
         comment: "is a brilliant move!",
-        color: "#14e6e6"
+        color: "#26c2a3" // var(--color-classification-brilliant) → var(--color-aqua-300)
     },
     GREAT: {
         type: "great",
@@ -32,7 +32,7 @@ export const Classification = {
         class: ClasifCss.MOVE_GREAT,
         accuracy: 1,
         comment: "is a great move!",
-        color: "#38a5ff"
+        color: "#749bbf" // var(--color-classification-great) → var(--color-slate-300)
     },
     BEST: {
         type: "best",
@@ -40,7 +40,7 @@ export const Classification = {
         class: ClasifCss.MOVE_BEST,
         accuracy: 1,
         comment: "is the best move.",
-        color: "#7bcc18"
+        color: "#81b64c" // var(--color-classification-best) → var(--color-green-300)
     },
     EXCELLENT: {
         type: "excellent",
@@ -48,7 +48,7 @@ export const Classification = {
         class: ClasifCss.MOVE_EXCELLENT,
         accuracy: 0.9,
         comment: "is an excellent move.",
-        color: "#7bcc18"
+        color: "#81b64c" // var(--color-classification-excellent) → var(--color-green-300)
     },
     GOOD: {
         type: "good",
@@ -56,7 +56,7 @@ export const Classification = {
         class: ClasifCss.MOVE_GOOD,
         accuracy: 0.7,
         comment: "is a good move.",
-        color: "#088a28"
+        color: "#95b776" // not explicit var in classification, but matches var(--color-green-400)
     },
     THEORY: {
         type: "theory",
@@ -64,7 +64,7 @@ export const Classification = {
         class: ClasifCss.MOVE_THEORY,
         accuracy: 1,
         comment: "is theory.",
-        color: "#e09d0d"
+        color: "#d5a47d" // var(--color-classification-book) → var(--color-skin-300). Theory and book share color in chess.com/lichess
     },
     INACCURACY: {
         type: "inaccuracy",
@@ -72,7 +72,7 @@ export const Classification = {
         class: ClasifCss.MOVE_INACCURACY,
         accuracy: 0.4,
         comment: "is an inaccuracy.",
-        color: "#ddd015"
+        color: "#f7c631" // var(--color-classification-inaccuracy) → var(--color-gold-200)
     },
     MISTAKE: {
         type: "mistake",
@@ -80,7 +80,7 @@ export const Classification = {
         class: ClasifCss.MOVE_MISTAKE,
         accuracy: 0.2,
         comment: "is a mistake.",
-        color: "#e5820d"
+        color: "#ffa459" // var(--color-classification-mistake) → var(--color-orange-200)
     },
     BLUNDER: {
         type: "blunder",
@@ -88,7 +88,7 @@ export const Classification = {
         class: ClasifCss.MOVE_BLUNDER,
         accuracy: 0,
         comment: "was a blunder!",
-        color: "#d44242"
+        color: "#fa412d" // var(--color-classification-blunder) → var(--color-red-300)
     },
     FORCED: {
         type: "forced",
@@ -96,7 +96,7 @@ export const Classification = {
         class: ClasifCss.MOVE_FORCED,
         accuracy: 1,
         comment: "was forced.",
-        color: "#088a28"
+        color: "#5d9948" // var(--color-classification-forced) → var(--color-green-400)
     },
     MISS: {
         type: "miss",
@@ -104,7 +104,7 @@ export const Classification = {
         class: ClasifCss.MOVE_MISS,
         accuracy: 0.1,
         comment: "missed a great opportunity.",
-        color: "#d44242"
+        color: "#ff7769" // var(--color-classification-miss)
     }
 };
 

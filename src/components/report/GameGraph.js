@@ -211,13 +211,17 @@ export class GameGraph {
                 if (!move) return;
 
                 const offset = increment * this.currentMove * 2 - increment * 2;
-                ctx.fillStyle = '#99999975';
-                ctx.fillRect(offset - this.scaleFactor, 0, 2 * this.scaleFactor, height);
+                
+                // Draw colored vertical line with transparency
+                const classificationColor = move.classification.color;
+                ctx.fillStyle = classificationColor + '99'; // Add transparency (60%)
+                const lineWidth = 4 * this.scaleFactor; // Thicker line
+                ctx.fillRect(offset - lineWidth / 2, 0, lineWidth, height);
             
                 const y = height / 100 * (move.graph);
 
                 // Highlight current move dot (larger than classification dots)
-                ctx.fillStyle = move.classification.color;
+                ctx.fillStyle = classificationColor;
                 ctx.beginPath();
                 ctx.arc(offset, y, 5 * this.scaleFactor, 0, Math.PI * 2 * this.scaleFactor);
                 ctx.fill();
@@ -232,12 +236,14 @@ export class GameGraph {
                 const x = offset;
                 const y = height/100 * (move.graph);
 
-                // Vertical line
-                ctx.fillStyle = '#99999975';
-                ctx.fillRect(x - this.scaleFactor, 0, 2 * this.scaleFactor, height);
+                // Draw colored vertical line with transparency
+                const classificationColor = move.classification.color;
+                ctx.fillStyle = classificationColor + '99'; // Add transparency (60%)
+                const lineWidth = 6 * this.scaleFactor; // Thicker line
+                ctx.fillRect(x - lineWidth / 2, 0, lineWidth, height);
                 
                 // Highlight dot
-                ctx.fillStyle = move.classification.color;
+                ctx.fillStyle = classificationColor;
 
                 ctx.beginPath();
                 ctx.arc(x, y, 4 * this.scaleFactor, 0, Math.PI * 2 * this.scaleFactor);

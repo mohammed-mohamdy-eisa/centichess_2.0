@@ -28,7 +28,7 @@
     --color-classification-mistake: var(--color-orange-200);
     --color-classification-miss: #ff7769;
     --color-classification-blunder: var(--color-red-300);
-    --color-classification-forced: var(--color-green-300);
+    --color-classification-forced: var(--color-green-400);
     
     /* Color Palette */
     --color-green-25: #f6ffe3;
@@ -3648,6 +3648,34 @@ body.lock-scroll {
     color: var(--text-primary);
 }
 
+/* Learning Settings Toggle Indicator */
+.toggle-indicator {
+    margin-left: auto;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--text-secondary);
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.quick-menu-item.active .toggle-indicator {
+    background-color: var(--color-vibrant-purple-500);
+    border-color: var(--color-vibrant-purple-500);
+}
+
+.quick-menu-item.active .toggle-indicator::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
 .quick-menu-item span {
     white-space: nowrap;
 }
@@ -3798,7 +3826,7 @@ body:has(.learning-mode) .move-info {
 
 .learning-actions-counter {
     font-size: 12px;
-    color: var(--color-vibrant-purple-500);
+    color: var(--color-vibrant-purple-400);
     @media (min-width: 768px) {
         margin-top: 60%; /* Add spacing from top on PC */
     }

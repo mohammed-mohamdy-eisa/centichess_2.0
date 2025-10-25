@@ -261,105 +261,6 @@ export class SidebarOverlay {
     }
 
     /**
-     * Format seconds into a human-readable time string
-     * @param {number} seconds - Number of seconds
-     * @returns {string} Formatted time string
-     */
-    static formatTime(seconds) {
-        if (!seconds || seconds < 0 || !isFinite(seconds)) return '';
-        
-        const minutes = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        
-        if (minutes > 0) {
-            return `${minutes}m ${secs}s`;
-        }
-        return `${secs}s`;
-    }
-
-    /**
-     * Calculate estimated time remaining based on progress
-     * Analysis is slower at the beginning (opening theory, complex positions) and faster towards the end (parabolic)
-     * @param {number} percentage - Current progress percentage (0-100)
-     * @returns {string} Formatted time remaining string or empty string
-     */
-    static getEstimatedTimeRemaining(percentage) {
-        // Don't show estimate until 10% progress for more accuracy
-        if (!this.analysisStartTime || percentage < 10 || percentage >= 100) {
-            return '';
-        }
-
-        const elapsedSeconds = (Date.now() - this.analysisStartTime) / 1000;
-        
-        // Track progress updates to calculate moving average
-        if (!this.progressHistory) {
-            this.progressHistory = [];
-        }
-        
-        const now = Date.now();
-        this.progressHistory.push({ percentage, timestamp: now });
-        
-        // Keep only recent history (last 10 updates or 20 seconds)
-        const cutoffTime = now - 20000;
-        this.progressHistory = this.progressHistory.filter(p => p.timestamp > cutoffTime).slice(-10);
-        
-        let remainingSeconds = 0;
-        
-        // If we have at least 3 data points, calculate based on recent progress rate
-        if (this.progressHistory.length >= 3) {
-            const oldest = this.progressHistory[0];
-            const newest = this.progressHistory[this.progressHistory.length - 1];
-            const progressDelta = newest.percentage - oldest.percentage;
-            const timeDelta = (newest.timestamp - oldest.timestamp) / 1000;
-            
-            if (progressDelta > 0 && timeDelta > 0) {
-                // Calculate time per percentage point based on recent progress
-                const timePerPercent = timeDelta / progressDelta;
-                const remainingPercent = 100 - percentage;
-                remainingSeconds = remainingPercent * timePerPercent;
-                
-                // Apply parabolic acceleration factor: analysis speeds up as it progresses
-                // Early game (0-30%): slowest, Mid game (30-70%): moderate, End game (70-100%): fastest
-                // Use inverse parabola: factor = 1.5 at 0%, decreases to ~0.3 at 100%
-                const normalizedProgress = percentage / 100; // 0 to 1
-                const accelerationFactor = 1.5 - (1.2 * normalizedProgress * normalizedProgress);
-                remainingSeconds *= Math.max(0.3, accelerationFactor);
-            }
-        }
-        
-        // Fallback to simple linear extrapolation for early stages
-        if (remainingSeconds === 0) {
-            const estimatedTotalSeconds = (elapsedSeconds / percentage) * 100;
-            remainingSeconds = estimatedTotalSeconds - elapsedSeconds;
-            
-            // Apply acceleration factor to fallback as well
-            const normalizedProgress = percentage / 100;
-            const accelerationFactor = 1.5 - (1.2 * normalizedProgress * normalizedProgress);
-            remainingSeconds *= Math.max(0.3, accelerationFactor);
-        }
-        
-        // After 20% progress, ensure estimate never increases (only decreases or stays same)
-        // This prevents confusing time jumps and provides smooth countdown
-        if (percentage >= 20) {
-            if (this.lastEstimatedSeconds !== undefined && remainingSeconds > this.lastEstimatedSeconds) {
-                // Smoothly decrease instead of jumping up
-                remainingSeconds = this.lastEstimatedSeconds * 0.95;
-            }
-        }
-        
-        // Smooth out small fluctuations by averaging with previous estimate
-        if (this.lastEstimatedSeconds !== undefined) {
-            // Use weighted average: 70% new estimate, 30% old estimate for smoothness
-            remainingSeconds = (remainingSeconds * 0.7) + (this.lastEstimatedSeconds * 0.3);
-        }
-        
-        // Store for next comparison
-        this.lastEstimatedSeconds = remainingSeconds;
-
-        return this.formatTime(remainingSeconds);
-    }
-
-    /**
      * Updates the evaluation progress bar
      * @param {number|object} progress - Progress percentage (0-100) or progress object with depth info
      * @param {string} engineName - Name of the engine analyzing the game (e.g., "Stockfish")
@@ -370,9 +271,6 @@ export class SidebarOverlay {
         // Show overlay when analysis starts
         if (percentage <= 5 && !this.isAnalysisOverlayActive) {
             this.isAnalysisOverlayActive = true;
-            this.analysisStartTime = Date.now(); // Start time tracking
-            this.progressHistory = []; // Reset progress history for new analysis
-            this.lastEstimatedSeconds = undefined; // Reset last estimate
             $('.analysis-overlay, .board-overlay').addClass('active');
             $('.tab-content, .bottom-content').addClass('blur-content');
 
@@ -417,12 +315,6 @@ export class SidebarOverlay {
             
             let progressText = `${Math.round(percentage)}% complete`;
             
-            // Add estimated time remaining
-            const timeRemaining = this.getEstimatedTimeRemaining(percentage);
-            if (timeRemaining) {
-                progressText += ` • ~${timeRemaining} remaining`;
-            }
-            
             if (typeof progress === 'object' && progress?.depth) {
                 progressText += ` (Depth ${progress.depth}/${progress.targetDepth})`;
             }
@@ -435,9 +327,6 @@ export class SidebarOverlay {
                 $('.analysis-overlay, .board-overlay').removeClass('active');
                 $('.tab-content, .bottom-content').removeClass('blur-content');
                 this.isAnalysisOverlayActive = false;
-                this.analysisStartTime = null; // Clear time tracking
-                this.progressHistory = []; // Clear progress history
-                this.lastEstimatedSeconds = undefined; // Clear last estimate
                 this.stopFactCycling();
             }, 5);
         }
@@ -449,9 +338,6 @@ export class SidebarOverlay {
     static cleanup() {
         this.isAnalysisOverlayActive = false;
         this.isUserInitiatedLoad = false;
-        this.analysisStartTime = null; // Clear time tracking
-        this.progressHistory = []; // Clear progress history
-        this.lastEstimatedSeconds = undefined; // Clear last estimate
         this.stopFactCycling();
     }
     

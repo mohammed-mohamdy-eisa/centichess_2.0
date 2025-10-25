@@ -16,6 +16,8 @@ export class MistakeLearner {
         this.currentEvaluationId = null; // Track current evaluation to prevent race conditions
         this.lastIncorrectMove = null; // Store last incorrect move for "Try again" button
         this.lastPositionBeforeMistake = null; // Store position for undo
+        this.mistakeSolved = false; // Track if current mistake was solved (top engine move made)
+        this.positionBeforeLearning = null; // Store position before entering learning mode
         
         // Initialize audio for learning sounds
         this.sounds = {
@@ -34,12 +36,16 @@ export class MistakeLearner {
             return;
         }
 
+        // Save current position before entering learning mode
+        this.positionBeforeLearning = this.chessUI.moveTree.currentNode.id;
+        
         // Reset all state
         this.solvedCorrectly = 0;
         this.usedHintOrSolution = false;
         this.currentEvaluationId = null;
         this.lastIncorrectMove = null;
         this.lastPositionBeforeMistake = null;
+        this.mistakeSolved = false;
 
         // Get all user mistakes
         this.mistakeMoves = this.getMistakeMoves();
@@ -114,6 +120,7 @@ export class MistakeLearner {
         this.hintLevel = 0;
         this.correctMoveMade = false;
         this.usedHintOrSolution = false; // Reset for new mistake
+        this.mistakeSolved = false; // Reset for new mistake
 
         // Get the position BEFORE the mistake was made
         const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
@@ -127,37 +134,19 @@ export class MistakeLearner {
         // Track this position
         this.currentMistakeNodeId = positionBeforeMistake.id;
 
-        // Get the opponent's move that led to this position (if exists)
-        const positionBeforeOpponentMove = mistakeMainlineIndex >= 2 ? 
-            this.chessUI.moveTree.mainline[mistakeMainlineIndex - 2] : null;
-
-        // Navigate to position before opponent's move
-        if (positionBeforeOpponentMove && positionBeforeMistake.move) {
-            // Navigate to the position before opponent's move first
-            this.chessUI.moveNavigator.handleTreeNodeClick(positionBeforeOpponentMove);
-            
-            // Then animate opponent's move WITHOUT showing classification
-            setTimeout(() => {
-                this.chessUI.board.move(
-                    positionBeforeMistake.move, 
-                    true,  // animate = true
-                    undefined,  // classification = undefined (no badge)
-                    positionBeforeMistake.move.before, 
-                    false, 
-                    positionBeforeMistake.move.promotion, 
-                    false
-                );
-                
-                // After animation, update the UI
-                setTimeout(() => {
-                    this.setupMistakePosition(mistakeMainlineIndex);
-                }, 200);
-            }, 50);
-        } else {
-            // No opponent move to show, navigate directly
+        // Navigate directly to position before mistake (no animation)
         this.chessUI.moveNavigator.handleTreeNodeClick(positionBeforeMistake);
-            this.setupMistakePosition(mistakeMainlineIndex);
+        
+        // Highlight opponent's last move squares (if exists)
+        if (positionBeforeMistake.move) {
+            const fromSquare = positionBeforeMistake.move.from;
+            const toSquare = positionBeforeMistake.move.to;
+            this.chessUI.board.highlightSquare(fromSquare, '#ffeb3b', 0.4);
+            this.chessUI.board.highlightSquare(toSquare, '#ffeb3b', 0.4);
         }
+        
+        // Setup mistake position UI
+        this.setupMistakePosition(mistakeMainlineIndex);
     }
 
     /**
@@ -539,6 +528,9 @@ export class MistakeLearner {
         if (!this.usedHintOrSolution) {
             this.solvedCorrectly++;
         }
+        
+        // Mark this mistake as solved (top engine move was made)
+        this.mistakeSolved = true;
 
             // Clear highlights
             this.chessUI.board.clearHighlights();
@@ -620,7 +612,7 @@ export class MistakeLearner {
             // Undo the incorrect move
             if (this.lastIncorrectMove) {
                 this.chessUI.board.unmove(true, this.lastIncorrectMove, this.lastPositionBeforeMistake.fen || this.lastPositionBeforeMistake.move?.after);
-            } else {
+        } else {
                 this.chessUI.board.fen(this.lastPositionBeforeMistake.fen || this.lastPositionBeforeMistake.move?.after);
             }
             
@@ -631,9 +623,9 @@ export class MistakeLearner {
             setTimeout(() => {
                 const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
                 const mistakeMoveNode = this.chessUI.moveTree.mainline[mistakeMainlineIndex];
-                const classification = this.currentMistakeMove.classification;
-                const moveNotation = mistakeMoveNode?.move?.san || 'the move';
-                const classificationColor = this.getClassificationColor(classification);
+            const classification = this.currentMistakeMove.classification;
+            const moveNotation = mistakeMoveNode?.move?.san || 'the move';
+            const classificationColor = this.getClassificationColor(classification);
                 const message = `${moveNotation} was ${this.getArticle(classification)} <strong style="color: ${classificationColor}">${classification}</strong>. Find the best move!`;
                 
                 this.showInitialActions(message);
@@ -750,7 +742,9 @@ export class MistakeLearner {
         // Show completion actions with score
         const total = this.mistakeMoves.length;
         const solved = this.solvedCorrectly;
+        const current = this.mistakeMoves.length;
         $('#learning-actions').html(`
+            <div class="learning-actions-counter" style="opacity: 0">Mistake ${current} of ${total}</div>
             <div class="learning-actions-message">🎉 Congratulations!<br>You completed ${solved} out of ${total} mistake${total > 1 ? 's' : ''}</div>
             <div class="learning-actions-buttons">
                 <button class="learning-action-btn primary" id="finish-learning">Return to Report</button>
@@ -768,6 +762,14 @@ export class MistakeLearner {
      * Exits learning mode
      */
     exit() {
+        // Navigate back to position before learning mode
+        if (this.positionBeforeLearning) {
+            const savedNode = this.chessUI.moveTree.nodeMap.get(this.positionBeforeLearning);
+            if (savedNode) {
+                this.chessUI.moveNavigator.handleTreeNodeClick(savedNode);
+            }
+        }
+        
         this.isActive = false;
         this.mistakeMoves = [];
         this.currentMistakeIndex = 0;
@@ -778,6 +780,8 @@ export class MistakeLearner {
         this.currentEvaluationId = null; // Cancel any pending evaluations
         this.lastIncorrectMove = null;
         this.lastPositionBeforeMistake = null;
+        this.mistakeSolved = false;
+        this.positionBeforeLearning = null;
 
         // Restore normal UI
         this.chessUI.moveNavigator.hideLearningControls();

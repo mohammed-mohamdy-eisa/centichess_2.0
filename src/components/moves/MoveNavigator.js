@@ -26,6 +26,11 @@ export class MoveNavigator {
         $("#copy-pgn").on("click", () => this.handleCopyPgn());
         $("#flip-board").on("click", () => this.handleFlipBoard());
         $("#download-pgn").on("click", () => this.handleDownloadPgn());
+        
+        // Learning settings toggle handlers
+        $("#toggle-auto-advance").on("click", () => this.handleToggleLearningSettings('autoAdvanceToNextMistake'));
+        $("#toggle-include-inaccuracies").on("click", () => this.handleToggleLearningSettings('includeInaccuraciesInLearning'));
+        $("#toggle-confetti").on("click", () => this.handleToggleLearningSettings('enableConfetti'));
 
         // Close quick menu when clicking outside
         $(document).on("click", (e) => this.handleDocumentClick(e));
@@ -214,7 +219,8 @@ export class MoveNavigator {
         // Update learning mode navigation if active
         if (this.chessUI.mistakeLearner?.isActive) {
             // Check if moved away from mistake position
-            if (!this.chessUI.mistakeLearner.isAtMistakePosition()) {
+            // Don't show "moved away" if mistake was already solved
+            if (!this.chessUI.mistakeLearner.isAtMistakePosition() && !this.chessUI.mistakeLearner.mistakeSolved) {
                 this.chessUI.mistakeLearner.showMovedAwayActions();
             }
         }
@@ -238,7 +244,8 @@ export class MoveNavigator {
         // Update learning mode navigation if active
         if (this.chessUI.mistakeLearner?.isActive) {
             // Check if moved away from mistake position
-            if (!this.chessUI.mistakeLearner.isAtMistakePosition()) {
+            // Don't show "moved away" if mistake was already solved
+            if (!this.chessUI.mistakeLearner.isAtMistakePosition() && !this.chessUI.mistakeLearner.mistakeSolved) {
                 this.chessUI.mistakeLearner.showMovedAwayActions();
             }
         }
@@ -582,6 +589,13 @@ export class MoveNavigator {
         $('#hint, #leave-learning, #popup-quick-menu').show();
         $('#restart, #skip-to-end').hide();
         // Keep backward, forward, and popup-quick-menu visible - they work in both modes
+        
+        // Switch quick menu to learning settings
+        $('.quick-menu-item:not(.learning-setting-item)').hide();
+        $('.learning-setting-item').show();
+        
+        // Update toggle states based on current settings
+        this.updateLearningSettingsToggles();
     }
 
     /**
@@ -599,6 +613,10 @@ export class MoveNavigator {
         
         // Restore navigation buttons (popup-quick-menu stays visible)
         $('#backward, #forward, #popup-quick-menu').show();
+        
+        // Switch quick menu back to normal items
+        $('.learning-setting-item').hide();
+        $('.quick-menu-item:not(.learning-setting-item)').show();
     }
 
     /**
@@ -617,5 +635,32 @@ export class MoveNavigator {
         if (this.chessUI.mistakeLearner?.isActive) {
             this.chessUI.mistakeLearner.exit();
         }
+    }
+
+    /**
+     * Handle toggling learning settings
+     */
+    handleToggleLearningSettings(settingKey) {
+        const currentValue = this.chessUI.settingsMenu.getSettingValue(settingKey);
+        const newValue = currentValue !== true;
+        
+        // Update the setting
+        this.chessUI.settingsMenu.saveSettingToCookie(settingKey, newValue);
+        
+        // Update the toggle visual state
+        this.updateLearningSettingsToggles();
+    }
+
+    /**
+     * Update toggle states based on current settings
+     */
+    updateLearningSettingsToggles() {
+        const autoAdvance = this.chessUI.settingsMenu.getSettingValue('autoAdvanceToNextMistake');
+        const includeInaccuracies = this.chessUI.settingsMenu.getSettingValue('includeInaccuraciesInLearning');
+        const enableConfetti = this.chessUI.settingsMenu.getSettingValue('enableConfetti');
+        
+        $('#toggle-auto-advance').toggleClass('active', autoAdvance !== false);
+        $('#toggle-include-inaccuracies').toggleClass('active', includeInaccuracies !== false);
+        $('#toggle-confetti').toggleClass('active', enableConfetti !== false);
     }
 }
