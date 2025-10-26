@@ -36,11 +36,11 @@ export class ChessUI {
         // Load the board with settings from cookies
         this.board = new Chessboard("#chessboard", {
             theme: {
-                boardDarkSquareColor: this.settingsMenu.getSettingValue('theme.boardDarkSquareColor') || 'rgba(110, 161, 118, 1)',
-                boardLightSquareColor: this.settingsMenu.getSettingValue('theme.boardLightSquareColor') || 'rgba(224, 224, 224, 1)',
+                boardDarkSquareColor: this.settingsMenu.getSettingValue('boardDarkSquareColor') || 'rgba(110, 161, 118, 1)',
+                boardLightSquareColor: this.settingsMenu.getSettingValue('boardLightSquareColor') || 'rgba(224, 224, 224, 1)',
                 pieceFolderName: this.settingsMenu.getSettingValue('pieceTheme') || 'cburnett'
             },
-            showBoardLabels: this.settingsMenu.getSettingValue('theme.boardLabels') === 'letter' || true
+            showBoardLabels: this.settingsMenu.getSettingValue('boardLabels') === 'letter' || this.settingsMenu.getSettingValue('boardLabels') === true
         }, this.chess);
 
         this.settingsMenu.init(this.board);
@@ -163,8 +163,10 @@ export class ChessUI {
 
         const analysis = await MoveEvaluator.analyzeGame(
             this.game, 
-            (progress) => {
-                SidebarOverlay.updateEvaluationProgress(progress, engineName);
+            (progress, dynamicEngineName) => {
+                // Use dynamic engine name if provided (includes fallback status), otherwise use initial name
+                const displayName = dynamicEngineName || engineName;
+                SidebarOverlay.updateEvaluationProgress(progress, displayName);
             },
             { engineType, engineDepth, maxMoveTime, engineThreads }
         );

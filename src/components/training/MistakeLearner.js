@@ -23,7 +23,8 @@ export class MistakeLearner {
         this.sounds = {
             correct: new Audio('/assets/sounds/learning/correct.mp3'),
             wrong: new Audio('/assets/sounds/learning/wrong.mp3'),
-            completed: new Audio('/assets/sounds/learning/completed.mp3')
+            completed: new Audio('/assets/sounds/learning/completed.mp3'),
+            better: new Audio('/assets/sounds/learning/better.mp3')
         };
     }
 
@@ -593,8 +594,8 @@ export class MistakeLearner {
      * Handles alternative good/excellent moves
      */
     handleAlternativeMove(classification, positionBeforeMistake) {
-        // Play correct sound for good/excellent moves (there's better)
-        this.playSound('correct');
+        // Play "better" sound for good/excellent moves (there's better)
+        this.playSound('better');
         
         // Simple text without spans, all black
         const moveType = classification === 'excellent' ? 'Excellent' : 'Good';

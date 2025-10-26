@@ -8,7 +8,7 @@
     --theme-dark: #7d7d7d;
     
     /* Layout */
-    --board-scale: 80;
+    --board-scale: 75;
     
     /* Effects */
     --shadow-1: 0 2px 5px rgba(0, 0, 0, 0.15);
@@ -1267,7 +1267,7 @@ select {
     max-width: 4.5vh;
     max-height: 4.5vh;
     transform: translate(min(8vw, 8vh), max(-1.8vw, -1.8vh));
-    z-index: 11;
+    z-index: 100000;
     pointer-events: none;
 }
 
@@ -3581,7 +3581,6 @@ body.lock-scroll {
     min-width: 180px;
     padding: 10px 0;
     display: none;
-    z-index: 1000;
     opacity: 0;
     transform: translateX(-50%) translateY(4px);
     transition: opacity 0.2s ease, transform 0.2s ease;
@@ -3754,7 +3753,6 @@ body.lock-scroll {
 /* Ensure move-info is above confetti */
 .move-info {
     position: relative;
-    z-index: 1000;
 }
 
 /* Move move-info inside moves tab on PC only */

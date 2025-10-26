@@ -2794,7 +2794,7 @@ export class Chessboard {
 			'width': s.classificationSize,
 			'height': s.classificationSize,
 			'transform': `translate(${s.classificationOffsetX}, ${s.classificationOffsetY})`,
-			'z-index': '11',
+			'z-index': '100',
 			'pointer-events': 'none'
 		});
 

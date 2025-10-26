@@ -64,16 +64,23 @@ export class EvaluationQueue {
             }
             
             // Evaluate current position
+            // Try Lichess cloud first (for manual moves and learn mode), fallback to local engine
             let lines = await MoveEvaluator.tryCloudEvaluation(item.fen);
             let engine = null;
+            let engineName = 'Lichess Cloud';
             
             if (!lines || lines.length < 2) {
+                // Cloud failed or returned insufficient data, use selected local engine
+                console.log('☁️ Cloud unavailable, using local engine fallback');
                 const engineType = this.settingsMenu?.getSettingValue('engineType') || 'stockfish-17.1-lite';
                 const threadCount = this.settingsMenu?.getSettingValue('engineThreads') ?? 0;
                 engine = new Engine({ engineType: engineType, threadCount: threadCount });
                 const depth = this.settingsMenu?.getSettingValue('engineDepth') || 16;
                 const maxMoveTime = this.settingsMenu?.getSettingValue('maxMoveTime') || 5;
                 lines = await this.evaluateWithEngine(item.fen, depth, 0, 100, engine, maxMoveTime);
+                engineName = engine.engine.name;
+            } else {
+                console.log('☁️ Using Lichess Cloud evaluation (depth:', lines[0]?.depth, ')');
             }
             
             // Create and store result
@@ -82,7 +89,7 @@ export class EvaluationQueue {
                     fen: item.fen,
                     lines: lines,
                     uciMove: item.node.move ? `${item.node.move.from}${item.node.move.to}` : "",
-                    engine: engine ? engine.engine.name : 'Cloud'
+                    engine: engineName
                 },
                 previous: { fen: item.previousFen, lines: prevLines }
             };
@@ -99,7 +106,7 @@ export class EvaluationQueue {
                     uciMove: item.node.move,
                     fen: item.fen,
                     lines,
-                    engine: engine ? engine.engine.name : 'Cloud'
+                    engine: engineName
                 });
             }
 

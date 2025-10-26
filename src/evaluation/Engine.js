@@ -1,4 +1,10 @@
 const engines = {
+    'cloud': {
+        name: "Cloud",
+        type: "cloud",
+        apiUrl: "https://lichess.org/api/cloud-eval",
+        fallbackEngine: 'stockfish-17.1-nnue'
+    },
     'stockfish-17.1-lite': {
         name: "Stockfish 17.1 Lite",
         // single-threaded fallback path (broadest compatibility)
@@ -60,8 +66,10 @@ export class Engine {
     busy = false;
     currentResolve = null;
     currentReject = null;
+    isFallback = false;
 
     constructor({ engineType = 'stockfish-17.1-lite', threadCount = 0 } = {}) {
+        this.engineType = engineType;
         this.engine = engines[engineType];
         
         // Auto-detect CPU count if threadCount is 0 or less
@@ -74,6 +82,14 @@ export class Engine {
         }
         
         this.threadCount = threadCount;
+
+        // Cloud engine doesn't need a worker
+        if (this.engine.type === 'cloud') {
+            console.log('Using Lichess Cloud evaluation');
+            this.worker = null;
+            this.fallbackEngine = null; // Will be initialized on first use if needed
+            return;
+        }
 
         // Determine worker path based on capabilities
         let workerPath = this.engine.path;
@@ -124,7 +140,9 @@ export class Engine {
     
     // Method to abort current evaluation
     abort() {
-        this.worker.postMessage('stop');
+        if (this.worker) {
+            this.worker.postMessage('stop');
+        }
         if (this.currentResolve) {
             this.currentResolve([]);
             this.currentResolve = null;
@@ -139,6 +157,10 @@ export class Engine {
         if (this.worker) {
             this.worker.terminate();
             this.worker = null;
+        }
+        if (this.fallbackEngine) {
+            this.fallbackEngine.terminate();
+            this.fallbackEngine = null;
         }
     }
     
@@ -232,11 +254,127 @@ export class Engine {
         return lines;
     }
 
+    async evaluateCloud(fen, targetDepth, verbose = false, progressCallback = null) {
+        try {
+            // Reset fallback flag when attempting cloud evaluation
+            this.isFallback = false;
+            
+            // Report initial progress
+            if (progressCallback && typeof progressCallback === 'function') {
+                progressCallback({ depth: 0, targetDepth: targetDepth, percent: 10 });
+            }
+
+            const params = new URLSearchParams({
+                fen: fen,
+                multiPv: this.multiPV.toString()
+            });
+
+            const response = await fetch(`${this.engine.apiUrl}?${params}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Cloud API returned ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (verbose) {
+                console.log('Cloud evaluation response:', data);
+            }
+
+            // Report progress
+            if (progressCallback && typeof progressCallback === 'function') {
+                progressCallback({ depth: targetDepth, targetDepth: targetDepth, percent: 100 });
+            }
+
+            // Transform cloud response to match local engine format
+            const lines = [];
+            if (data.pvs && Array.isArray(data.pvs)) {
+                for (let i = 0; i < Math.min(data.pvs.length, this.multiPV); i++) {
+                    const pv = data.pvs[i];
+                    const moves = pv.moves ? pv.moves.split(' ') : [];
+                    const uciMove = moves[0];
+                    
+                    if (!uciMove) continue;
+
+                    // Handle both cp (centipawn) and mate scores
+                    let score, type;
+                    if (pv.mate !== undefined && pv.mate !== null) {
+                        score = pv.mate;
+                        type = 'mate';
+                    } else {
+                        score = pv.cp || 0;
+                        type = 'cp';
+                    }
+
+                    lines.push({
+                        id: i + 1,
+                        uciMove: uciMove,
+                        depth: data.depth || targetDepth,
+                        score: score,
+                        type: type,
+                        pv: moves
+                    });
+                }
+            }
+
+            return lines;
+        } catch (error) {
+            console.warn('Cloud evaluation failed:', error.message, '- Falling back to Stockfish 17.1 NNUE (Fast preset)');
+            // Fallback to local engine with fast preset settings
+            return this.fallbackToLocalEngine(fen, targetDepth, verbose, progressCallback);
+        }
+    }
+
+    async fallbackToLocalEngine(fen, targetDepth, verbose, progressCallback) {
+        console.log('Falling back to Stockfish 17.1 NNUE with Fast preset');
+        
+        // Mark that we're using fallback
+        this.isFallback = true;
+        
+        // Initialize fallback engine if not already done
+        if (!this.fallbackEngine) {
+            const fallbackType = this.engine.fallbackEngine || 'stockfish-17.1-nnue';
+            // Use fast preset thread count (0 = auto) for fallback
+            this.fallbackEngine = new Engine({ 
+                engineType: fallbackType, 
+                threadCount: 0
+            });
+        }
+
+        // Use fast preset values for fallback: depth 9, time 31s (infinity)
+        const fastDepth = 9;
+        const fastTime = 31;
+        
+        return this.fallbackEngine.evaluate(fen, fastDepth, verbose, progressCallback, 0, fastTime);
+    }
+
+    /**
+     * Get the current engine name, including fallback status
+     */
+    getEngineName() {
+        if (this.isFallback && this.fallbackEngine) {
+            return `${engines['stockfish-17.1-nnue'].name} (Fallback)`;
+        }
+        return this.engine.name;
+    }
+
     async evaluate(fen, targetDepth, verbose = false, progressCallback = null, fallen = 0, maxMoveTime = null) {
         this.busy = true;
         
         // Reset current depth
         this.currentDepth = 0;
+        
+        // Use cloud evaluation if cloud engine is selected
+        if (this.engine.type === 'cloud') {
+            const result = await this.evaluateCloud(fen, targetDepth, verbose, progressCallback);
+            this.busy = false;
+            return result;
+        }
         
         if (!this.worker) {
             try {

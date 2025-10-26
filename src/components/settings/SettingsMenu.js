@@ -38,12 +38,45 @@ export class SettingsMenu {
                         description: 'Engine settings',
                         settings: [
                             {
+                                key: 'engineType',
+                                type: 'dropdown',
+                                label: 'Engine Type',
+                                defaultValue: 'stockfish-17.1-lite',
+                                options: [
+                                    {
+                                        value: 'cloud',
+                                        label: '☁️ Cloud'
+                                    },
+                                    {
+                                        value: 'stockfish-17.1-lite',
+                                        label: 'Stockfish 17.1 Lite'
+                                    },
+                                    {
+                                        value: 'stockfish-17.1-nnue',
+                                        label: 'Stockfish 17.1 NNUE'
+                                    },
+                                    {
+                                        value: 'stockfish-16-lite',
+                                        label: 'Stockfish 16 Lite'
+                                    },
+                                    {
+                                        value: 'stockfish-11',
+                                        label: 'Stockfish 11'
+                                    }
+                                ],
+                            },
+                            {
                                 key: 'engineStrength',
                                 type: 'dropdown',
                                 label: 'Strength',
                                 description: 'Quick presets for engine analysis strength',
                                 defaultValue: 'standard',
                                 options: [
+                                    {
+                                        value: 'cloud',
+                                        label: 'Cloud',
+                                        visibleWhen: { key: 'engineType', value: 'cloud' }
+                                    },
                                     {
                                         value: 'fast',
                                         label: 'Fast'
@@ -66,57 +99,32 @@ export class SettingsMenu {
                                     }
                                 ],
                                 presetActions: {
+                                    'cloud': [
+                                        { key: 'engineDepth', value: 99 },
+                                        { key: 'maxMoveTime', value: 31 },
+                                        { key: 'engineThreads', value: 0 }
+                                    ],
                                     'fast': [
-                                        { key: 'engineType', value: 'stockfish-17.1-nnue' },
                                         { key: 'engineDepth', value: 9 },
                                         { key: 'maxMoveTime', value: 31 },
                                         { key: 'engineThreads', value: 0 }
                                     ],
                                     'standard': [
-                                        { key: 'engineType', value: 'stockfish-17.1-lite' },
                                         { key: 'engineDepth', value: 16 },
                                         { key: 'maxMoveTime', value: 10 },
                                         { key: 'engineThreads', value: 1 }
                                     ],
                                     'deep': [
-                                        { key: 'engineType', value: 'stockfish-17.1-nnue' },
                                         { key: 'engineDepth', value: 20 },
                                         { key: 'maxMoveTime', value: 16 },
-                                        { key: 'engineThreads', value: 0 }
+                                        { key: 'engineThreads', value: 2 }
                                     ],
                                     'maximum': [
-                                        { key: 'engineType', value: 'stockfish-17.1-nnue' },
                                         { key: 'engineDepth', value: 24 },
-                                        { key: 'maxMoveTime', value: 31 },
-                                        { key: 'engineThreads', value: 0 }
+                                        { key: 'maxMoveTime', value: 30 },
+                                        { key: 'engineThreads', value: 3 }
                                     ]
                                 }
-                            },
-                            {
-                                key: 'engineType',
-                                type: 'dropdown',
-                                label: 'Engine Type',
-                                defaultValue: 'stockfish-17.1-lite',
-                                affectsPreset: 'engineStrength',
-                                visibleWhen: { key: 'engineStrength', value: 'custom' },
-                                options: [
-                                    {
-                                        value: 'stockfish-17.1-lite',
-                                        label: 'Stockfish 17.1 Lite'
-                                    },
-                                    {
-                                        value: 'stockfish-17.1-nnue',
-                                        label: 'Stockfish 17.1 NNUE'
-                                    },
-                                    {
-                                        value: 'stockfish-16-lite',
-                                        label: 'Stockfish 16 Lite'
-                                    },
-                                    {
-                                        value: 'stockfish-11',
-                                        label: 'Stockfish 11'
-                                    }
-                                ],
                             },
                             {
                                 key: 'engineDepth',
@@ -127,7 +135,6 @@ export class SettingsMenu {
                                 min: 2,
                                 max: 24,
                                 affectsPreset: 'engineStrength',
-                                visibleWhen: { key: 'engineStrength', value: 'custom' },
                             },
                             {
                                 key: 'maxMoveTime',
@@ -140,7 +147,6 @@ export class SettingsMenu {
                                 step: 1,
                                 format: (v) => (v >= 31 ? '∞' : `${v}s`),
                                 affectsPreset: 'engineStrength',
-                                visibleWhen: { key: 'engineStrength', value: 'custom' },
                             },
                             {
                                 key: 'engineThreads',
@@ -153,7 +159,6 @@ export class SettingsMenu {
                                 step: 1,
                                 format: (v) => v === 0 ? 'Auto' : String(v),
                                 affectsPreset: 'engineStrength',
-                                visibleWhen: { key: 'engineStrength', value: 'custom' },
                             },
                         ]
                     },
@@ -804,6 +809,14 @@ export class SettingsMenu {
         const currentValue = this.getSettingValue(settingKey) || config.defaultValue;
         
         config.options.forEach(option => {
+            // Check if this option should be visible based on conditions
+            if (option.visibleWhen) {
+                const conditionMet = this._checkVisibilityCondition(option.visibleWhen);
+                if (!conditionMet) {
+                    return; // Skip this option
+                }
+            }
+            
             const optionElement = document.createElement('option');
             optionElement.value = option.value;
             optionElement.textContent = option.label;
@@ -1627,8 +1640,61 @@ export class SettingsMenu {
             this._syncRelatedSettings([{ path, value }]);
         }
         
+        // Auto-switch to cloud preset when cloud engine is selected
+        if (settingKey === 'engineType' && value === 'cloud') {
+            const currentStrength = this.getSettingValue('engineStrength');
+            if (currentStrength !== 'cloud') {
+                // Switch to cloud preset
+                this._updateSettingUI('engineStrength', 'cloud');
+                this.saveSettingToCookie('engineStrength', 'cloud');
+                
+                // Apply cloud preset actions
+                const strengthConfig = this._findSettingConfig('engineStrength');
+                if (strengthConfig && strengthConfig.presetActions && strengthConfig.presetActions['cloud']) {
+                    strengthConfig.presetActions['cloud'].forEach(action => {
+                        const relatedConfig = this._findSettingConfig(action.key);
+                        if (relatedConfig) {
+                            this._updateSettingUI(action.key, action.value);
+                            this.saveSettingToCookie(action.key, action.value);
+                            if (relatedConfig.path) {
+                                this._updateChessboardSetting(relatedConfig.path, action.value);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        
+        // Auto-switch to fast preset when switching from cloud to any other engine
+        if (settingKey === 'engineType' && value !== 'cloud') {
+            const currentStrength = this.getSettingValue('engineStrength');
+            if (currentStrength === 'cloud') {
+                // Switch to fast preset
+                this._updateSettingUI('engineStrength', 'fast');
+                this.saveSettingToCookie('engineStrength', 'fast');
+                
+                // Apply fast preset actions
+                const strengthConfig = this._findSettingConfig('engineStrength');
+                if (strengthConfig && strengthConfig.presetActions && strengthConfig.presetActions['fast']) {
+                    strengthConfig.presetActions['fast'].forEach(action => {
+                        const relatedConfig = this._findSettingConfig(action.key);
+                        if (relatedConfig) {
+                            this._updateSettingUI(action.key, action.value);
+                            this.saveSettingToCookie(action.key, action.value);
+                            if (relatedConfig.path) {
+                                this._updateChessboardSetting(relatedConfig.path, action.value);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        
         // Update conditional visibility when a setting that others depend on changes
         this._updateConditionalVisibility(settingKey);
+        
+        // Re-render dropdowns that have conditional options
+        this._updateDropdownOptions(settingKey);
     }
 
     /**
@@ -1675,5 +1741,50 @@ export class SettingsMenu {
         this._updateSettingUI(presetKey, 'custom');
         // Save to cookie
         this.saveSettingToCookie(presetKey, 'custom');
+    }
+
+    /**
+     * Update dropdown options when conditions change
+     */
+    _updateDropdownOptions(changedKey) {
+        // Find all dropdowns that have options with visibility conditions dependent on changedKey
+        this._traverseSettings((settingKey, config) => {
+            if (config.type === 'dropdown' && config.options) {
+                // Check if any option has a visibleWhen condition on the changed key
+                const hasConditionalOptions = config.options.some(
+                    option => option.visibleWhen && option.visibleWhen.key === changedKey
+                );
+                
+                if (hasConditionalOptions) {
+                    // Re-render this dropdown
+                    const currentValue = this.getSettingValue(settingKey);
+                    const selectElement = this.container.querySelector(`[data-setting-key="${settingKey}"]`);
+                    
+                    if (selectElement && selectElement.tagName === 'SELECT') {
+                        // Clear existing options
+                        selectElement.innerHTML = '';
+                        
+                        // Rebuild options
+                        config.options.forEach(option => {
+                            // Check if this option should be visible
+                            if (option.visibleWhen) {
+                                const conditionMet = this._checkVisibilityCondition(option.visibleWhen);
+                                if (!conditionMet) {
+                                    return; // Skip this option
+                                }
+                            }
+                            
+                            const optionElement = document.createElement('option');
+                            optionElement.value = option.value;
+                            optionElement.textContent = option.label;
+                            if (option.value === currentValue) {
+                                optionElement.selected = true;
+                            }
+                            selectElement.appendChild(optionElement);
+                        });
+                    }
+                }
+            }
+        });
     }
 }
