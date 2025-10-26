@@ -236,7 +236,7 @@ export class SettingsMenu {
                                 type: 'toggle',
                                 label: 'Include Inaccuracies',
                                 description: 'Include inaccuracy moves in mistake learning mode',
-                                defaultValue: true,
+                                defaultValue: false,
                                 path: 'includeInaccuraciesInLearning'
                             },
                             {
