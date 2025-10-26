@@ -18,6 +18,11 @@ export class SettingsMenu {
         this.render();
         this.bindEvents();
         this.loadSettingsFromCookies();
+        
+        // Update conditional visibility after loading settings (with small delay to ensure DOM is ready)
+        setTimeout(() => {
+            this._updateConditionalVisibility('engineStrength');
+        }, 0);
     }
 
     /**
@@ -25,71 +30,229 @@ export class SettingsMenu {
      */
     _getDefaultSettingsConfig() {
         return {
-            'Board Appearance': {
+            'Engine & Quick Settings': {
                 settings: {
-                    'boardTheme': {
-                        type: 'visual-list',
-                        label: 'Board Theme',
-                        description: 'Choose your preferred board style',
-                        defaultValue: 'green',
-                        path: 'theme.boardColors',
-                        options: [
-                            { 
-                                value: 'classic', 
-                                label: 'Classic',
-                                preview: { type: 'board', light: '#f0d9b5', dark: '#b58863' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#f0d9b5' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#b58863' }
-                                ]
+                    'engineSettings': {
+                        type: 'group',
+                        label: 'Engine Settings',
+                        description: 'Engine settings',
+                        settings: [
+                            {
+                                key: 'engineType',
+                                type: 'dropdown',
+                                label: 'Engine Type',
+                                defaultValue: 'stockfish-17.1-lite',
+                                options: [
+                                    {
+                                        value: 'cloud',
+                                        label: '☁️ Cloud'
+                                    },
+                                    {
+                                        value: 'stockfish-17.1-lite',
+                                        label: 'Stockfish 17.1 Lite'
+                                    },
+                                    {
+                                        value: 'stockfish-17.1-nnue',
+                                        label: 'Stockfish 17.1 NNUE'
+                                    },
+                                    {
+                                        value: 'stockfish-16-lite',
+                                        label: 'Stockfish 16 Lite'
+                                    },
+                                    {
+                                        value: 'stockfish-11',
+                                        label: 'Stockfish 11'
+                                    }
+                                ],
                             },
-                            { 
-                                value: 'green', 
-                                label: 'Green',
-                                preview: { type: 'board', light: '#e0e0e0', dark: '#6ea176' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#e0e0e0' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#6ea176' }
-                                ]
+                            {
+                                key: 'engineStrength',
+                                type: 'dropdown',
+                                label: 'Strength',
+                                description: 'Quick presets for engine analysis strength',
+                                defaultValue: 'standard',
+                                options: [
+                                    {
+                                        value: 'cloud',
+                                        label: 'Cloud',
+                                        visibleWhen: { key: 'engineType', value: 'cloud' }
+                                    },
+                                    {
+                                        value: 'fast',
+                                        label: 'Fast'
+                                    },
+                                    {
+                                        value: 'standard',
+                                        label: 'Standard'
+                                    },
+                                    {
+                                        value: 'deep',
+                                        label: 'Deep'
+                                    },
+                                    {
+                                        value: 'maximum',
+                                        label: 'Maximum'
+                                    },
+                                    {
+                                        value: 'custom',
+                                        label: 'Custom'
+                                    }
+                                ],
+                                presetActions: {
+                                    'cloud': [
+                                        { key: 'engineDepth', value: 99 },
+                                        { key: 'maxMoveTime', value: 31 },
+                                        { key: 'engineThreads', value: 0 }
+                                    ],
+                                    'fast': [
+                                        { key: 'engineDepth', value: 9 },
+                                        { key: 'maxMoveTime', value: 31 },
+                                        { key: 'engineThreads', value: 0 }
+                                    ],
+                                    'standard': [
+                                        { key: 'engineDepth', value: 16 },
+                                        { key: 'maxMoveTime', value: 10 },
+                                        { key: 'engineThreads', value: 1 }
+                                    ],
+                                    'deep': [
+                                        { key: 'engineDepth', value: 20 },
+                                        { key: 'maxMoveTime', value: 16 },
+                                        { key: 'engineThreads', value: 2 }
+                                    ],
+                                    'maximum': [
+                                        { key: 'engineDepth', value: 24 },
+                                        { key: 'maxMoveTime', value: 30 },
+                                        { key: 'engineThreads', value: 3 }
+                                    ]
+                                }
                             },
-                            { 
-                                value: 'blue', 
-                                label: 'Blue',
-                                preview: { type: 'board', light: '#dee3e6', dark: '#8ca2ad' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#dee3e6' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#8ca2ad' }
-                                ]
+                            {
+                                key: 'engineDepth',
+                                type: 'slider',
+                                label: 'Engine Depth',
+                                description: 'Analysis depth for both main game and variations',
+                                defaultValue: 16,
+                                min: 2,
+                                max: 24,
+                                affectsPreset: 'engineStrength',
                             },
-                            { 
-                                value: 'purple', 
-                                label: 'Purple',
-                                preview: { type: 'board', light: '#e8e4f0', dark: '#9b7aa0' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#e8e4f0' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#9b7aa0' }
-                                ]
+                            {
+                                key: 'maxMoveTime',
+                                type: 'slider',
+                                label: 'Search Time',
+                                description: 'Limit engine search time per move (31 = ∞)',
+                                defaultValue: 10,
+                                min: 2,
+                                max: 31,
+                                step: 1,
+                                format: (v) => (v >= 31 ? '∞' : `${v}s`),
+                                affectsPreset: 'engineStrength',
                             },
-                            { 
-                                value: 'red', 
-                                label: 'Red',
-                                preview: { type: 'board', light: '#ffe6e6', dark: '#cc5555' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#ffe6e6' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#cc5555' }
-                                ]
+                            {
+                                key: 'engineThreads',
+                                type: 'slider',
+                                label: 'CPUs',
+                                description: 'Auto = detect automatically, 1 CPU = single-threaded, 2+ CPUs = multi-threaded (requires browser support)',
+                                defaultValue: 1,
+                                min: 0,
+                                max: 5,
+                                step: 1,
+                                format: (v) => v === 0 ? 'Auto' : String(v),
+                                affectsPreset: 'engineStrength',
                             },
-                            { 
-                                value: 'orange', 
-                                label: 'Orange',
-                                preview: { type: 'board', light: '#ffe6e6', dark: '#cd8042' },
-                                actions: [
-                                    { path: 'theme.boardLightSquareColor', value: '#ffe6e6' },
-                                    { path: 'theme.boardDarkSquareColor', value: '#cd8042' }
+                        ]
+                    },
+                    'quickToggles': {
+                        type: 'group',
+                        label: 'Quick Toggles',
+                        description: 'Quickly toggle settings',
+                        settings: [
+                            {
+                                key: 'showBestButton',
+                                type: 'toggle',
+                                label: 'Show Best Button',
+                                description: 'Show dedicated button for Show Best instead of quick menu',
+                                defaultValue: false,
+                                path: 'showBestButton'
+                            },
+                            {
+                                key: 'showBoardLabels',
+                                type: 'toggle',
+                                label: 'Show Board Labels',
+                                description: 'Display file and rank labels around the board',
+                                defaultValue: true,
+                                path: 'showBoardLabels'
+                            },
+                            {
+                                key: 'audioEnabled',
+                                type: 'toggle',
+                                label: 'Sound Effects',
+                                description: 'Play sounds for moves and captures',
+                                defaultValue: true,
+                                path: 'audioEnabled'
+                            },
+                            {
+                                key: 'showBestMoveArrows',
+                                type: 'toggle',
+                                label: 'Show Board Arrows',
+                                description: 'Display analysis arrows on the board',
+                                defaultValue: true,
+                                path: 'showBestMoveArrows'
+                            },
+                            {
+                                key: 'bestMoveArrowsMode',
+                                type: 'dropdown',
+                                label: 'Board Arrows Mode',
+                                description: 'Choose which analysis arrows to show',
+                                defaultValue: 'top-alternative',
+                                path: 'bestMoveArrowsMode',
+                                options: [
+                                    { value: 'top-alternative', label: 'Top Engine Move' },
+                                    { value: 'best-response', label: 'Best Response' },
+                                    { value: 'both', label: 'Both (Smart)' }
                                 ]
                             }
                         ]
-                    },
+                    }
+                },
+            },
+            'Learn Mode Settings': {
+                settings: {
+                    'learnModeSettings': {
+                        type: 'group',
+                        label: 'Learn Mode Settings',
+                        description: 'Configure learning mode behavior',
+                        settings: [
+                            {
+                                key: 'autoAdvanceToNextMistake',
+                                type: 'toggle',
+                                label: 'Move to next mistake automatically',
+                                description: 'Automatically move to next mistake after solving the current mistake',
+                                defaultValue: false,
+                                path: 'autoAdvanceToNextMistake'
+                            },
+                            {
+                                key: 'includeInaccuraciesInLearning',
+                                type: 'toggle',
+                                label: 'Include Inaccuracies',
+                                description: 'Include inaccuracy moves in mistake learning mode',
+                                defaultValue: false,
+                                path: 'includeInaccuraciesInLearning'
+                            },
+                            {
+                                key: 'enableConfetti',
+                                type: 'toggle',
+                                label: 'Enable Confetti',
+                                description: 'Show confetti animation when solving mistakes correctly',
+                                defaultValue: true,
+                                path: 'enableConfetti'
+                            }
+                        ]
+                    }
+                },
+            },
+            'Board Appearance': {
+                settings: {
                     'pieceTheme': {
                         type: 'visual-list',
                         label: 'Piece Set',
@@ -279,6 +442,87 @@ export class SettingsMenu {
                             }
                         ]
                     },
+                    'boardTheme': {
+                        type: 'visual-list',
+                        label: 'Board Theme',
+                        description: 'Choose your preferred board style',
+                        defaultValue: 'grey',
+                        path: 'theme.boardColors',
+                        options: [
+                            { 
+                                value: 'classic', 
+                                label: 'Classic',
+                                preview: { type: 'board', light: '#f0d9b5', dark: '#b58863' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#f0d9b5' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#b58863' }
+                                ]
+                            },
+                            { 
+                                value: 'green', 
+                                label: 'Green',
+                                preview: { type: 'board', light: '#e0e0e0', dark: '#6ea176' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#e0e0e0' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#6ea176' }
+                                ]
+                            },
+                            { 
+                                value: 'blue', 
+                                label: 'Blue',
+                                preview: { type: 'board', light: '#dee3e6', dark: '#8ca2ad' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#dee3e6' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#8ca2ad' }
+                                ]
+                            },
+                            { 
+                                value: 'purple', 
+                                label: 'Purple',
+                                preview: { type: 'board', light: '#e8e4f0', dark: '#9b7aa0' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#e8e4f0' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#9b7aa0' }
+                                ]
+                            },
+                            { 
+                                value: 'pink', 
+                                label: 'Pink',
+                                preview: { type: 'board', light: '#ffe8f0', dark: '#ff9cae' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#ffe8f0' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#ff9cae' }
+                                ]
+                            },
+                            { 
+                                value: 'red', 
+                                label: 'Red',
+                                preview: { type: 'board', light: '#ffe6e6', dark: '#cc5555' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#ffe6e6' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#cc5555' }
+                                ]
+                            },
+                            { 
+                                value: 'orange', 
+                                label: 'Orange',
+                                preview: { type: 'board', light: '#ffe6e6', dark: '#cd8042' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#ffe6e6' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#cd8042' }
+                                ]
+                            },
+                            { 
+                                value: 'grey', 
+                                label: 'Grey',
+                                preview: { type: 'board', light: '#c2c2c2', dark: '#7d7d7d' },
+                                actions: [
+                                    { path: 'theme.boardLightSquareColor', value: '#c2c2c2' },
+                                    { path: 'theme.boardDarkSquareColor', value: '#7d7d7d' }
+                                ]
+                            }
+                        ]
+                    },
                     'boardColors': {
                         type: 'group',
                         label: 'Custom Board Colors',
@@ -288,7 +532,7 @@ export class SettingsMenu {
                                 key: 'boardLightSquareColor',
                                 type: 'color',
                                 label: 'Light Squares',
-                                defaultValue: '#f0d9b5',
+                                defaultValue: '#c2c2c2',
                                 path: 'theme.boardLightSquareColor',
                                 preview: { target: '.color-preview-box' }
                             },
@@ -296,7 +540,7 @@ export class SettingsMenu {
                                 key: 'boardDarkSquareColor',
                                 type: 'color',
                                 label: 'Dark Squares',
-                                defaultValue: '#b58863',
+                                defaultValue: '#7d7d7d',
                                 path: 'theme.boardDarkSquareColor',
                                 preview: { target: '.color-preview-box' }
                             }
@@ -322,80 +566,6 @@ export class SettingsMenu {
                     // }
                 }
             },
-            'Engine & Quick Settings': {
-                settings: {
-                    'engineSettings': {
-                        type: 'group',
-                        label: 'Engine Settings',
-                        description: 'Engine settings',
-                        settings: [
-                            {
-                                key: 'engineType',
-                                type: 'dropdown',
-                                label: 'Engine Type',
-                                defaultValue: 'stockfish-17-lite',
-                                options: [
-                                    {
-                                        value: 'stockfish-17-lite',
-                                        label: 'Stockfish 17 Lite'
-                                    },
-                                    {
-                                        value: 'stockfish-16-nnue',
-                                        label: 'Stockfish 16 NNUE '
-                                    },
-                                    {
-                                        value: 'stockfish-16-lite',
-                                        label: 'Stockfish 16 Lite'
-                                    },
-                                    {
-                                        value: 'stockfish-11',
-                                        label: 'Stockfish 11'
-                                    }
-                                ],
-                            },
-                            {
-                                key: 'engineDepth',
-                                type: 'slider',
-                                label: 'Engine Depth',
-                                defaultValue: 14,
-                                min: 2,
-                                max: 24,
-                            },
-                            {
-                                key: 'variationEngineDepth',
-                                type: 'slider',
-                                label: 'Variation Engine Depth',
-                                defaultValue: 14,
-                                min: 2,
-                                max: 24,
-                            }
-                        ]
-                    },
-                    'quickToggles': {
-                        type: 'group',
-                        label: 'Quick Toggles',
-                        description: 'Quickly toggle settings',
-                        settings: [
-                            {
-                                key: 'showBoardLabels',
-                                type: 'toggle',
-                                label: 'Show Board Labels',
-                                description: 'Display file and rank labels around the board',
-                                defaultValue: true,
-                                path: 'showBoardLabels'
-                            },
-                            {
-                                key: 'audioEnabled',
-                                type: 'toggle',
-                                label: 'Sound Effects',
-                                description: 'Play sounds for moves and captures',
-                                defaultValue: true,
-                                path: 'audioEnabled'
-                            }
-                        ]
-                    }
-                }
-            }
         };
     }
 
@@ -467,6 +637,17 @@ export class SettingsMenu {
         settingDiv.className = 'setting-item';
         settingDiv.setAttribute('data-setting', settingKey);
         
+        // Handle conditional visibility
+        if (config.visibleWhen) {
+            const conditionMet = this._checkVisibilityCondition(config.visibleWhen);
+            if (!conditionMet) {
+                settingDiv.style.display = 'none';
+            }
+            // Store the visibility condition for dynamic updates
+            settingDiv.setAttribute('data-visible-when-key', config.visibleWhen.key);
+            settingDiv.setAttribute('data-visible-when-value', config.visibleWhen.value);
+        }
+        
         const label = document.createElement('div');
         label.className = 'setting-label';
         label.innerHTML = `
@@ -535,6 +716,17 @@ export class SettingsMenu {
             const subSettingDiv = document.createElement('div');
             subSettingDiv.className = 'setting-sub-item';
             subSettingDiv.setAttribute('data-setting', subConfig.key);
+            
+            // Handle conditional visibility for sub-items in groups
+            if (subConfig.visibleWhen) {
+                const conditionMet = this._checkVisibilityCondition(subConfig.visibleWhen);
+                if (!conditionMet) {
+                    subSettingDiv.style.display = 'none';
+                }
+                // Store the visibility condition for dynamic updates
+                subSettingDiv.setAttribute('data-visible-when-key', subConfig.visibleWhen.key);
+                subSettingDiv.setAttribute('data-visible-when-value', subConfig.visibleWhen.value);
+            }
             
             const subLabel = document.createElement('div');
             subLabel.className = 'setting-sub-label';
@@ -625,6 +817,14 @@ export class SettingsMenu {
         const currentValue = this.getSettingValue(settingKey) || config.defaultValue;
         
         config.options.forEach(option => {
+            // Check if this option should be visible based on conditions
+            if (option.visibleWhen) {
+                const conditionMet = this._checkVisibilityCondition(option.visibleWhen);
+                if (!conditionMet) {
+                    return; // Skip this option
+                }
+            }
+            
             const optionElement = document.createElement('option');
             optionElement.value = option.value;
             optionElement.textContent = option.label;
@@ -751,6 +951,33 @@ export class SettingsMenu {
     }
 
     /**
+     * Check if a visibility condition is met
+     */
+    _checkVisibilityCondition(condition) {
+        const currentValue = this.getSettingValue(condition.key);
+        return currentValue === condition.value;
+    }
+
+    /**
+     * Update visibility of conditionally shown settings
+     */
+    _updateConditionalVisibility(changedKey) {
+        const conditionalElements = this.container.querySelectorAll('[data-visible-when-key]');
+        conditionalElements.forEach(element => {
+            const conditionKey = element.getAttribute('data-visible-when-key');
+            if (conditionKey === changedKey) {
+                const conditionValue = element.getAttribute('data-visible-when-value');
+                const currentValue = this.getSettingValue(changedKey);
+                if (currentValue === conditionValue) {
+                    element.style.display = '';
+                } else {
+                    element.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    /**
      * Bind event listeners - optimized approach using event delegation
      */
     bindEvents() {
@@ -838,6 +1065,16 @@ export class SettingsMenu {
         const value = this._extractValueFromElement(element);
         
         if (settingKey && path) {
+            // Check if this setting affects a preset and switch to custom if needed
+            const config = this._findSettingConfig(settingKey);
+            if (config && config.affectsPreset && settingKey !== config.affectsPreset) {
+                // Switch to custom when individual engine setting is changed
+                const currentPreset = this.getSettingValue(config.affectsPreset);
+                if (currentPreset !== 'custom') {
+                    this._switchToCustomPreset(config.affectsPreset);
+                }
+            }
+            
             this._handleValueChange(settingKey, path, value, element);
         } else {
             console.warn('Missing settingKey or path for element:', element, {
@@ -1138,6 +1375,22 @@ export class SettingsMenu {
      * Update chessboard settings
      */
     _updateChessboardSetting(path, value) {
+        // Handle special case for show best button toggle
+        if (path === 'showBestButton') {
+            if (value === true || value === 'true') {
+                // Show the show-best button, hide skip-to-end and quick menu item
+                $('#show-best-btn').show();
+                $('#skip-to-end').hide();
+                $('#show-best').hide();
+            } else {
+                // Hide the show-best button, show skip-to-end and quick menu item
+                $('#show-best-btn').hide();
+                $('#skip-to-end').show();
+                $('#show-best').show();
+            }
+            return;
+        }
+        
         if (this.chessboard && this.chessboard.setOption) {
             this.chessboard.setOption(path, value);
         }
@@ -1211,6 +1464,44 @@ export class SettingsMenu {
                 
                 // Update default value for UI
                 config.defaultValue = savedValue;
+            }
+        });
+        
+        // Auto-detect presets after loading all settings
+        this._autoDetectPresets();
+    }
+
+    /**
+     * Auto-detect which preset matches current settings
+     */
+    _autoDetectPresets() {
+        this._traverseSettings((settingKey, config) => {
+            if (config.presetActions) {
+                const currentPreset = this.getSettingValue(settingKey);
+                
+                // If preset is not saved or is custom, try to detect matching preset
+                if (!currentPreset || currentPreset === 'custom') {
+                    // Check each preset to see if it matches current values
+                    for (const [presetValue, presetActions] of Object.entries(config.presetActions)) {
+                        const allMatch = presetActions.every(action => {
+                            const currentValue = this.getSettingValue(action.key);
+                            return currentValue === action.value;
+                        });
+                        
+                        if (allMatch) {
+                            // Found a matching preset, update it
+                            this.saveSettingToCookie(settingKey, presetValue);
+                            config.defaultValue = presetValue;
+                            return;
+                        }
+                    }
+                    
+                    // No preset matches, set to custom
+                    if (!currentPreset) {
+                        this.saveSettingToCookie(settingKey, 'custom');
+                        config.defaultValue = 'custom';
+                    }
+                }
             }
         });
     }
@@ -1336,7 +1627,24 @@ export class SettingsMenu {
         const config = this._findSettingConfig(settingKey);
         const option = this._findOptionByValue(config, value);
         
-        if (option && option.actions) {
+        // Handle preset actions (for engine strength presets)
+        if (config && config.presetActions && config.presetActions[value]) {
+            const presetActions = config.presetActions[value];
+            presetActions.forEach(action => {
+                // Update the related setting
+                const relatedConfig = this._findSettingConfig(action.key);
+                if (relatedConfig) {
+                    // Update UI
+                    this._updateSettingUI(action.key, action.value);
+                    // Save to cookie
+                    this.saveSettingToCookie(action.key, action.value);
+                    // Update chessboard if path exists
+                    if (relatedConfig.path) {
+                        this._updateChessboardSetting(relatedConfig.path, action.value);
+                    }
+                }
+            });
+        } else if (option && option.actions) {
             // Execute multiple actions (for board theme presets)
             option.actions.forEach(action => {
                 this._updateChessboardSetting(action.path, action.value);
@@ -1355,6 +1663,62 @@ export class SettingsMenu {
             // Sync related settings for single path update
             this._syncRelatedSettings([{ path, value }]);
         }
+        
+        // Auto-switch to cloud preset when cloud engine is selected
+        if (settingKey === 'engineType' && value === 'cloud') {
+            const currentStrength = this.getSettingValue('engineStrength');
+            if (currentStrength !== 'cloud') {
+                // Switch to cloud preset
+                this._updateSettingUI('engineStrength', 'cloud');
+                this.saveSettingToCookie('engineStrength', 'cloud');
+                
+                // Apply cloud preset actions
+                const strengthConfig = this._findSettingConfig('engineStrength');
+                if (strengthConfig && strengthConfig.presetActions && strengthConfig.presetActions['cloud']) {
+                    strengthConfig.presetActions['cloud'].forEach(action => {
+                        const relatedConfig = this._findSettingConfig(action.key);
+                        if (relatedConfig) {
+                            this._updateSettingUI(action.key, action.value);
+                            this.saveSettingToCookie(action.key, action.value);
+                            if (relatedConfig.path) {
+                                this._updateChessboardSetting(relatedConfig.path, action.value);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        
+        // Auto-switch to fast preset when switching from cloud to any other engine
+        if (settingKey === 'engineType' && value !== 'cloud') {
+            const currentStrength = this.getSettingValue('engineStrength');
+            if (currentStrength === 'cloud') {
+                // Switch to fast preset
+                this._updateSettingUI('engineStrength', 'fast');
+                this.saveSettingToCookie('engineStrength', 'fast');
+                
+                // Apply fast preset actions
+                const strengthConfig = this._findSettingConfig('engineStrength');
+                if (strengthConfig && strengthConfig.presetActions && strengthConfig.presetActions['fast']) {
+                    strengthConfig.presetActions['fast'].forEach(action => {
+                        const relatedConfig = this._findSettingConfig(action.key);
+                        if (relatedConfig) {
+                            this._updateSettingUI(action.key, action.value);
+                            this.saveSettingToCookie(action.key, action.value);
+                            if (relatedConfig.path) {
+                                this._updateChessboardSetting(relatedConfig.path, action.value);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        
+        // Update conditional visibility when a setting that others depend on changes
+        this._updateConditionalVisibility(settingKey);
+        
+        // Re-render dropdowns that have conditional options
+        this._updateDropdownOptions(settingKey);
     }
 
     /**
@@ -1374,6 +1738,77 @@ export class SettingsMenu {
             
             // Handle visual-list deselection when individual settings change
             this._handleVisualListDeselection(path, value);
+        });
+    }
+
+    /**
+     * Check if current values match a preset
+     */
+    _valuesMatchPreset(presetKey, presetValue) {
+        const presetConfig = this._findSettingConfig(presetKey);
+        if (!presetConfig || !presetConfig.presetActions || !presetConfig.presetActions[presetValue]) {
+            return true; // If no preset actions, assume it matches
+        }
+
+        const presetActions = presetConfig.presetActions[presetValue];
+        return presetActions.every(action => {
+            const currentValue = this.getSettingValue(action.key);
+            return currentValue === action.value;
+        });
+    }
+
+    /**
+     * Switch preset dropdown to "custom"
+     */
+    _switchToCustomPreset(presetKey) {
+        // Update UI
+        this._updateSettingUI(presetKey, 'custom');
+        // Save to cookie
+        this.saveSettingToCookie(presetKey, 'custom');
+    }
+
+    /**
+     * Update dropdown options when conditions change
+     */
+    _updateDropdownOptions(changedKey) {
+        // Find all dropdowns that have options with visibility conditions dependent on changedKey
+        this._traverseSettings((settingKey, config) => {
+            if (config.type === 'dropdown' && config.options) {
+                // Check if any option has a visibleWhen condition on the changed key
+                const hasConditionalOptions = config.options.some(
+                    option => option.visibleWhen && option.visibleWhen.key === changedKey
+                );
+                
+                if (hasConditionalOptions) {
+                    // Re-render this dropdown
+                    const currentValue = this.getSettingValue(settingKey);
+                    const selectElement = this.container.querySelector(`[data-setting-key="${settingKey}"]`);
+                    
+                    if (selectElement && selectElement.tagName === 'SELECT') {
+                        // Clear existing options
+                        selectElement.innerHTML = '';
+                        
+                        // Rebuild options
+                        config.options.forEach(option => {
+                            // Check if this option should be visible
+                            if (option.visibleWhen) {
+                                const conditionMet = this._checkVisibilityCondition(option.visibleWhen);
+                                if (!conditionMet) {
+                                    return; // Skip this option
+                                }
+                            }
+                            
+                            const optionElement = document.createElement('option');
+                            optionElement.value = option.value;
+                            optionElement.textContent = option.label;
+                            if (option.value === currentValue) {
+                                optionElement.selected = true;
+                            }
+                            selectElement.appendChild(optionElement);
+                        });
+                    }
+                }
+            }
         });
     }
 }

@@ -4,7 +4,7 @@ import { Classification } from "../../classification/MoveClassifier.js";
 export const IgnoredSuggestionTypes = [
     Classification.BRILLIANT.type,
     Classification.GREAT.type,
-    Classification.PERFECT.type,
+    Classification.BEST.type,
     Classification.THEORY.type,
     Classification.FORCED.type
 ];
@@ -37,17 +37,51 @@ export class MoveInformation {
 
         // Show placeholder when at the root node or have no move data
         if (!node || node.id === 'root' || !node.move) {
-            $("<div>").addClass("move-info-placeholder")
-                .text("Select a move to see its classification.")
-                .appendTo($moveInfo);
+            const $placeholder = $("<div>").addClass("move-info-placeholder");
+            
+            // Add brilliant icon
+            const brilliantClass = Classification.BRILLIANT;
+            if (brilliantClass?.cachedImg) {
+                const clone = brilliantClass.cachedImg.cloneNode(true);
+                $(clone).addClass("placeholder-icon").appendTo($placeholder);
+            } else {
+                $("<img>").addClass("placeholder-icon")
+                    .attr("src", brilliantClass.src)
+                    .attr("alt", "brilliant")
+                    .appendTo($placeholder);
+            }
+            
+            $("<span>").text("Select a move to see its classification.").appendTo($placeholder);
+            $placeholder.appendTo($moveInfo);
             return;
         }
 
         // Create container for move classification info
         const $moveInfoContainer = $("<div>").addClass("move-classification-info");
 
+	// If we have a move selected but classification isn't ready yet, show a loading message
+        if (!node.classification) {
+		const $analysing = $("<div>").addClass("move-info-placeholder");
+		
+		// Add great icon
+		const greatClass = Classification.GREAT;
+		if (greatClass?.cachedImg) {
+			const clone = greatClass.cachedImg.cloneNode(true);
+			$(clone).addClass("placeholder-icon").appendTo($analysing);
+		} else {
+			$("<img>").addClass("placeholder-icon")
+				.attr("src", greatClass.src)
+				.attr("alt", "great")
+				.appendTo($analysing);
+		}
+		
+		$("<span>").text("Analysing...").appendTo($analysing);
+		$analysing.appendTo($moveInfo);
+		return;
+	}
+
         // Add the current move classification if available
-        if (node.classification) {
+		if (node.classification) {
             const $moveInfoLine = $("<div>").addClass("classification-line");
 
             // Left side - classification and move
@@ -85,7 +119,7 @@ export class MoveInformation {
 
                         if (bestMoveUci) {
                             const san = MoveInformation.convertUCIToSAN(bestMoveUci, prevNode.fen);
-                            $("<div>").addClass("perfect-move-alternative")
+                            $("<div>").addClass("best-move-alternative")
                                 .text("Best was " + san)
                                 .appendTo($moveInfoLine);
                         }
@@ -93,10 +127,49 @@ export class MoveInformation {
                 }
             }
 
+            // Add evaluation score box
+            if (node.evalScore !== undefined) {
+                const isMate = node.evalType === 'mate';
+                let scoreText;
+                
+                if (isMate) {
+                    scoreText = (node.evalScore > 0) ? "M" + node.evalScore : "M" + Math.abs(node.evalScore);
+                } else {
+                    let evalValue = node.evalScore / 100;
+                    scoreText = evalValue > 0 ? "+" + evalValue.toFixed(2) : evalValue.toFixed(2);
+                }
+                
+                $("<div>").addClass("move-eval-score")
+                    .addClass(node.evalScore >= 0 ? "white-score" : "black-score")
+                    .text(scoreText)
+                    .appendTo($moveInfoLine);
+            }
+
             $moveInfoContainer.append($moveInfoLine);
         }
 
         // Add the container to the move-info div
         $moveInfo.append($moveInfoContainer);
+    }
+
+    /**
+     * Shows learning mode feedback in the move info box
+     * @param {string} message - The feedback message to display
+     * @param {boolean|null} isCorrect - True for correct, false for incorrect, null for neutral
+     */
+    static showLearningFeedback(message, isCorrect) {
+        const $moveInfo = $(".move-info").empty();
+        $moveInfo.removeClass('is-empty');
+
+        const feedbackClass = isCorrect === true ? 'learning-correct' : 
+                            isCorrect === false ? 'learning-incorrect' : 
+                            'learning-neutral';
+
+        const $feedback = $("<div>")
+            .addClass("learning-feedback")
+            .addClass(feedbackClass)
+            .html(message);
+
+        $moveInfo.append($feedback);
     }
 }

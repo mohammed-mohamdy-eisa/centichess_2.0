@@ -189,6 +189,7 @@ export class Chessboard {
 
 		// Game state
 		this.arrows = [];
+		this.bestMoveArrows = []; // [{ from, to, color }]
 		this.highlights = [];
 		this.squares = [];
 		this.events = {};
@@ -205,8 +206,8 @@ export class Chessboard {
 
 		this.settings = {
 			theme: {
-				boardLightSquareColor: 'rgba(224, 224, 224, 1)',
-				boardDarkSquareColor: 'rgba(110, 161, 118, 1)',
+				boardLightSquareColor: '#c2c2c2',
+				boardDarkSquareColor: '#7d7d7d',
 				boardBackgroundPath: '',
 				boardImageBackground: false,
 				pieceFoldersPath: 'assets/pieces/',
@@ -221,12 +222,14 @@ export class Chessboard {
 				justMovedColor: 'rgba(255, 208, 0, 0.36)',
 				highlightColor: 'rgba(255, 82, 82, 0.71)',
 				arrowColor: 'rgba(223, 145, 0, 0.59)',
+				alternativeColor: 'rgba(223, 145, 0, 0.59)',
+				bestColor: 'rgba(231, 76, 60, 0.59)',
 				droppableIndicatorColor: 'rgba(0, 0, 0, 0.15)',
 				droppableHoverBorderColor: 'rgba(255, 255, 255, 0.781)',
 				droppableHoverBorderWidth: '5px',
 				captureIndicatorSize: 'calc(1.1vmin)',
 				captureIndicatorColor: 'rgba(0, 0, 0, 0.15)',
-				draggedPieceScale: 1.1,
+				draggedPieceScale: 1.3,
 				hoverCursor: 'grab',
 				grabCursor: 'grabbing',
 				promotionPanelBackground: 'rgba(61, 61, 61, 0.75)',
@@ -260,7 +263,7 @@ export class Chessboard {
 			draggingEnabled: true,
 			clickingEnabled: true,
 
-			pieceDragThreshold: -1,
+			pieceDragThreshold: 5,
 			pieceClickThreshold: 40,
 
 			pieceAnimationDuration: 0.1,
@@ -1078,6 +1081,108 @@ export class Chessboard {
 	}
 
 	/**
+	 * Sets the best move arrow for the current position
+	 * @param {string} uciMove - UCI move notation (e.g., "e2e4")
+	 */
+	setBestMoveArrow(uciMove) {
+		if (!uciMove || uciMove.length < 4) {
+			this.clearBestMoveArrows();
+			return;
+		}
+
+		// Extract from and to squares
+		const fromSquare = uciMove.substring(0, 2);
+		const toSquare = uciMove.substring(2, 4);
+
+		// Convert to board indices
+		const fromIndex = this.algebraicToIndex(fromSquare, this.flipped);
+		const toIndex = this.algebraicToIndex(toSquare, this.flipped);
+
+		// Clear existing best move arrows and add new one (using bestColor for best response)
+		this.bestMoveArrows = [{ from: fromIndex, to: toIndex, color: this.settings.styling.bestColor, opacity: 0.85 }];
+		this._render();
+	}
+
+	/**
+	 * Adds an additional best move arrow with a custom color (used for top alternative).
+	 * @param {string} uciMove
+	 * @param {string} color
+	 */
+	addBestMoveArrow(uciMove, color = null, opacity = 0.85) {
+		if (!uciMove || uciMove.length < 4) return;
+		const fromSquare = uciMove.substring(0, 2);
+		const toSquare = uciMove.substring(2, 4);
+		const fromIndex = this.algebraicToIndex(fromSquare, this.flipped);
+		const toIndex = this.algebraicToIndex(toSquare, this.flipped);
+		this.bestMoveArrows.push({ from: fromIndex, to: toIndex, color: color || this.settings.styling.alternativeColor, opacity });
+		this._render();
+	}
+
+	/**
+	 * Clears all best move arrows
+	 */
+	clearBestMoveArrows() {
+		this.bestMoveArrows = [];
+		this._render();
+	}
+
+	/**
+	 * Highlights a specific square with a custom color
+	 * @param {string} square - Algebraic notation (e.g., "e4")
+	 * @param {string} color - CSS color value
+	 * @param {number} opacity - Opacity value (0-1)
+	 */
+	highlightSquare(square, color = '#710099', opacity = 0.59) {
+		const index = this.algebraicToIndex(square, this.flipped);
+		const squareElement = this.getSquare(index, this.flipped);
+		if (squareElement) {
+			// Add a highlight overlay
+			const overlay = document.createElement('div');
+			overlay.className = 'custom-highlight';
+			overlay.style.cssText = `
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-color: ${color};
+				opacity: ${opacity};
+				pointer-events: none;
+			`;
+			squareElement.appendChild(overlay);
+		}
+	}
+
+	/**
+	 * Clears all custom highlights
+	 */
+	clearHighlights() {
+		const highlights = document.querySelectorAll(`#squares-${this.id} .custom-highlight`);
+		highlights.forEach(h => h.remove());
+	}
+
+	/**
+	 * Adds a custom arrow between two squares
+	 * @param {string} from - Starting square in algebraic notation
+	 * @param {string} to - Ending square in algebraic notation
+	 * @param {string} color - Arrow color
+	 * @param {number} opacity - Arrow opacity
+	 */
+	addMoveArrow(from, to, color = '#d44242', opacity = 0.6) {
+		// Use the existing arrow system but with custom color
+		this.addBestMoveArrow(from + to, color, opacity);
+	}
+
+	/**
+	 * Checks if best move arrows should be shown based on settings
+	 * @returns {boolean}
+	 */
+	shouldShowBestMoveArrows() {
+		const settingValue = document.querySelector('#toggle-showBestMoveArrows');
+		return settingValue ? settingValue.checked : true;
+	}
+
+	/**
 	 * Toggles an arrow between two squares on the chessboard.
 	 * If an arrow already exists, it is removed; otherwise, it is added.
 	 *
@@ -1573,6 +1678,16 @@ export class Chessboard {
 			}
 		}
 		this._onResize();
+
+		// Listen for settings changes
+		document.addEventListener('change', (event) => {
+			if (event.target && event.target.id === 'toggle-showBestMoveArrows') {
+				this._render();
+			} else if (event.target && event.target.getAttribute('data-setting-key') === 'bestMoveArrowsMode') {
+				// Trigger arrow update when mode changes
+				this.emit('settingsChanged');
+			}
+		});
 	}
 
 	/**
@@ -1675,6 +1790,7 @@ export class Chessboard {
 		this.canvas.width = this.canvas.clientWidth;
 		this.canvas.height = this.canvas.clientHeight;
 
+		// Draw regular arrows
 		for (const [from, to] of this.arrows) {
 			this._drawArrow(
 				this.canvas, ctx,
@@ -1682,6 +1798,18 @@ export class Chessboard {
 				(from % 8) * squareSize + halfSquare, Math.floor(from / 8) * squareSize + halfSquare,
 				(to % 8) * squareSize + halfSquare, Math.floor(to / 8) * squareSize + halfSquare
 			);
+		}
+
+		// Draw best move arrows if enabled
+		if (this.shouldShowBestMoveArrows()) {
+			for (const arrow of this.bestMoveArrows) {
+				this._drawBestMoveArrow(
+					this.canvas, ctx,
+					(arrow.from % 8) * squareSize + halfSquare, Math.floor(arrow.from / 8) * squareSize + halfSquare,
+					(arrow.to % 8) * squareSize + halfSquare, Math.floor(arrow.to / 8) * squareSize + halfSquare,
+					arrow.color, arrow.opacity || 0.85
+				);
+			}
 		}
 	}
 
@@ -1734,6 +1862,54 @@ export class Chessboard {
 		const headLength = s / 16;
 		ctx.lineWidth = s / 48;
 		ctx.fillStyle = ctx.strokeStyle = this.settings.styling.arrowColor;
+
+		// If the move is knight move
+		const threshold = 0.05;
+		const knightRatio = Math.abs((fromX - toX) / (fromY - toY));
+		const length = Math.sqrt((toX - fromX) ** 2 + (toY - fromY) ** 2);
+		if ((length / s < 0.35) && 
+			(Math.abs(knightRatio - 0.5) < threshold || 
+				Math.abs(knightRatio - 2) < threshold)) {
+			return this._drawKnightArrow(ctx, fromX, fromY, toX, toY, s, headLength);
+		}
+
+		const f = 0.865 * headLength;
+		const angle = Math.atan2(toY - fromY, toX - fromX);
+		const xOff = f * Math.cos(angle);
+		const yOff = f * Math.sin(angle);
+
+		const x1 = fromX + (s / 22) * Math.cos(angle);
+		const y1 = fromY + (s / 22) * Math.sin(angle);
+		const x2 = toX - xOff;
+		const y2 = toY - yOff;
+		
+		ctx.beginPath();
+		ctx.moveTo(x1, y1);
+		ctx.lineTo(x2, y2);
+		ctx.stroke();
+
+		this._drawArrowhead(ctx, toX, toY, angle, headLength);
+	}
+
+	/**
+	 * Draws a best move arrow on the chessboard canvas.
+	 * @private
+	 * @param {HTMLCanvasElement} canvas The canvas element.
+	 * @param {CanvasRenderingContext2D} ctx The canvas context.
+	 * @param {number} fromX The starting x-coordinate.
+	 * @param {number} fromY The starting y-coordinate.
+	 * @param {number} toX The ending x-coordinate.
+	 * @param {number} toY The ending y-coordinate.
+	 */
+	_drawBestMoveArrow(canvas, ctx, fromX, fromY, toX, toY, color = '#2ecc71', opacity = 0.85) {
+		if (!canvas || !ctx) return;
+		
+		const s = canvas.width;
+		const headLength = s / 16;
+		ctx.lineWidth = s / 48; // Match orange arrow style exactly
+		// Apply opacity to color if it's an rgba string
+		const finalColor = color.includes('rgba') ? color : color + Math.floor(opacity * 255).toString(16).padStart(2, '0');
+		ctx.fillStyle = ctx.strokeStyle = finalColor; // Color per arrow type
 
 		// If the move is knight move
 		const threshold = 0.05;
@@ -1912,8 +2088,10 @@ export class Chessboard {
 
 		event.preventDefault();
 
+
+
 		if (event.type === 'touchstart' || event.button === 0) {
-			this._startDrag(square, event);
+			this._startDrag(square);
 		}
 	}
 
@@ -1967,10 +2145,25 @@ export class Chessboard {
 	}
 
 	/**
+	 * Detects if the current device is a mobile device
+	 * @private
+	 * @returns {boolean} True if device is mobile
+	 */
+	_isMobileDevice() {
+		return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+			|| (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+	}
+
+	/**
 	 * @private
 	 */
-	_startDrag(square, event) {
+	_startDrag(square) {
 		if (!this.settings.isInteractive || this.isDestroyed) return;
+
+		// Disable dragging on mobile devices
+		if (this._isMobileDevice()) {
+			return;
+		}
 
 		const index = this.getSquareIndex(square);
 		const legalDestinations = this._getLegalDestinations(index);
@@ -1993,9 +2186,6 @@ export class Chessboard {
 
 		this.dragPiece = square.firstChild;
 		this.startDragIndex = index;
-
-		const { x, y } = this._getEventCoordinates(event);
-		this._continueDrag(x, y);
 
 		// Add document listeners for dragging outside board
 		['mousemove', 'touchmove'].forEach(type => this._addTrackedEventListener(document, type, this.boundDocumentMouseMove, { passive: false }));
@@ -2604,7 +2794,7 @@ export class Chessboard {
 			'width': s.classificationSize,
 			'height': s.classificationSize,
 			'transform': `translate(${s.classificationOffsetX}, ${s.classificationOffsetY})`,
-			'z-index': '11',
+			'z-index': '100',
 			'pointer-events': 'none'
 		});
 

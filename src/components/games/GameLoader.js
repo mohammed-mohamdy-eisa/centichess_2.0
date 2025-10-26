@@ -130,6 +130,7 @@ export class GameLoader {
             const blackAvatar = avatarSupport ? this.fetchPlayerAvatar(pgnData.black) : undefined;
 
             return {
+                platform,
                 username: username,
                 pgn: game.pgn,
                 result: pgnData.result || '*',
@@ -178,6 +179,7 @@ export class GameLoader {
         const username = white || black;
 
         return {
+            platform: Platform.PGN,
             username: username,
             pgn: pgn,
             result: pgnData.result || '*',

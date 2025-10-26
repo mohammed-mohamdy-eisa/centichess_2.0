@@ -18,6 +18,7 @@ import { Classification } from '../classification/MoveClassifier.js';
 import { SidebarOverlay } from './report/SidebarOverlay.js';
 import { GameClassifier } from '../classification/GameClassifier.js';
 import { SettingsMenu } from './settings/SettingsMenu.js';
+import { MistakeLearner } from './training/MistakeLearner.js';
 
 /**
  * Manages UI interactions and board state
@@ -35,11 +36,11 @@ export class ChessUI {
         // Load the board with settings from cookies
         this.board = new Chessboard("#chessboard", {
             theme: {
-                boardDarkSquareColor: this.settingsMenu.getSettingValue('theme.boardDarkSquareColor') || 'rgba(110, 161, 118, 1)',
-                boardLightSquareColor: this.settingsMenu.getSettingValue('theme.boardLightSquareColor') || 'rgba(224, 224, 224, 1)',
+                boardDarkSquareColor: this.settingsMenu.getSettingValue('boardDarkSquareColor') || '#7d7d7d',
+                boardLightSquareColor: this.settingsMenu.getSettingValue('boardLightSquareColor') || '#c2c2c2',
                 pieceFolderName: this.settingsMenu.getSettingValue('pieceTheme') || 'cburnett'
             },
-            showBoardLabels: this.settingsMenu.getSettingValue('theme.boardLabels') === 'letter' || true
+            showBoardLabels: this.settingsMenu.getSettingValue('boardLabels') === 'letter' || this.settingsMenu.getSettingValue('boardLabels') === true
         }, this.chess);
 
         this.settingsMenu.init(this.board);
@@ -48,6 +49,7 @@ export class ChessUI {
         this.moveTree = new MoveTree();
         this.moveNavigator = new MoveNavigator(this);
         this.evaluationQueue = new EvaluationQueue(this.settingsMenu);
+        this.mistakeLearner = new MistakeLearner(this);
 
         this.gamesList = new GamesList();
 
@@ -76,6 +78,38 @@ export class ChessUI {
         
         // Initialize clocks to default state
         Clock.resetClocks();
+
+        // Listen for board settings changes to update arrows instantly
+        this.board.on('settingsChanged', () => {
+            if (this.moveTree && this.moveTree.currentNode) {
+                this.moveNavigator.updateBoardArrows(this.moveTree.currentNode);
+            }
+        });
+    }
+
+    /**
+     * Format engine name for display
+     * @param {string} engineType - Raw engine type (e.g., "stockfish-17.1-nnue")
+     * @returns {string} Formatted engine name (e.g., "Stockfish 17.1 NNUE")
+     */
+    formatEngineName(engineType) {
+        if (!engineType) return 'Stockfish';
+        
+        // Convert "stockfish-17.1-nnue" to "Stockfish 17.1 NNUE"
+        // Convert "stockfish-17.1-lite" to "Stockfish 17.1 Lite"
+        const parts = engineType.split('-');
+        
+        // Capitalize first part (engine name)
+        const engineName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+        
+        // Join the rest with spaces and capitalize appropriately
+        const rest = parts.slice(1).map(part => {
+            if (part === 'nnue') return '';
+            if (part === 'lite') return 'Lite';
+            return part;
+        }).join(' ');
+        
+        return rest ? `${engineName} ${rest}` : engineName;
     }
 
     async load(game) {
@@ -92,9 +126,17 @@ export class ChessUI {
         // Set initial clocks before analysis starts
         Clock.setInitialClocks(this.moveTree, this.game.pgn);
 
+        const engineType = this.settingsMenu.getSettingValue('engineType');
+        const engineDepth = this.settingsMenu.getSettingValue('engineDepth') || 16;
+        const maxMoveTime = this.settingsMenu.getSettingValue('maxMoveTime') || 5;
+        const engineThreads = this.settingsMenu.getSettingValue('engineThreads') ?? 0;
+
+        // Format engine name for display (e.g., "stockfish-17.1-nnue" -> "Stockfish 17.1 NNUE")
+        const engineName = this.formatEngineName(engineType);
+
         SidebarOverlay.show();
         SidebarOverlay.startFactCycling();
-        SidebarOverlay.updateEvaluationProgress(0);
+        SidebarOverlay.updateEvaluationProgress(0, engineName);
 
         this.board.fen(this.moveTree.mainline[0].fen);
 
@@ -108,15 +150,25 @@ export class ChessUI {
         $('.tab-content, .bottom-content').addClass('blur-content');
         this.board.setOption({ isInteractive: false });
 
-        const engineType = this.settingsMenu.getSettingValue('engineType');
-        const engineDepth = this.settingsMenu.getSettingValue('engineDepth') || 14;
+        // Wire up cancel button for analysis overlay
+        $('#cancel-analysis').off('click').on('click', () => {
+            try {
+                MoveEvaluator.cancelActiveAnalysis();
+            } catch (_) {}
+            $('.analysis-overlay').removeClass('active');
+            $('.tab-content, .bottom-content').removeClass('blur-content');
+            SidebarOverlay.cleanup(); // Cleanup scroll lock and state
+            this.board.setOption({ isInteractive: true });
+        });
 
         const analysis = await MoveEvaluator.analyzeGame(
             this.game, 
-            (progress) => {
-                SidebarOverlay.updateEvaluationProgress(progress);
+            (progress, dynamicEngineName) => {
+                // Use dynamic engine name if provided (includes fallback status), otherwise use initial name
+                const displayName = dynamicEngineName || engineName;
+                SidebarOverlay.updateEvaluationProgress(progress, displayName);
             },
-            { engineType, engineDepth }
+            { engineType, engineDepth, maxMoveTime, engineThreads }
         );
 
         this.board.setOption({ isInteractive: true });
@@ -137,12 +189,45 @@ export class ChessUI {
         GameGraph.setAnalysis(analysis);
         GameStats.render('.game-stats', analysis, game.white.name, game.black.name);
 
+        // Wire up the "Learn from Mistakes" button
+        $('#learn-from-mistakes').off('click').on('click', () => {
+            this.mistakeLearner.start();
+        });
+
+        // Wire up the "Start Review" button
+        $('#start-review').off('click').on('click', () => {
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Navigate to the first move
+            if (this.moveTree.mainline.length > 1) {
+                const firstMove = this.moveTree.mainline[1]; // mainline[0] is root
+                this.moveNavigator.handleTreeNodeClick(firstMove);
+            }
+        });
+
         this.moveTree.render('move-tree', (node) => {
             this.moveNavigator.handleTreeNodeClick(node);
         });
 
         $('.analysis-overlay').removeClass('active');
         $('.tab-content, .bottom-content').removeClass('blur-content');
+
+        // Scroll to show tab buttons after analysis completes
+        setTimeout(() => {
+            const sidebarHeader = document.querySelector('.sidebar-header');
+            const header = document.querySelector('.header');
+            if (sidebarHeader) {
+                const headerHeight = header ? header.offsetHeight : 0;
+                const elementPosition = sidebarHeader.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = elementPosition - headerHeight - 10; // 10px extra padding
+                
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        }, 500); // Wait for overlay fade-out and UI updates to complete
 
         // Initialize clocks
         Clock.updateFromMoveTree(this.moveTree, this.board.flipped, this.game?.pgn);

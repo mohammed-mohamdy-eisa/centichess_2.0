@@ -7,7 +7,7 @@ export const ClasifCss = {
 	MOVE_THEORY: "theory-move",
     MOVE_BRILLIANT: "brilliant-move",
     MOVE_GREAT: "great-move",
-    MOVE_PERFECT: "perfect-move",
+    MOVE_BEST: "best-move",
     MOVE_EXCELLENT: "excellent-move",
     MOVE_GOOD: "good-move",
     MOVE_INACCURACY: "inaccuracy-move",
@@ -24,7 +24,7 @@ export const Classification = {
         class: ClasifCss.MOVE_BRILLIANT,
         accuracy: 1,
         comment: "is a brilliant move!",
-        color: "#14e6e6"
+        color: "#26c2a3" // var(--color-classification-brilliant) → var(--color-aqua-300)
     },
     GREAT: {
         type: "great",
@@ -32,15 +32,15 @@ export const Classification = {
         class: ClasifCss.MOVE_GREAT,
         accuracy: 1,
         comment: "is a great move!",
-        color: "#38a5ff"
+        color: "#749bbf" // var(--color-classification-great) → var(--color-slate-300)
     },
-    PERFECT: {
-        type: "perfect",
-        src: "/assets/classifications/perfect.svg",
-        class: ClasifCss.MOVE_PERFECT,
+    BEST: {
+        type: "best",
+        src: "/assets/classifications/best.svg",
+        class: ClasifCss.MOVE_BEST,
         accuracy: 1,
-        comment: "is perfect.",
-        color: "#7bcc18"
+        comment: "is the best move.",
+        color: "#81b64c" // var(--color-classification-best) → var(--color-green-300)
     },
     EXCELLENT: {
         type: "excellent",
@@ -48,7 +48,7 @@ export const Classification = {
         class: ClasifCss.MOVE_EXCELLENT,
         accuracy: 0.9,
         comment: "is an excellent move.",
-        color: "#7bcc18"
+        color: "#81b64c" // var(--color-classification-excellent) → var(--color-green-300)
     },
     GOOD: {
         type: "good",
@@ -56,7 +56,7 @@ export const Classification = {
         class: ClasifCss.MOVE_GOOD,
         accuracy: 0.7,
         comment: "is a good move.",
-        color: "#088a28"
+        color: "#95b776" // not explicit var in classification, but matches var(--color-green-400)
     },
     THEORY: {
         type: "theory",
@@ -64,7 +64,7 @@ export const Classification = {
         class: ClasifCss.MOVE_THEORY,
         accuracy: 1,
         comment: "is theory.",
-        color: "#e09d0d"
+        color: "#d5a47d" // var(--color-classification-book) → var(--color-skin-300). Theory and book share color in chess.com/lichess
     },
     INACCURACY: {
         type: "inaccuracy",
@@ -72,7 +72,7 @@ export const Classification = {
         class: ClasifCss.MOVE_INACCURACY,
         accuracy: 0.4,
         comment: "is an inaccuracy.",
-        color: "#ddd015"
+        color: "#f7c631" // var(--color-classification-inaccuracy) → var(--color-gold-200)
     },
     MISTAKE: {
         type: "mistake",
@@ -80,7 +80,7 @@ export const Classification = {
         class: ClasifCss.MOVE_MISTAKE,
         accuracy: 0.2,
         comment: "is a mistake.",
-        color: "#e5820d"
+        color: "#ffa459" // var(--color-classification-mistake) → var(--color-orange-200)
     },
     BLUNDER: {
         type: "blunder",
@@ -88,7 +88,7 @@ export const Classification = {
         class: ClasifCss.MOVE_BLUNDER,
         accuracy: 0,
         comment: "was a blunder!",
-        color: "#d44242"
+        color: "#fa412d" // var(--color-classification-blunder) → var(--color-red-300)
     },
     FORCED: {
         type: "forced",
@@ -96,15 +96,15 @@ export const Classification = {
         class: ClasifCss.MOVE_FORCED,
         accuracy: 1,
         comment: "was forced.",
-        color: "#088a28"
+        color: "#5d9948" // var(--color-classification-forced) → var(--color-green-400)
     },
     MISS: {
         type: "miss",
         src: "/assets/classifications/miss.svg",
         class: ClasifCss.MOVE_MISS,
-        accuracy: 0,
-        comment: "was a miss.",
-        color: "#d44242"
+        accuracy: 0.1,
+        comment: "missed a great opportunity.",
+        color: "#ff7769" // var(--color-classification-miss)
     }
 };
 
@@ -122,7 +122,7 @@ export const CommentType = {
 export class MoveClassifier {
     // Classification types with no special rules
     static centipawnClassifications = [
-        Classification.PERFECT,
+        Classification.BEST,
         Classification.EXCELLENT,
         Classification.GOOD,
         Classification.INACCURACY,
@@ -143,7 +143,7 @@ export class MoveClassifier {
     // Evaluation loss threshold for excellent in a previously equal position is 30
     // These numbers are from the Game Report github repo by Wintrcat
     static evalLossThresholds = {
-        [Classification.PERFECT.type]: (prevEval) => Math.max(0.0001 * Math.pow(Math.abs(prevEval), 2) + 0.0236 * Math.abs(prevEval) - 3.7143, 0),
+        [Classification.BEST.type]: (prevEval) => Math.max(0.0001 * Math.pow(Math.abs(prevEval), 2) + 0.0236 * Math.abs(prevEval) - 3.7143, 0),
         [Classification.EXCELLENT.type]: (prevEval) => Math.max(0.0002 * Math.pow(Math.abs(prevEval), 2) + 0.1231 * Math.abs(prevEval) + 27.5455, 0),
         [Classification.GOOD.type]: (prevEval) => Math.max(0.0002 * Math.pow(Math.abs(prevEval), 2) + 0.2643 * Math.abs(prevEval) + 60.5455, 0),
         [Classification.INACCURACY.type]: (prevEval) => Math.max(0.0002 * Math.pow(Math.abs(prevEval), 2) + 0.3624 * Math.abs(prevEval) + 108.0909, 0),
@@ -512,7 +512,7 @@ export class MoveClassifier {
         if (!bestLine) {
             const board = new Chess(move.fen);
             if (board.isCheckmate()) {
-                classification = Classification.PERFECT;
+                classification = Classification.BEST;
                 move.commentType = CommentType.WON;
                 move.graph = isBlack ? 0 : 100;
                 move.win = 100;
@@ -527,7 +527,7 @@ export class MoveClassifier {
                     if (board.isThreefoldRepetition() && !board.inCheck() && absEval > 0) {
                         classification = Classification.BLUNDER;
                     } else {
-                        classification = Classification.PERFECT;
+                        classification = Classification.BEST;
                     }
                 }
             }
@@ -556,8 +556,9 @@ export class MoveClassifier {
             move.graph = (bestLine.score > 0) ? 0 : 100;
         }
         
-        // No second computer line means no other line exists (the move is forced)
-        if (!prevSecondLine) {
+        // Forced move check (Wintrchess approach): only 1 legal move in previous position
+        const prevBoard = new Chess(previous.fen);
+        if (prevBoard.moves().length <= 1) {
             classification = Classification.FORCED;
             move.classification = classification;
             move.commentType = CommentType.FORCED;
@@ -591,7 +592,7 @@ export class MoveClassifier {
 
         // If the move matches the top computer move already we can skip the rest
         if (move.uciMove === prevBestLine.uciMove) {
-            classification = Classification.PERFECT;
+            classification = Classification.BEST;
         } else {
             if (noMate) {
                 // Standard move evaluation
@@ -603,7 +604,7 @@ export class MoveClassifier {
                 move.commentData = { mateIn: absEval }
                 if (absEval > 0) {
                     // Comment: Nothing you can do about it.
-                    classification = Classification.PERFECT;
+                    classification = Classification.BEST;
                     move.commentType = CommentType.GOT_MATED;
                 } else if (absEval >= -2) {
                     // Comment: Missing mate in 2 is a blunder.
@@ -624,7 +625,7 @@ export class MoveClassifier {
             else if (prevBestLine.type == "mate" && bestLine.type == "cp") {
                 move.commentType = CommentType.MISS;
                 if (prevAbsEval < 0 && absEval < 0) {
-                    classification = Classification.PERFECT;
+                    classification = Classification.BEST;
                 } else if (absEval >= 400) {
                     classification = Classification.GOOD;
                 } else if (absEval >= 200) {
@@ -645,7 +646,7 @@ export class MoveClassifier {
                     } else if (absEval < 0) {
                         classification = Classification.BLUNDER;
                     } else if (absEval < prevAbsEval) {
-                        classification = Classification.PERFECT;
+                        classification = Classification.BEST;
                     } else if (absEval <= prevAbsEval + 2) {
                         classification = Classification.EXCELLENT;
                     } else {
@@ -653,7 +654,7 @@ export class MoveClassifier {
                     }
                 } else {
                     if (absEval == prevAbsEval) {
-                        classification = Classification.PERFECT;
+                        classification = Classification.BEST;
                     } else {
                         classification = Classification.GOOD;
                     }
@@ -682,7 +683,7 @@ export class MoveClassifier {
         }
 
         // The second 'great' move check
-        if (prevSecondLine && classification === Classification.PERFECT && noMate) {
+        if (prevSecondLine && classification === Classification.BEST && noMate) {
             // Was this move the only good move compared to the next two options?
             const evalDiff = Math.abs(prevBestLine.score - prevSecondLine.score);
 
@@ -700,7 +701,7 @@ export class MoveClassifier {
         }
 
         const secondAbsEval = secondLine.score * (isBlack ? 1 : -1);
-        if (classification === Classification.PERFECT || classification === Classification.GREAT || classification === Classification.EXCELLENT) {
+        if (classification === Classification.BEST || classification === Classification.GREAT || classification === Classification.EXCELLENT) {
             // If the position is already overwhelmingly winning (e.g. mate scenarios or huge centipawn advantage)
             const winningAnyways = (secondAbsEval >= 900 && bestLine.type == "cp") || 
                                    (bestLine.type == "mate" && secondLine.type == "mate");
@@ -726,7 +727,7 @@ export class MoveClassifier {
                     const movedPiece = lastBoard.get(move.uciMove.slice(0, 2));
                     if (movedPiece && this.isDamageControlMove(movedPiece, sacrificedPieces, move.uciMove, previous.fen)) {
                         // This is damage control, not a brilliant sacrifice
-                        classification = Classification.PERFECT;
+                        classification = Classification.BEST;
                         sacrificedPieces = [];
 
                     } else {
@@ -735,9 +736,9 @@ export class MoveClassifier {
 
                         move.commentData = { piecesViablyCapturable };
 
-                        // If no sacrificed piece can be safely captured, revert to PERFECT
+                        // If no sacrificed piece can be safely captured, revert to BEST
                         if (piecesViablyCapturable.length === 0) {
-                            classification = Classification.PERFECT;
+                            classification = Classification.BEST;
                             sacrificedPieces = sacrificedPieces.filter(piece => piece.square !== move.uciMove.slice(2, 4));
                         }
                     }
@@ -751,6 +752,37 @@ export class MoveClassifier {
         if (classification == Classification.BLUNDER && (prevOppositeWin > 80 || prevOppositeWin < 20) && (win > 80 || win < 20)) {
             classification = Classification.INACCURACY;
             move.commentType = CommentType.STILL_WINNING;
+        }
+
+        // Chess.com Miss detection: failing to capitalize on opponent's mistake
+        // Check if opponent made a significant mistake (not forced/theory) and we failed to punish it
+        if (moves.length >= 2) {
+            const opponentPrevMove = moves[moves.length - 2];
+            
+            // Check if opponent made a mistake/blunder/inaccuracy
+            const opponentMadeMistake = opponentPrevMove && 
+                (opponentPrevMove.classification === Classification.MISTAKE ||
+                 opponentPrevMove.classification === Classification.BLUNDER ||
+                 opponentPrevMove.classification === Classification.INACCURACY);
+            
+            if (opponentMadeMistake && noMate) {
+                // Calculate if we had a winning opportunity but didn't take it
+                // Opponent's mistake should have given us an advantage
+                const prevPrevBestLine = opponentPrevMove.lines?.find(line => line.id === 1);
+                if (prevPrevBestLine) {
+                    // Calculate what our advantage should have been after opponent's mistake
+                    const expectedAdvantage = prevAbsEval; // Advantage after their mistake
+                    
+                    // If we had a significant advantage (>200cp or winning position) but now it's gone
+                    if (Math.abs(expectedAdvantage) > 200 && Math.abs(absEval) < 100) {
+                        // Check if we're not already classified as mistake/blunder
+                        if (classification === Classification.GOOD || classification === Classification.EXCELLENT) {
+                            classification = Classification.MISS;
+                            move.commentType = CommentType.MISS;
+                        }
+                    }
+                }
+            }
         }
 
         // Store the classification on the move object for reference

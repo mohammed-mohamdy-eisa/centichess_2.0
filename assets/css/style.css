@@ -4,51 +4,184 @@
 
 :root {
     /* Board Colors */
-    --theme-light: #e0e0e0;
-    --theme-dark: #6ea176;
+    --theme-light: #c2c2c2;
+    --theme-dark: #7d7d7d;
     
     /* Layout */
-    --board-scale: 80;
+    --board-scale: 75;
     
     /* Effects */
     --shadow-1: 0 2px 5px rgba(0, 0, 0, 0.15);
     --transition-1: 0.25s ease-in-out;
     
     /* Base Colors */
-    --pure-white: #ffffff;
+    --pure-white: #e0e0e0;
     --pure-black: #000000;
     
     /* Classification Colors */
-    --brilliant-cyan: #14e6e6;
-    --great-blue: #38a5ff;
-    --excellent-green: #7bcc18;
-    --good-green: #66a576;
-    --forced-green: #66a576;
-    --inaccuracy-yellow: #ddd015;
-    --mistake-orange: #e5820d;
-    --blunder-red: #d44242;
-    --miss-red: #d44242;
-    --theory-yellow: #e09d0d;
+    --color-classification-brilliant: var(--color-aqua-300);
+    --color-classification-great: var(--color-slate-300);
+    --color-classification-best: var(--color-green-300);
+    --color-classification-excellent: var(--color-green-300);
+    --color-classification-book: var(--color-skin-300);
+    --color-classification-inaccuracy: var(--color-gold-200);
+    --color-classification-mistake: var(--color-orange-200);
+    --color-classification-miss: #ff7769;
+    --color-classification-blunder: var(--color-red-300);
+    --color-classification-forced: var(--color-green-400);
+    
+    /* Color Palette */
+    --color-green-25: #f6ffe3;
+    --color-green-50: #f3ffcf;
+    --color-green-75: #ebffbd;
+    --color-green-100: #d8fa9d;
+    --color-green-200: #b2e068;
+    --color-green-300: #81b64c;
+    --color-green-400: #5d9948;
+    --color-green-500: #45753c;
+    --color-green-600: #305730;
+    --color-green-700: #204227;
+    --color-aqua-25: #eafffa;
+    --color-aqua-50: #ddfff5;
+    --color-aqua-75: #ccffec;
+    --color-aqua-100: #adfbd8;
+    --color-aqua-200: #62f6ca;
+    --color-aqua-300: #26c2a3;
+    --color-aqua-400: #109888;
+    --color-aqua-500: #10777c;
+    --color-aqua-600: #09505f;
+    --color-aqua-700: #073745;
+    --color-blue-25: #cef5ff;
+    --color-blue-50: #b2f0ff;
+    --color-blue-75: #83defc;
+    --color-blue-100: #4dc3ea;
+    --color-blue-200: #009fd9;
+    --color-blue-300: #008cd1;
+    --color-blue-400: #0069ab;
+    --color-blue-500: #0b548c;
+    --color-blue-600: #083a66;
+    --color-blue-700: #072a4f;
+    --color-slate-25: #faffff;
+    --color-slate-50: #f2fcff;
+    --color-slate-75: #e5f6ff;
+    --color-slate-100: #d0e6fb;
+    --color-slate-200: #aed0f0;
+    --color-slate-300: #749bbf;
+    --color-slate-400: #486688;
+    --color-slate-500: #324660;
+    --color-slate-600: #263242;
+    --color-slate-700: #1e2533;
+    --color-purple-25: #f6edff;
+    --color-purple-50: #e8dbff;
+    --color-purple-75: #d5c6ff;
+    --color-purple-100: #c9acff;
+    --color-purple-200: #9881f2;
+    --color-purple-300: #7a66f4;
+    --color-purple-400: #5e53d9;
+    --color-purple-500: #303d8a;
+    --color-purple-600: #212e5d;
+    --color-purple-700: #152243;
+    --color-fuchsia-25: #ffd4d4;
+    --color-fuchsia-50: #ffb5b9;
+    --color-fuchsia-75: #ff949d;
+    --color-fuchsia-100: #ff788a;
+    --color-fuchsia-200: #fa466a;
+    --color-fuchsia-300: #ed2456;
+    --color-fuchsia-400: #c4144f;
+    --color-fuchsia-500: #940c45;
+    --color-fuchsia-600: #610734;
+    --color-fuchsia-700: #49052d;
+    --color-vibrant-purple-100: #f464ff;
+    --color-vibrant-purple-200: #c636ff;
+    --color-vibrant-purple-300: #c200ff;
+    --color-vibrant-purple-400: #9900cc;
+    --color-vibrant-purple-500: #710099;
+    --color-vibrant-purple-600: #4c0066;
+    --color-vibrant-purple-700: #330044;
+    --color-red-25: #ffe0ca;
+    --color-red-50: #ffcbb2;
+    --color-red-75: #ffb196;
+    --color-red-100: #ff8a75;
+    --color-red-200: #ff6352;
+    --color-red-300: #fa412d;
+    --color-red-400: #e02828;
+    --color-red-500: #ad1f24;
+    --color-red-600: #881822;
+    --color-red-700: #631018;
+    --color-orange-25: #fffbda;
+    --color-orange-50: #fff3c2;
+    --color-orange-75: #ffe5a8;
+    --color-orange-100: #ffd591;
+    --color-orange-200: #ffa459;
+    --color-orange-300: #fa742c;
+    --color-orange-400: #dc501d;
+    --color-orange-500: #a93616;
+    --color-orange-600: #7a1a0b;
+    --color-orange-700: #610808;
+    --color-gold-25: #ffffc7;
+    --color-gold-50: #fff599;
+    --color-gold-75: #fce26a;
+    --color-gold-100: #fad541;
+    --color-gold-200: #f7c631;
+    --color-gold-300: #e3aa24;
+    --color-gold-400: #cf8d1b;
+    --color-gold-500: #b27314;
+    --color-gold-600: #99580e;
+    --color-gold-700: #7a4414;
+    --color-brown-25: #fffef5;
+    --color-brown-50: #fbf7ec;
+    --color-brown-75: #fbf3d8;
+    --color-brown-100: #fbebc1;
+    --color-brown-200: #f9d983;
+    --color-brown-300: #e2b664;
+    --color-brown-400: #ca9350;
+    --color-brown-500: #9d6c3e;
+    --color-brown-600: #6a4632;
+    --color-brown-700: #543426;
+    --color-skin-25: #fffce8;
+    --color-skin-50: #fff3d4;
+    --color-skin-75: #fbe7c4;
+    --color-skin-100: #fadaae;
+    --color-skin-200: #e3c29c;
+    --color-skin-300: #d5a47d;
+    --color-skin-400: #8d694b;
+    --color-skin-500: #6b4d3a;
+    --color-skin-600: #543f34;
+    --color-skin-700: #4a352e;
+    --color-neutrals-white: #fff;
+    --color-neutrals-black: #000;
+    --color-gray-75: #f8f8f8;
+    --color-gray-100: #f1f1f1;
+    --color-gray-200: #e7e6e5;
+    --color-gray-300: #dad8d6;
+    --color-gray-400: #bebdb9;
+    --color-gray-500: #8b8987;
+    --color-gray-600: #666564;
+    --color-gray-700: #4b4847;
+    --color-gray-800: #312e2b;
+    --color-gray-900: #262421;
     
     /* Classification Background Gradients */
-    --theory-bg-start: #b19000a9;
-    --theory-bg-end: #4d3500;
-    --brilliant-bg-start: #1ac9c9bd;
-    --brilliant-bg-end: #1ac9c9bd;
-    --great-bg-start: #149ff077;
-    --great-bg-end: #2881c593;
-    --excellent-bg-start: #7ac91abd;
-    --excellent-bg-end: #7fd8127a;
-    --forced-bg-start: #7ec7a8ab;
-    --forced-bg-end: #6da451;
-    --good-bg-start: #2db3338a;
-    --good-bg-end: #6da451;
-    --inaccuracy-bg-start: #cfaa15ce;
-    --inaccuracy-bg-end: #e8ba02;
-    --mistake-bg-start: #ff8c007c;
-    --mistake-bg-end: #e5820d;
-    --blunder-bg-start: #c73120ad;
-    --blunder-bg-end: #cf3120;
+    --theory-bg-start: rgba(213, 164, 125, 0.7);
+    --theory-bg-end: rgba(107, 77, 58, 0.9);
+    --brilliant-bg-start: rgba(38, 194, 163, 0.7);
+    --brilliant-bg-end: rgba(16, 119, 124, 0.8);
+    --great-bg-start: rgba(116, 155, 191, 0.6);
+    --great-bg-end: rgba(72, 102, 136, 0.8);
+    --excellent-bg-start: rgba(129, 182, 76, 0.7);
+    --excellent-bg-end: rgba(69, 117, 60, 0.9);
+    --forced-bg-start: rgba(129, 182, 76, 0.6);
+    --forced-bg-end: rgba(48, 87, 48, 0.9);
+    --good-bg-start: rgba(129, 182, 76, 0.6);
+    --good-bg-end: rgba(48, 87, 48, 0.9);
+    --inaccuracy-bg-start: rgba(247, 198, 49, 0.7);
+    --inaccuracy-bg-end: rgba(227, 170, 36, 0.9);
+    --mistake-bg-start: rgba(255, 164, 89, 0.6);
+    --mistake-bg-end: rgba(250, 116, 44, 0.9);
+    --miss-bg-start: rgba(255, 119, 105, 0.7);
+    --miss-bg-end: rgba(255, 87, 69, 0.9);
+    --blunder-bg-start: rgba(250, 65, 45, 0.7);
+    --blunder-bg-end: rgba(173, 31, 36, 0.9);
     
     /* Social Media Colors */
     --youtube-red: #f77e7e;
@@ -68,7 +201,7 @@
     --eval-bar-black: #070707;
     --eval-white-text: #070707;
     --eval-black-text: #ffffff;
-    --engine-progress: #3579af;
+    --engine-progress: #f0f0f0;
     
     /* Generic Grays */
     --gray-50: #f9f9f9;
@@ -86,51 +219,51 @@
     --hover-light: rgba(255, 255, 255, 0.15);
     --hover-dark: rgba(0, 0, 0, 0.1);
     --hover-button: #454545;
-    --hover-accent: #0081cc;
+    --hover-accent: #e8e8e8;
     
     /* Alpha Colors */
     --evaluation-pending-bg: rgba(0, 0, 0, 0.05);
     --section-border: rgba(255, 255, 255, 0.1);
     --transparent-bg: rgba(0, 0, 0, 0);
-    --light-btn-shadow: rgba(46, 181, 214, 0.2);
-    --light-btn-bg-alpha: rgba(46, 181, 214, 0.1);
-    --light-btn-border-alpha: rgba(46, 181, 214, 0.5);
+    --light-btn-shadow: rgba(240, 240, 240, 0.2);
+    --light-btn-bg-alpha: rgba(240, 240, 240, 0.1);
+    --light-btn-border-alpha: rgba(240, 240, 240, 0.5);
 }
 
 /* Dark Theme Variables */
 body.dark_theme {
     /* Background Colors */
-    --bg-primary: hsl(0, 0%, 7%);
-    --bg-secondary: hsl(0, 0%, 12%);
-    --bg-accent: #1818188a;
+    --bg-primary: #000000;
+    --bg-secondary: #000000;
+    --bg-accent: rgba(255, 255, 255, 0);
     
-    --sidebar-base: #2d2d2d;
-    --sidebar-inner-base: #3a3a3a;
-    --turn-bg: #363636;
-    --sidebar-inactive: #363636;
-    --stats-label: #acacac;
-    --stats-divider: #555555;
+    --sidebar-base: #0d0d0d;
+    --sidebar-inner-base: #121212;
+    --turn-bg: #111111;
+    --sidebar-inactive: #0f0f0f;
+    --stats-label: #8a8a8a;
+    --stats-divider: #2a2a2a;
     
     /* Text Colors */
     --text-primary: #fff;
-    --text-secondary: #aaa;
+    --text-secondary: #8a8a8a;
     --color-primary: hsl(0, 0%, 100%);
     --color-secondary: hsl(0, 0%, 62%);
     
     /* Button Colors */
-    --light-btn: #2c689b;
-    --light-btn-hover: #2c689b;
-    --btn-secondary: #363636;
-    --selected-blue: #4885bb9f;
+    --light-btn: #5c5c5c;
+    --light-btn-hover: #6b6b6b;
+    --btn-secondary: #1a1a1a;
+    --selected-blue: #f0f0f049;
     
     /* Scrollbar Colors */
-    --scrollbar: #333;
-    --scroll-thumb: #555;
+    --scrollbar: #141414;
+    --scroll-thumb: #2a2a2a;
     
     /* Accent Colors */
-    --light-cyan: hsl(204, 83%, 60%);
-    --lighter-cyan: hsl(194, 95%, 54%);
-    --dark-cyan: hsl(202, 96%, 47%);
+    --light-cyan: hsl(0, 0%, 95%);
+    --lighter-cyan: hsl(0, 0%, 98%);
+    --dark-cyan: hsl(0, 0%, 90%);
     
     /* Base Colors */
     --black: hsl(0, 0%, 0%);
@@ -139,17 +272,17 @@ body.dark_theme {
     
     /* Form Elements */
     --card-shadow: hsla(0, 0%, 0%, 0.4);
-    --input-bg: hsl(0, 0%, 16%);
+    --input-bg: #151515;
     
     /* Dark Theme Specific Colors */
-    --dark-surface-1: #2e2e2e;
-    --dark-surface-2: #424242;
-    --dark-border: rgba(255, 255, 255, 0.1);
-    --dark-border-hover: rgba(255, 255, 255, 0.3);
-    --dark-text-muted: #7e7e7e;
-    --dark-overlay: rgba(39, 39, 39, 0.849);
-    --analysis-bg: rgba(255, 255, 255, 0.1);
-    --analysis-progress-bg: #222222;
+    --dark-surface-1: #111111;
+    --dark-surface-2: #1a1a1a;
+    --dark-border: rgba(255, 255, 255, 0.06);
+    --dark-border-hover: rgba(255, 255, 255, 0.18);
+    --dark-text-muted: #6e6e6e;
+    --dark-overlay: rgba(0, 0, 0, 0.85);
+    --analysis-bg: rgba(255, 255, 255, 0.06);
+    --analysis-progress-bg: #111111;
     --analysis-text: #ddd;
     --game-result-light-bg: #f0f0f0;
     --game-result-light-text: #333;
@@ -157,12 +290,24 @@ body.dark_theme {
     --game-result-dark-text: #f0f0f0;
     --engine-white-bg: #e9e9e9;
     --engine-white-text: #333;
-    --engine-black-bg: #444;
+    --engine-black-bg: #1e1e1e;
     --engine-black-text: #fff;
-    --move-pending-text: #bbb;
-    --toggle-border: rgba(255, 255, 255, 0.1);
+    --move-pending-text: #888;
+    --toggle-border: rgba(255, 255, 255, 0.08);
     --toggle-thumb: white;
-    --nameplate-bg: #3a3a3a;
+    --nameplate-bg: #121212;
+
+    /* Darker gray scale overrides for dark theme */
+    --gray-50: #0a0a0a;
+    --gray-100: #121212;
+    --gray-200: #181818;
+    --gray-300: #1f1f1f;
+    --gray-400: #262626;
+    --gray-500: #2e2e2e;
+    --gray-600: #3a3a3a;
+    --gray-700: #474747;
+    --gray-800: #555555;
+    --gray-900: #666666;
 }
 
 /*===================================*\
@@ -183,7 +328,7 @@ html, body {
     background-color: var(--bg-primary);
     padding: 0;
     box-sizing: border-box;
-    font-family: "Jost", sans-serif;
+    font-family: "Roboto", sans-serif;
     font-optical-sizing: auto;
     scroll-behavior: smooth;
 
@@ -267,7 +412,6 @@ select {
 
 .logo a {
     color: var(--color-primary);
-    font-family: var(--ff-poppins);
     font-size: 22px;
 }
 
@@ -396,6 +540,14 @@ select {
     padding-top: 70px;
 }
 
+/* Chess wrapper to contain move-info and chess-container */
+.chess-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+
 /* Chess Box Layout */
 .chess-box {
     display: flex;
@@ -451,13 +603,13 @@ select {
 .profile-picture {
     width: 30px;
     height: 30px;
-    padding-left: 10px;
 }
 
 .profile {
     display: flex;
     align-items: center;
     gap: 10px;
+    padding-left: 15px;
 }
 
 .name {
@@ -480,7 +632,7 @@ select {
 }
 
 .clock-time {
-    font-family: 'Jost', sans-serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
@@ -769,7 +921,7 @@ select {
     padding: 15px;
     flex: 1;
     overflow-y: auto;
-    font-family: "Jost", sans-serif;
+    font-family: "Roboto", sans-serif;
     line-height: 1.5;
     background-color: var(--sidebar-inner-base);
     border-radius: 8px;
@@ -818,6 +970,10 @@ select {
     position: relative;
 }
 
+.turn:nth-child(odd) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
 .variation {
     margin-left: 20px; /* Indentation for variations */
     margin-bottom: 10px;
@@ -836,6 +992,7 @@ select {
     align-items: center;
     margin: 0 4px;
     position: relative;
+    min-width: 40%;
 }
 
 .move-container {
@@ -873,7 +1030,6 @@ select {
 
 .move-container:hover {
     background-color: var(--hover-light);
-    transform: translateY(-1px);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -887,7 +1043,6 @@ select {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 1px;
     margin: 0;
     border-radius: 4px;
     font-weight: 500;
@@ -903,12 +1058,11 @@ select {
 }
 
 .current-move {
-    color: var(--perm-white) !important;
     font-weight: 600;
 }
 
 .current-container {
-    background-color: var(--light-btn);
+    background-color:  var(--hover-light);
     font-weight: 600;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -924,49 +1078,120 @@ select {
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
-/* Add some highlighting for move quality */
-.move[data-node-id*="brilliant"],
-.brilliant-move {
-	color: var(--brilliant-cyan);
+/* Add some highlighting for move quality - scoped to moves container only */
+.moves-container .move[data-node-id*="brilliant"],
+.moves-container .brilliant-move {
+	color: var(--color-classification-brilliant);
 }
 
-.move[data-node-id*="great"],
-.great-move {
-    color: var(--great-blue);
+.moves-container .move[data-node-id*="great"],
+.moves-container .great-move {
+    color: var(--color-classification-great);
 }
 
-.move[data-node-id*="perfect"],
-.move[data-node-id*="excellent"],
-.perfect-move,
-.excellent-move {
-    color: var(--excellent-green);
+.moves-container .move[data-node-id*="best"],
+.moves-container .move[data-node-id*="excellent"],
+.moves-container .best-move,
+.moves-container .excellent-move {
+    color: var(--pure-white);
 }
 
-.move[data-node-id*="good"],
-.good-move,
-.forced-move {
-    color: var(--good-green);
+.moves-container .move[data-node-id*="good"],
+.moves-container .good-move,
+.moves-container .forced-move {
+    color: var(--pure-white);
 }
 
-.move[data-node-id*="inaccuracy"],
-.inaccuracy-move {
-    color: var(--inaccuracy-yellow);
+.moves-container .move[data-node-id*="inaccuracy"],
+.moves-container .inaccuracy-move {
+    color: var(--color-classification-inaccuracy);
 }
 
-.move[data-node-id*="mistake"],
-.mistake-move {
-    color: var(--mistake-orange);
+.moves-container .move[data-node-id*="mistake"],
+.moves-container .mistake-move {
+    color: var(--color-classification-mistake);
 }
 
-.move[data-node-id*="blunder"],
-.move[data-node-id*="miss"],
-.blunder-move,
-.miss-move {
-    color: var(--blunder-red);
+.moves-container .move[data-node-id*="miss"],
+.moves-container .miss-move {
+    color: var(--color-classification-miss);
 }
 
-.theory-move {
-    color: var(--theory-yellow);
+.moves-container .move[data-node-id*="blunder"],
+.moves-container .blunder-move {
+    color: var(--color-classification-blunder);
+}
+
+.moves-container .theory-move {
+    color: var(--pure-white);
+}
+
+/* Move icon after text in moves-container only */
+.moves-container .move-container {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.moves-container .move-icon {
+    margin-right: 0;
+    margin-left: 5px;
+}
+
+/* Hide move icons for specific classifications in moves-container only */
+.moves-container .best-container .move-icon,
+.moves-container .excellent-container .move-icon,
+.moves-container .theory-container .move-icon,
+.moves-container .forced-container .move-icon,
+.moves-container .good-container .move-icon {
+    display: none;
+}
+
+/* Move classification colors for everywhere else (outside moves container) */
+.move[data-node-id*="brilliant"]:not(.moves-container .move),
+.brilliant-move:not(.moves-container .brilliant-move) {
+	color: var(--color-classification-brilliant);
+}
+
+.move[data-node-id*="great"]:not(.moves-container .move),
+.great-move:not(.moves-container .great-move) {
+    color: var(--color-classification-great);
+}
+
+.move[data-node-id*="best"]:not(.moves-container .move),
+.move[data-node-id*="excellent"]:not(.moves-container .move),
+.best-move:not(.moves-container .best-move),
+.excellent-move:not(.moves-container .excellent-move) {
+    color: var(--color-classification-excellent);
+}
+
+.move[data-node-id*="good"]:not(.moves-container .move),
+.good-move:not(.moves-container .good-move),
+.forced-move:not(.moves-container .forced-move) {
+    color: var(--color-classification-forced);
+}
+
+.move[data-node-id*="inaccuracy"]:not(.moves-container .move),
+.inaccuracy-move:not(.moves-container .inaccuracy-move) {
+    color: var(--color-classification-inaccuracy);
+}
+
+.move[data-node-id*="mistake"]:not(.moves-container .move),
+.mistake-move:not(.moves-container .mistake-move) {
+    color: var(--color-classification-mistake);
+}
+
+.move[data-node-id*="miss"]:not(.moves-container .move),
+.miss-move:not(.moves-container .miss-move) {
+    color: var(--color-classification-miss);
+}
+
+.move[data-node-id*="blunder"]:not(.moves-container .move),
+.blunder-move:not(.moves-container .blunder-move) {
+    color: var(--color-classification-blunder);
+}
+
+.theory-move:not(.moves-container .theory-move) {
+    color: var(--color-classification-book);
 }
 
 
@@ -989,7 +1214,7 @@ select {
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-family: "Jost", sans-serif;
+    font-family: "Roboto", sans-serif;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -1021,6 +1246,15 @@ select {
     box-shadow: none;
 }
 
+.controls button:disabled {
+    background-color: var(--btn-secondary);
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    pointer-events: none;
+}
+
 /* Make the quick menu button slightly wider */
 .quick-menu-container button {
     min-width: 60px;
@@ -1040,7 +1274,7 @@ select {
     max-width: 4.5vh;
     max-height: 4.5vh;
     transform: translate(min(8vw, 8vh), max(-1.8vw, -1.8vh));
-    z-index: 11;
+    z-index: 100000;
     pointer-events: none;
 }
 
@@ -1061,7 +1295,7 @@ select {
 	background-image: linear-gradient(var(--great-bg-start) 100%, var(--great-bg-end) 50%);
 }
 
-.board-classification.perfect-move,
+.board-classification.best-move,
 .board-classification.excellent-move {
 	background-image: linear-gradient(var(--excellent-bg-start) 100%, var(--excellent-bg-end) 0%);
 }
@@ -1082,7 +1316,10 @@ select {
 	background-image: linear-gradient(var(--mistake-bg-start) 100%, var(--mistake-bg-end) 50%);
 }
 
-.board-classification.miss-move,
+.board-classification.miss-move {
+	background-image: linear-gradient(var(--miss-bg-start) 100%, var(--miss-bg-end) 50%);
+}
+
 .board-classification.blunder-move {
 	background-image: linear-gradient(var(--blunder-bg-start) 100%, var(--blunder-bg-end) 50%);
 }
@@ -1165,7 +1402,7 @@ select {
     flex-direction: column;
     gap: 6px;
     width: 100%;
-    font-family: "Jost", sans-serif;
+    font-family: "Roboto", sans-serif;
     max-width: 100%;
 }
 
@@ -1193,7 +1430,7 @@ select {
 }
 
 .white-score {
-    background-color: var(--engine-white-bg);
+    background-color: var(--pure-white);
     color: var(--engine-white-text);
 }
 
@@ -1267,7 +1504,13 @@ select {
     border-radius: 8px;
     margin: 15px 15px 0 15px;
     box-shadow: var(--shadow-1);
+    min-height: auto;
+    padding-bottom: 10px;
+}
+
+.engine-lines:not(.collapsed) {
     min-height: 160px;
+    padding-bottom: 10px;
 }
 
 .section-title {
@@ -1280,6 +1523,19 @@ select {
     letter-spacing: 0.5px;
     display: flex;
     align-items: center;
+}
+
+.section-title.clickable-title {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin: -6px -8px 10px -8px;
+}
+
+.section-title.clickable-title:hover {
+    background-color: var(--hover-dark);
 }
 
 /* Engine lines title and waiting message */
@@ -1298,6 +1554,32 @@ select {
 
 .engine-lines-title.no-evaluation::before {
     background-color: #999;
+}
+
+.engine-lines-collapse-button {
+    margin-left: auto;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.engine-lines-collapse-button:hover {
+    background-color: var(--hover-dark);
+}
+
+.engine-lines-collapse-button svg {
+    width: 12px;
+    height: 12px;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+}
+
+.engine-lines-collapse-button:hover svg {
+    color: var(--text-primary);
 }
 
 .engine-depth {
@@ -1353,43 +1635,77 @@ select {
 }
 
 /* Move Information Display */
+/* Bubble styling for the move-info positioned outside chess-container */
 .move-info {
-    padding: 5px;
-    background-color: var(--sidebar-inner-base);
-    border-radius: 8px;
+    background-color: var(--engine-white-bg);
+    color: var(--engine-white-text);
+    border-radius: 15px;
     box-shadow: var(--shadow-1);
+    padding: 12px;
+    margin: 0 0 8px 0;
+    position: relative;
+    min-width: 80%;
+    min-height: 20px;
+    text-align: left;
+    font-weight: 500;
+    align-self: center;
+}
+
+.move-info-placeholder {
     display: flex;
-    justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+}
+
+.placeholder-icon {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.move-info::after {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: 5%;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid var(--engine-white-bg);
 }
 
 .classification-line {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 10px;
 }
 
 .move-left-side {
     display: flex;
     align-items: center;
+    flex: 0 1 auto;
 }
 
-.perfect-move-alternative {
+.best-move-alternative {
     font-style: italic;
     color: var(--text-secondary);
-    margin-left: auto;
-    text-align: right;
     font-size: 14px;
 }
 
-.move-info-placeholder {
-    color: var(--text-secondary);
-    font-style: italic;
+.move-eval-score {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    padding: 4px 6px;
+    /* min-width: 50px; */
+    border-radius: 3px;
     text-align: center;
-    width: 100%;
-    padding: 8px;
+    font-size: x-small;
+    flex-shrink: 0;
+    margin-left: auto;
 }
 
 
@@ -1407,7 +1723,7 @@ select {
     width: 100%;
     height: 100%;
     background-color: var(--dark-overlay);
-    z-index: 21;
+    z-index: 24;
     display: none;
     align-items: center;
     justify-content: center;
@@ -1416,6 +1732,13 @@ select {
 
 .analysis-overlay.active {
     display: flex;
+}
+
+/* Lock scroll when overlay is active (applied via JS on mobile) */
+body.lock-scroll {
+    overflow: hidden;
+    height: 100vh;
+    touch-action: none;
 }
 
 .board-overlay {
@@ -1441,6 +1764,11 @@ select {
     width: 80%;
     max-width: 350px;
     z-index: 21;
+    height: 350px;
+}
+
+.analysis-content #cancel-analysis {
+    background-color: var(--btn-secondary);
 }
 
 .analysis-content h2 {
@@ -1490,13 +1818,15 @@ select {
     color: var(--analysis-text);
     transition: opacity 0.3s ease;
     opacity: 1;
+    cursor: pointer;
+    user-select: none;
 }
 
 .game-graph {
     padding: 0px;
     background-color: #ffffff00;
     overflow: hidden;
-    height: 130px;
+    height: 100px;
 }
 
 #game-analysis-graph {
@@ -1581,7 +1911,6 @@ select {
         width: max-content;
         margin-inline: auto;
         color: var(--color-primary);
-        font-family: var(--ff-poppins);
         font-size: 18px;
     }
 
@@ -1616,16 +1945,17 @@ select {
 @media (max-width: 1280px) {
     .main-panel {
         flex-direction: column;
+        padding-top: 70px;
     }
 
     .sidebar {
         width: calc(var(--board-scale) * 1vmin + 30px);
         max-width: calc(var(--board-scale) * 1vw + 30px);
         margin: 0 auto;
-        height: 92vh;
-        max-height: 92vh;
+        height: auto;
+        max-height: calc(92vh - 70px);
         flex-direction: column;
-        padding-bottom: 100px; /* Add space for sticky nav */
+        padding-bottom: 80px; /* Add space for sticky nav */
     }
 
     .bottom-content {
@@ -1644,9 +1974,9 @@ select {
     }
 
     .controls {
-        max-width: calc(calc(var(--board-scale) * 1vw) + 30px);
         margin: 0 auto;
         gap: 8px;
+        max-width: calc(var(--board-scale) * 1vmin);
     }
 
     .controls button {
@@ -1665,8 +1995,15 @@ select {
     }
     
     .moves-container {
-        overflow-y: visible;
+        overflow-y: auto;
         overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        max-height: calc(100% - 120px);
+    }
+    
+    .tab-content {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 }
 
@@ -1674,16 +2011,17 @@ select {
 @media (max-width: 768px) {
     .main-panel {
         flex-direction: column;
+        padding-top: 70px;
     }
 
     .sidebar {
         width: calc(var(--board-scale) * 1vmin + 30px);
         max-width: calc(var(--board-scale) * 1vw + 30px);
         margin: 0 auto;
-        height: 92vh;
-        max-height: 92vh;
+        height: auto;
+        max-height: calc(92vh - 70px);
         flex-direction: column;
-        padding-bottom: 100px;
+        padding-bottom: 80px;
     }
 
     .bottom-content {
@@ -1702,9 +2040,9 @@ select {
     }
 
     .controls {
-        max-width: calc(calc(var(--board-scale) * 1vw) + 30px);
         margin: 0 auto;
         gap: 8px;
+        max-width: calc(var(--board-scale) * 1vmin);
     }
 
     .controls button {
@@ -1723,8 +2061,10 @@ select {
     }
     
     .moves-container {
-        overflow-y: visible;
+        overflow-y: auto;
         overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        max-height: calc(100% - 120px);
     }
 
     /* Quick menu responsive adjustments */
@@ -1834,7 +2174,6 @@ select {
     }
 
     .controls {
-        max-width: calc(calc(var(--board-scale) * 1vw) + 30px);
         margin: 0 auto;
         gap: 8px;
         padding-bottom: 10px;
@@ -1919,6 +2258,16 @@ select {
         width: 14px;
         height: 14px;
     }
+
+    /* Learning actions container mobile adjustments */
+    .learning-actions {
+        order: -1; /* Place at the top of sidebar on mobile */
+        margin-top: 16px;
+    }
+    
+    .learning-actions-counter {
+        margin-top: 5px; /* Remove large top margin on mobile */
+    }
 }
 
 /* Game Stats Styles */
@@ -1931,10 +2280,11 @@ select {
 
 .stats-comparison {
     color: var(--color-primary);
-    font-family: 'Jost', sans-serif;
+    font-family: 'Roboto', sans-serif;
     background-size: cover;
     background-position: center;
     border-radius: 0;
+    margin-bottom: 20px;
 }
 
 .stats-players {
@@ -1948,6 +2298,10 @@ select {
     flex: 1;
     text-align: center;
     font-weight: 700;
+    max-width: 15ch; /* Limit to ~15 characters */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .stats-label {
@@ -1975,11 +2329,18 @@ select {
 .stats-count {
     flex: 1;
     text-align: center;
-    font-weight: 600;
+    font-family: 'Jost', sans-serif;
+    font-weight: 700;
     font-size: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.stats-move[style*="cursor: pointer"] {
+    transition: all 0.2s ease;
 }
 
 .stats-icon {
@@ -2004,11 +2365,12 @@ select {
 .stats-box {
     flex: 1;
     text-align: center;
+    font-family: 'Jost', sans-serif;
     color: #1a1a1a;
     background-color: #dddddd;
     border-radius: 4px;
-    font-weight: 600;
-    padding: 2px 0;
+    font-weight: 700;
+    font-size: larger;
 }
 
 .stats-box.black {
@@ -2019,6 +2381,55 @@ select {
 .stats-divider {
     border: 1px solid var(--stats-divider);
     margin: 16px 0px;
+}
+
+/* Stats Expand/Collapse Button */
+.stats-expand-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    margin-top: 6px;
+    background-color: var(--sidebar-inner-base);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.stats-expand-button:hover {
+    background-color: var(--hover-dark);
+}
+
+.stats-expand-button .expand-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.stats-expand-button:hover .expand-text {
+    color: var(--text-primary);
+}
+
+.stats-expand-button .expand-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.stats-expand-button .expand-icon svg {
+    color: var(--text-secondary);
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.stats-expand-button:hover .expand-icon svg {
+    color: var(--text-primary);
+}
+
+.stats-expandable-row {
+    overflow: hidden;
 }
 
 
@@ -2398,7 +2809,7 @@ select {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-family: "Jost", sans-serif;
+    font-family: "Roboto", sans-serif;
 }
 
 .load-more-button:hover {
@@ -2483,7 +2894,7 @@ select {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-family: "Jost", sans-serif;
+    font-family: "Roboto", sans-serif;
     align-self: flex-start;
 }
 
@@ -2979,6 +3390,7 @@ select {
     background-color: rgba(46, 181, 214, 0.1);
     outline: 1px solid var(--light-btn);
     outline-offset: -1px;
+    order: -1;
 }
 
 .visual-list-label {
@@ -3176,7 +3588,6 @@ select {
     min-width: 180px;
     padding: 10px 0;
     display: none;
-    z-index: 1000;
     opacity: 0;
     transform: translateX(-50%) translateY(4px);
     transition: opacity 0.2s ease, transform 0.2s ease;
@@ -3232,6 +3643,12 @@ select {
     color: white;
 }
 
+.quick-menu-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .quick-menu-item svg {
     width: 18px;
     height: 18px;
@@ -3241,6 +3658,34 @@ select {
 
 .quick-menu-item:hover svg {
     color: var(--text-primary);
+}
+
+/* Learning Settings Toggle Indicator */
+.toggle-indicator {
+    margin-left: auto;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--text-secondary);
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.quick-menu-item.active .toggle-indicator {
+    background-color: var(--color-vibrant-purple-500);
+    border-color: var(--color-vibrant-purple-500);
+}
+
+.quick-menu-item.active .toggle-indicator::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
 }
 
 .quick-menu-item span {
@@ -3272,4 +3717,160 @@ select {
     border-left: 7px solid transparent;
     border-right: 7px solid transparent;
     border-top: 7px solid var(--dark-border);
+}
+
+/* ==================== Learn from Mistakes Mode ==================== */
+
+/* Learn from Mistakes Button */
+.learn-button {
+    width: 100%;
+    margin: 16px auto;
+    padding: 16px;
+    background: none;
+    color: var(--pure-white);
+    border: 1px solid var(--color-vibrant-purple-400);
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.learn-button:hover {
+    background: var(--color-vibrant-purple-400);
+    border-color: var(--color-vibrant-purple-400);
+}
+
+.learn-button:active {
+    background: var(--light-btn);
+    color: white;
+}
+
+.learn-button svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+}
+
+/* Learning Feedback in Move Info Box */
+.learning-feedback {
+    font-size: 15px;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Ensure move-info is above confetti */
+.move-info {
+    position: relative;
+}
+
+/* Move move-info inside moves tab on PC only */
+@media (min-width: 769px) {
+    /* Hide the original move-info above chessboard on PC */
+    .chess-wrapper > .move-info {
+        display: none;
+    }
+    
+    /* Show and style the move-info inside moves tab */
+    .move-info-sidebar {
+        display: block !important;
+        position: relative;
+        width: 80%;
+        margin: 10px 0;
+        min-width: auto;
+    }
+    
+    .move-info-sidebar::after {
+        display: none; /* Hide arrow */
+    }
+}
+
+/* Hide sidebar move-info on mobile */
+@media (max-width: 768px) {
+    .move-info-sidebar {
+        display: none !important;
+    }
+}
+
+/* Hide move-info completely during learning mode */
+.learning-mode ~ * .move-info,
+body:has(.learning-mode) .move-info {
+    display: none !important;
+}
+
+/* Leave button styling */
+#leave-learning {
+    background: var(--color-vibrant-purple-400) !important;
+    color: white !important;
+    order: -1; /* Move to leftmost position */
+}
+
+/* Ensure controls use flexbox in learning mode */
+.controls.learning-mode {
+    display: flex !important;
+}
+
+/* Learning Actions Container (in sidebar on desktop, under chessboard on mobile) */
+.learning-actions {
+    background-color: transparent;
+    border-radius: 0;
+    padding: 0;
+    margin-top: 0;
+    text-align: center;
+    box-shadow: none;
+    border: none;
+    width: 100%;
+}
+
+.learning-actions-message {
+    font-size: 16px;
+    color: var(--text-primary);
+    margin: 12px 0;
+    text-align: center;
+    line-height: 1.5;
+    font-weight: 600;
+}
+
+.learning-actions-counter {
+    font-size: 12px;
+    color: var(--color-vibrant-purple-400);
+    @media (min-width: 768px) {
+        margin-top: 60%; /* Add spacing from top on PC */
+    }
+}
+
+.learning-actions-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.learning-action-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 5px 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-family: "Roboto", sans-serif;
+    text-align: center;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+@keyframes feedbackSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

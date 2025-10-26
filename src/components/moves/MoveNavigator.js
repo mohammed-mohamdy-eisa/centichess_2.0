@@ -26,6 +26,13 @@ export class MoveNavigator {
         $("#copy-pgn").on("click", () => this.handleCopyPgn());
         $("#flip-board").on("click", () => this.handleFlipBoard());
         $("#download-pgn").on("click", () => this.handleDownloadPgn());
+        $("#show-best").on("click", () => this.handleShowBest());
+        $("#show-best-btn").on("click", () => this.handleShowBest());
+        
+        // Learning settings toggle handlers
+        $("#toggle-auto-advance").on("click", () => this.handleToggleLearningSettings('autoAdvanceToNextMistake'));
+        $("#toggle-include-inaccuracies").on("click", () => this.handleToggleLearningSettings('includeInaccuraciesInLearning'));
+        $("#toggle-confetti").on("click", () => this.handleToggleLearningSettings('enableConfetti'));
 
         // Close quick menu when clicking outside
         $(document).on("click", (e) => this.handleDocumentClick(e));
@@ -56,6 +63,10 @@ export class MoveNavigator {
 
         // Set up new chessboard event listeners
         this.chessUI.board.on('usermove', (moveObj) => this.handleUserMove(moveObj));
+
+        // Learning mode event handlers
+        $("#hint").on("click", () => this.handleHint());
+        $("#leave-learning").on("click", () => this.handleLeaveLearning());
     }
 
     handleCopyFenToClipboard() {
@@ -84,17 +95,146 @@ export class MoveNavigator {
         
         // Update clocks
         Clock.updateFromMoveTree(this.chessUI.moveTree, this.chessUI.board.flipped, this.chessUI.game?.pgn);
+
+        // Clear any active hint arrow timeout
+        if (this.hintArrowTimeout) {
+            clearTimeout(this.hintArrowTimeout);
+            this.hintArrowTimeout = null;
+        }
+
+        // Update board arrows per mode
+        this.updateBoardArrows(node);
+        
+        // Update show-best button state based on evaluation availability
+        this.updateShowBestButtonState(node);
+    }
+
+    /**
+     * Updates the best move arrow on the chessboard for the current position
+     * @param {Object} node - The current move tree node
+     */
+    updateBoardArrows(node) {
+        if (!this.chessUI.analysis || !this.chessUI.analysis.moves) return;
+
+        const mode = this.chessUI.settingsMenu.getSettingValue('bestMoveArrowsMode') || 'best-response';
+
+        // Always start by clearing arrows
+        this.chessUI.board.clearBestMoveArrows();
+
+        // If mode is 'none', don't show any arrows
+        if (mode === 'none') return;
+
+        // Helper function to check if a move classification is optimal
+        const isOptimalMove = (classification) => {
+            if (!classification) return false;
+            const optimal = ['brilliant', 'great', 'best', 'theory', 'excellent'];
+            return optimal.includes(classification.toLowerCase());
+        };
+
+        // Helper function to determine if current position is player's turn
+        const isPlayerTurn = () => {
+            if (!this.chessUI.game?.username) return false;
+            const userIsBlack = this.chessUI.game.username.toLowerCase() === this.chessUI.game.black?.name?.toLowerCase();
+            const prevNode = this.chessUI.moveTree.getPreviousMove();
+            if (!prevNode?.move) return false;
+            
+            // If the previous move was made by white, current turn is black
+            const currentTurnIsBlack = prevNode.move.color === 'w';
+            return userIsBlack === currentTurnIsBlack;
+        };
+
+        if (mode === 'best-response') {
+            // Best response mode - no changes
+            const currentFen = node.fen;
+            const currentAnalysis = this.chessUI.analysis.moves.find(m => m.fen === currentFen);
+            const bestLine = currentAnalysis?.lines?.find(l => l.id === 1);
+            if (bestLine?.uciMove) {
+                this.chessUI.board.setBestMoveArrow(bestLine.uciMove);
+            }
+        } else if (mode === 'top-alternative') {
+            // Top engine move mode
+            const prevNode = this.chessUI.moveTree.getPreviousMove();
+            if (prevNode && !isOptimalMove(node.classification)) {
+                const prevFen = prevNode.fen || prevNode.move?.before;
+                const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
+                const prevBest = prevAnalysis?.lines?.find(l => l.id === 1);
+                if (prevBest?.uciMove) {
+                    this.chessUI.board.addBestMoveArrow(prevBest.uciMove, null, 0.85);
+                }
+            }
+        } else if (mode === 'both') {
+            // Smart "Both" mode
+            const playersTurn = isPlayerTurn();
+            
+            if (playersTurn) {
+                // On player's turn
+                const prevNode = this.chessUI.moveTree.getPreviousMove();
+                
+                if (isOptimalMove(node.classification)) {
+                    // Optimal move: Only show best-response arrow
+                    const currentFen = node.fen;
+                    const currentAnalysis = this.chessUI.analysis.moves.find(m => m.fen === currentFen);
+                    const bestLine = currentAnalysis?.lines?.find(l => l.id === 1);
+                    if (bestLine?.uciMove) {
+                        this.chessUI.board.setBestMoveArrow(bestLine.uciMove);
+                    }
+                } else {
+                    // Suboptimal move: Show both arrows
+                    // Best response arrow
+                    const currentFen = node.fen;
+                    const currentAnalysis = this.chessUI.analysis.moves.find(m => m.fen === currentFen);
+                    const bestLine = currentAnalysis?.lines?.find(l => l.id === 1);
+                    if (bestLine?.uciMove) {
+                        this.chessUI.board.setBestMoveArrow(bestLine.uciMove);
+                    }
+                    
+                    // Top alternative arrow
+                    if (prevNode) {
+                        const prevFen = prevNode.fen || prevNode.move?.before;
+                        const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
+                        const prevBest = prevAnalysis?.lines?.find(l => l.id === 1);
+                        if (prevBest?.uciMove) {
+                            this.chessUI.board.addBestMoveArrow(prevBest.uciMove, null, 0.85);
+                        }
+                    }
+                }
+            } else {
+                // On opponent's turn: Only show best move if they played a suboptimal move
+                if (!isOptimalMove(node.classification)) {
+                    const prevNode = this.chessUI.moveTree.getPreviousMove();
+                    if (prevNode) {
+                        const prevFen = prevNode.fen || prevNode.move?.before;
+                        const prevAnalysis = this.chessUI.analysis.moves.find(m => m.fen === prevFen);
+                        const prevBest = prevAnalysis?.lines?.find(l => l.id === 1);
+                        if (prevBest?.uciMove) {
+                            // Use red color for opponent's arrows
+                            this.chessUI.board.addBestMoveArrow(prevBest.uciMove, 'rgba(231, 76, 60, 0.59)', 0.85);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     handleForwardMove() {
         const nextNode = this.chessUI.moveTree.getNextMove();
         if (!nextNode || !nextNode.move) return;
 
-        const classification = nextNode.classification;
+        // In learning mode, don't show classifications on the board
+        const classification = this.chessUI.mistakeLearner?.isActive ? undefined : nextNode.classification;
         this.chessUI.board.move(nextNode.move, true, classification, nextNode.move.before, false, nextNode.move.promotion, false);
 
         this.chessUI.moveTree.navigateTo(nextNode.id);
         this.updateAfterMove(nextNode);
+        
+        // Update learning mode navigation if active
+        if (this.chessUI.mistakeLearner?.isActive) {
+            // Check if moved away from mistake position
+            // Don't show "moved away" if mistake was already solved
+            if (!this.chessUI.mistakeLearner.isAtMistakePosition() && !this.chessUI.mistakeLearner.mistakeSolved) {
+                this.chessUI.mistakeLearner.showMovedAwayActions();
+            }
+        }
     }
 
     handleBackwardMove() {
@@ -111,6 +251,15 @@ export class MoveNavigator {
         this.chessUI.moveTree.updateNodeClassification(prevNode, this.chessUI.board);
 
         this.updateAfterMove(prevNode);
+        
+        // Update learning mode navigation if active
+        if (this.chessUI.mistakeLearner?.isActive) {
+            // Check if moved away from mistake position
+            // Don't show "moved away" if mistake was already solved
+            if (!this.chessUI.mistakeLearner.isAtMistakePosition() && !this.chessUI.mistakeLearner.mistakeSolved) {
+                this.chessUI.mistakeLearner.showMovedAwayActions();
+            }
+        }
     }
 
     handleFlipBoard() {
@@ -148,6 +297,10 @@ export class MoveNavigator {
         
         // Update clocks for starting position
         Clock.updateFromMoveTree(this.chessUI.moveTree, this.chessUI.board.flipped, this.chessUI.game?.pgn);
+        
+        // Update move info and board arrows
+        MoveInformation.updateMoveInfo(this.chessUI.moveTree.currentNode, null);
+        this.updateBoardArrows(this.chessUI.moveTree.currentNode);
     }
 
     handleSkipToEnd() {
@@ -156,6 +309,11 @@ export class MoveNavigator {
     }
 
     handleUserMove(moveObj) {
+        // If in learning mode, delegate to MistakeLearner
+        if (this.chessUI.mistakeLearner?.isActive) {
+            return this.chessUI.mistakeLearner.handleUserMove(moveObj);
+        }
+
         // Check if the move exists in the mainline next
         const currentIndex = this.chessUI.moveTree.getNodeIndex(this.chessUI.moveTree.currentNode);
         if (currentIndex !== -1 && currentIndex + 1 < this.chessUI.moveTree.mainline.length) {
@@ -234,7 +392,8 @@ export class MoveNavigator {
     navigateToExistingMove(moveNode) {
         this.chessUI.moveTree.navigateTo(moveNode.id);
 
-        // Add classification to the board
+        // Add classification to the board (skip in learning mode)
+        if (!this.chessUI.mistakeLearner?.isActive) {
         const fromIdx = this.chessUI.board.algebraicToIndex(moveNode.move.from, this.chessUI.board.flipped);
         const toIdx = this.chessUI.board.algebraicToIndex(moveNode.move.to, this.chessUI.board.flipped);
         this.chessUI.board.addClassification(
@@ -242,6 +401,7 @@ export class MoveNavigator {
             this.chessUI.board.getSquare(fromIdx, this.chessUI.board.flipped),
             this.chessUI.board.getSquare(toIdx, this.chessUI.board.flipped)
         );
+        }
 
         this.updateAfterMove(moveNode);
 
@@ -266,7 +426,9 @@ export class MoveNavigator {
         
         this.chessUI.board.fen(targetNode.move.before);
         if (targetNode.move) {
-            this.chessUI.board.move(targetNode.move, true, targetNode.classification, targetNode.move.before, false, targetNode.move.promotion);
+            // In learning mode, don't show classifications on the board
+            const classification = this.chessUI.mistakeLearner?.isActive ? undefined : targetNode.classification;
+            this.chessUI.board.move(targetNode.move, true, classification, targetNode.move.before, false, targetNode.move.promotion);
         }
 
         // Update move tree and UI
@@ -318,6 +480,11 @@ export class MoveNavigator {
 
             this.chessUI.moveTree.render('move-tree', (node) => this.handleTreeNodeClick(node));
             this.updateAfterMove(currentNode);
+            
+            // Update show-best button state for the evaluated node if it's current
+            if (currentNode.id === node.id) {
+                this.updateShowBestButtonState(currentNode);
+            }
 
         }, this.chessUI.moveTree);
     }
@@ -398,6 +565,172 @@ export class MoveNavigator {
         $("#quick-menu").removeClass('show');
     }
 
+    /**
+     * Checks if evaluation data exists for the current position and updates the show-best button state
+     * @param {Object} node - The current move tree node
+     */
+    updateShowBestButtonState(node) {
+        const currentFen = node.fen || (node.move ? node.move.after : null);
+        
+        if (!currentFen) {
+            $("#show-best-btn").prop('disabled', true);
+            $("#show-best").addClass('disabled');
+            return;
+        }
+
+        let hasEvaluation = false;
+        
+        // Check in the processed moves from evaluation queue
+        if (this.chessUI.evaluationQueue.processedMoves.has(node.id)) {
+            const processed = this.chessUI.evaluationQueue.processedMoves.get(node.id);
+            if (processed?.move?.lines && processed.move.lines.length > 0) {
+                hasEvaluation = true;
+            }
+        }
+        
+        // If not found, check in analysis moves (for analyzed games)
+        if (!hasEvaluation && this.chessUI.analysis?.moves) {
+            const analysisMove = this.chessUI.analysis.moves.find(m => m.fen === currentFen);
+            if (analysisMove?.lines && analysisMove.lines.length > 0) {
+                hasEvaluation = true;
+            }
+        }
+        
+        // Enable or disable the button and quick menu item based on evaluation availability
+        $("#show-best-btn").prop('disabled', !hasEvaluation);
+        $("#show-best").toggleClass('disabled', !hasEvaluation);
+    }
+
+    async handleShowBest() {
+        $("#quick-menu").removeClass('show');
+        
+        const currentNode = this.chessUI.moveTree.currentNode;
+        const currentFen = currentNode.fen || (currentNode.move ? currentNode.move.after : null);
+        
+        if (!currentFen) {
+            return;
+        }
+
+        // Check if we already have evaluation for this position
+        let evaluationData = null;
+        
+        // Check in the processed moves from evaluation queue
+        if (this.chessUI.evaluationQueue.processedMoves.has(currentNode.id)) {
+            const processed = this.chessUI.evaluationQueue.processedMoves.get(currentNode.id);
+            if (processed?.move?.lines && processed.move.lines.length > 0) {
+                evaluationData = processed.move;
+            }
+        }
+        
+        // If not found, check in analysis moves (for analyzed games)
+        if (!evaluationData && this.chessUI.analysis?.moves) {
+            const analysisMove = this.chessUI.analysis.moves.find(m => m.fen === currentFen);
+            if (analysisMove?.lines && analysisMove.lines.length > 0) {
+                evaluationData = analysisMove;
+            }
+        }
+        
+        // If still no evaluation, request one
+        if (!evaluationData) {
+            // Disable the button and quick menu item during evaluation
+            $("#show-best-btn").prop('disabled', true);
+            $("#show-best").addClass('disabled');
+            
+            // Show "Analysing..." in move-info
+            const $moveInfo = $(".move-info").empty();
+            const $placeholder = $("<div>").addClass("move-info-placeholder");
+            $("<span>").text("Analysing...").appendTo($placeholder);
+            $placeholder.appendTo($moveInfo);
+            
+            try {
+                // Import Engine class
+                const { Engine } = await import('../../evaluation/Engine.js');
+                const { MoveEvaluator } = await import('../../evaluation/MoveEvaluator.js');
+                
+                // Try cloud evaluation first
+                let lines = await MoveEvaluator.tryCloudEvaluation(currentFen);
+                
+                // If no cloud evaluation, use local engine
+                if (!lines || lines.length === 0) {
+                    const engineType = this.chessUI.settingsMenu?.getSettingValue('engineType') || 'stockfish-17.1-lite';
+                    const threadCount = this.chessUI.settingsMenu?.getSettingValue('engineThreads') ?? 0;
+                    const engine = new Engine({ engineType: engineType, threadCount: threadCount });
+                    const depth = this.chessUI.settingsMenu?.getSettingValue('engineDepth') || 16;
+                    const maxMoveTime = this.chessUI.settingsMenu?.getSettingValue('maxMoveTime') || 5;
+                    
+                    lines = await this.chessUI.evaluationQueue.evaluateWithEngine(
+                        currentFen, 
+                        depth, 
+                        0, 
+                        100, 
+                        engine, 
+                        maxMoveTime
+                    );
+                    
+                    // Clean up engine
+                    if (engine && engine.worker) {
+                        engine.worker.terminate();
+                    }
+                }
+                
+                if (lines && lines.length > 0) {
+                    evaluationData = { lines: lines };
+                    
+                    // Store evaluation in processed moves cache for future use
+                    if (!this.chessUI.evaluationQueue.processedMoves.has(currentNode.id)) {
+                        this.chessUI.evaluationQueue.processedMoves.set(currentNode.id, {
+                            move: { fen: currentFen, lines: lines }
+                        });
+                    }
+                    
+                    // Enable the button and quick menu item now that we have evaluation
+                    $("#show-best-btn").prop('disabled', false);
+                    $("#show-best").removeClass('disabled');
+                } else {
+                    // Restore move-info display
+                    MoveInformation.updateMoveInfo(currentNode, this.chessUI.moveTree.getPreviousMove());
+                    return;
+                }
+            } catch (error) {
+                console.error('Error evaluating position:', error);
+                // Restore move-info display
+                MoveInformation.updateMoveInfo(currentNode, this.chessUI.moveTree.getPreviousMove());
+                return;
+            }
+        }
+        
+        // Extract the best move (first line, id 1)
+        const bestLine = evaluationData.lines.find(line => line.id === 1);
+        
+        if (!bestLine || !bestLine.uciMove) {
+            // Restore move-info display
+            MoveInformation.updateMoveInfo(currentNode, this.chessUI.moveTree.getPreviousMove());
+            return;
+        }
+        
+        // Restore move-info display
+        MoveInformation.updateMoveInfo(currentNode, this.chessUI.moveTree.getPreviousMove());
+        
+        // Display the hint arrow with a distinct color (yellow/gold for hint)
+        const hintColor = 'rgba(241, 196, 15, 0.75)'; // Gold color for hint
+        this.chessUI.board.clearBestMoveArrows();
+        this.chessUI.board.addBestMoveArrow(bestLine.uciMove, hintColor, 0.9);
+        
+        // Store the hint arrow timeout so we can clear it when user navigates
+        if (this.hintArrowTimeout) {
+            clearTimeout(this.hintArrowTimeout);
+        }
+        
+        // Auto-clear the hint arrow after 5 seconds
+        this.hintArrowTimeout = setTimeout(() => {
+            this.chessUI.board.clearBestMoveArrows();
+            // Restore normal arrows if in a game with analysis
+            if (this.chessUI.analysis?.moves) {
+                this.updateBoardArrows(currentNode);
+            }
+        }, 5000);
+    }
+
     showNotification(message) {
         // Create a simple notification
         const notification = $(`
@@ -422,5 +755,96 @@ export class MoveNavigator {
         setTimeout(() => {
             notification.fadeOut(300, () => notification.remove());
         }, 3000);
+    }
+
+    /**
+     * Shows learning mode controls
+     */
+    showLearningControls() {
+        $('.bottom-content .controls').addClass('learning-mode');
+        
+        // Use flexbox to reorder - leave button will use CSS order: -1 to go first
+        const controls = $('.bottom-content .controls');
+        controls.css('display', 'flex');
+        
+        // Show learning controls, hide only specific normal ones
+        $('#hint, #leave-learning, #popup-quick-menu').show();
+        $('#restart, #skip-to-end').hide();
+        // Keep backward, forward, and popup-quick-menu visible - they work in both modes
+        
+        // Switch quick menu to learning settings
+        $('.quick-menu-item:not(.learning-setting-item)').hide();
+        $('.learning-setting-item').show();
+        // Hide the inaccuracies toggle in learning mode
+        $('#toggle-include-inaccuracies').hide();
+        
+        // Update toggle states based on current settings
+        this.updateLearningSettingsToggles();
+    }
+
+    /**
+     * Hides learning mode controls
+     */
+    hideLearningControls() {
+        $('.bottom-content .controls').removeClass('learning-mode');
+        
+        // Remove inline flex styling
+        $('.bottom-content .controls').css('display', '');
+        
+        // Hide learning controls and show normal ones
+        $('#hint, #leave-learning').hide();
+        $('#restart, #skip-to-end').show();
+        
+        // Restore navigation buttons (popup-quick-menu stays visible)
+        $('#backward, #forward, #popup-quick-menu').show();
+        
+        // Switch quick menu back to normal items
+        $('.learning-setting-item').hide();
+        $('.quick-menu-item:not(.learning-setting-item)').show();
+    }
+
+    /**
+     * Handles hint button click
+     */
+    handleHint() {
+        if (this.chessUI.mistakeLearner?.isActive) {
+            this.chessUI.mistakeLearner.showHint();
+        }
+    }
+
+    /**
+     * Handles leave learning button click
+     */
+    handleLeaveLearning() {
+        if (this.chessUI.mistakeLearner?.isActive) {
+            this.chessUI.mistakeLearner.exit();
+        }
+    }
+
+    /**
+     * Handle toggling learning settings
+     */
+    handleToggleLearningSettings(settingKey) {
+        const currentValue = this.chessUI.settingsMenu.getSettingValue(settingKey);
+        const newValue = currentValue !== true;
+        
+        // Update the setting
+        this.chessUI.settingsMenu.saveSettingToCookie(settingKey, newValue);
+        
+        // Update the toggle visual state
+        this.updateLearningSettingsToggles();
+    }
+
+    /**
+     * Update toggle states based on current settings
+     */
+    updateLearningSettingsToggles() {
+        const autoAdvance = this.chessUI.settingsMenu.getSettingValue('autoAdvanceToNextMistake');
+        const includeInaccuracies = this.chessUI.settingsMenu.getSettingValue('includeInaccuraciesInLearning');
+        const enableConfetti = this.chessUI.settingsMenu.getSettingValue('enableConfetti');
+        
+        $('#toggle-auto-advance').toggleClass('active', autoAdvance !== false);
+        $('#toggle-include-inaccuracies').toggleClass('active', includeInaccuracies !== false);
+        $('#toggle-confetti').toggleClass('active', enableConfetti !== false);
     }
 }

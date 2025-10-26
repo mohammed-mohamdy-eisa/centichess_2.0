@@ -64,7 +64,9 @@ export class GameStats {
                 true))
             .append(this.createPhaseClassificationsRow('Opening', phaseClassifications?.white?.opening, phaseClassifications?.black?.opening, false))
             .append(this.createPhaseClassificationsRow('Middlegame', phaseClassifications?.white?.middlegame, phaseClassifications?.black?.middlegame, false))
-            .append(this.createPhaseClassificationsRow('Endgame', phaseClassifications?.white?.endgame, phaseClassifications?.black?.endgame, false));
+            .append(this.createPhaseClassificationsRow('Endgame', phaseClassifications?.white?.endgame, phaseClassifications?.black?.endgame, false))
+            .append(this.createLearnButton())
+            .append(this.createStartReviewButton());
 
 
 
@@ -139,26 +141,62 @@ export class GameStats {
     static createMovesSection(analysis) {
         const movesSection = $('<div class="stats-moves"></div>');
 
-        const displayedClassifications = [
+        // Classifications to show when collapsed (default)
+        const collapsedClassifications = [
             Classification.BRILLIANT, 
             Classification.GREAT, 
-            Classification.PERFECT, 
-            Classification.EXCELLENT, 
-            Classification.GOOD, 
-            Classification.MISTAKE, 
+            Classification.BEST, 
+            Classification.MISTAKE,
+            Classification.MISS,
             Classification.BLUNDER
         ];
 
-        displayedClassifications.forEach(classif => {
+        // Additional classifications to show when expanded
+        const expandedClassifications = [
+            Classification.EXCELLENT, 
+            Classification.GOOD, 
+            Classification.THEORY,
+            Classification.INACCURACY
+        ];
+
+        // All classifications in order for expanded view
+        const allClassifications = [
+            Classification.BRILLIANT, 
+            Classification.GREAT, 
+            Classification.BEST, 
+            Classification.EXCELLENT, 
+            Classification.GOOD, 
+            Classification.THEORY,
+            Classification.INACCURACY, 
+            Classification.MISTAKE,
+            Classification.MISS,
+            Classification.BLUNDER
+        ];
+
+        // Track if section is collapsed (default is collapsed)
+        let isCollapsed = true;
+
+        // Create expand/collapse button
+        const expandButton = $(`<div class="stats-expand-button">
+            <span class="expand-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </span>
+            <span class="expand-text">Show more</span>
+        </div>`);
+
+        // Create rows for all classifications
+        allClassifications.forEach(classif => {
             const whiteCount = analysis.white.counts[classif.type] || 0;
             const blackCount = analysis.black.counts[classif.type] || 0;
             
             const label = classif.type.charAt(0).toUpperCase() + classif.type.slice(1);
-            const row = $(`<div class="stats-row">
+            const row = $(`<div class="stats-row stats-classification-row">
                 <div class="stats-label">${label}</div>
-                <div class="stats-count ${classif.class}">${whiteCount}</div>
+                <div class="stats-count stats-move ${classif.class}" data-player="white" data-classification="${classif.type}">${whiteCount}</div>
                 <div class="stats-icon"></div>
-                <div class="stats-count ${classif.class}">${blackCount}</div>
+                <div class="stats-count stats-move ${classif.class}" data-player="black" data-classification="${classif.type}">${blackCount}</div>
             </div>`);
             
             // Add classification icon if available
@@ -169,11 +207,140 @@ export class GameStats {
                 const icon = $(`<img src="${classif.src}" alt="${classif.type}" class="stats-icon">`);
                 row.find('.stats-icon').append(icon);
             }
+
+            // Mark expandable rows (those only shown when expanded)
+            if (expandedClassifications.includes(classif)) {
+                row.addClass('stats-expandable-row');
+            }
+            
+            // Add click handlers to navigate to first move with this classification
+            row.find('.stats-move').each(function() {
+                const $count = $(this);
+                const count = parseInt($count.text());
+                
+                // Only make clickable if count > 0
+                if (count > 0) {
+                    $count.css('cursor', 'pointer');
+                    $count.on('click', function() {
+                        const player = $(this).data('player');
+                        const classificationType = $(this).data('classification');
+                        GameStats.navigateToClassification(classificationType, player);
+                    });
+                }
+            });
             
             movesSection.append(row);
         });
+
+        // Add expand button after all rows
+        movesSection.append(expandButton);
+
+        // Add click handler for expand/collapse
+        expandButton.on('click', function() {
+            isCollapsed = !isCollapsed;
+            
+            if (isCollapsed) {
+                movesSection.find('.stats-expandable-row').slideUp(200);
+                expandButton.find('.expand-text').text('Show more');
+                expandButton.find('.expand-icon svg').css('transform', 'rotate(0deg)');
+            } else {
+                movesSection.find('.stats-expandable-row').slideDown(200);
+                expandButton.find('.expand-text').text('Show less');
+                expandButton.find('.expand-icon svg').css('transform', 'rotate(180deg)');
+            }
+        });
+
+        // Hide expandable rows initially (collapsed state)
+        movesSection.find('.stats-expandable-row').hide();
         
         return movesSection;
+    }
+
+    /**
+     * Creates the "Learn from Mistakes" button
+     * @returns {jQuery} The learn button element
+     */
+    static createLearnButton() {
+        return $(`
+            <button id="learn-from-mistakes" class="learn-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="18" height="18" fill="currentColor">
+                    <path d="M320 32c-8.1 0-16.1 1.4-23.7 4.1L15.8 137.4C6.3 140.9 0 149.9 0 160s6.3 19.1 15.8 22.6l57.9 20.9C57.3 229.3 48 259.8 48 291.9l0 28.1c0 28.4-10.8 57.7-22.3 80.8c-6.5 13-13.9 25.8-22.5 37.6C0 442.7-.9 448.3 .9 453.4s6 8.9 11.2 10.2l64 16c4.2 1.1 8.7 .3 12.4-2s6.3-6.1 7.1-10.4c8.6-42.8 4.3-81.2-2.1-108.7C90.3 344.3 86 329.8 80 316.5l0-24.6c0-30.2 10.2-58.7 27.9-81.5c12.9-15.5 29.6-28 49.2-35.7l157-61.7c8.2-3.2 17.5 .8 20.7 9s-.8 17.5-9 20.7l-157 61.7c-12.4 4.9-23.3 12.4-32.2 21.6l159.6 57.6c7.6 2.7 15.6 4.1 23.7 4.1s16.1-1.4 23.7-4.1L624.2 182.6c9.5-3.4 15.8-12.5 15.8-22.6s-6.3-19.1-15.8-22.6L343.7 36.1C336.1 33.4 328.1 32 320 32zM128 408c0 35.3 86 72 192 72s192-36.7 192-72L496.7 262.6 354.5 314c-11.1 4-22.8 6-34.5 6s-23.5-2-34.5-6L143.3 262.6 128 408z"/>
+                </svg>
+                Learn from Mistakes
+            </button>
+        `);
+    }
+
+    /**
+     * Creates the "Start Review" button
+     * @returns {jQuery} The start review button element
+     */
+    static createStartReviewButton() {
+        return $(`
+                <button id="start-review" class="learn-button" style="background-color: var(--btn-secondary); border: none;">
+                Start Review
+            </button>
+        `);
+    }
+
+    /**
+     * Navigates to the first move with the specified classification for the specified player
+     * @param {string} classificationType - The classification type to search for
+     * @param {string} player - 'white' or 'black'
+     */
+    static navigateToClassification(classificationType, player) {
+        // Get ChessUI instance from window (set by analysis.js)
+        const chessUI = window.chessUI;
+        if (!chessUI || !chessUI.analysis || !chessUI.moveTree) {
+            console.warn('ChessUI not available for navigation');
+            return;
+        }
+
+        const analysis = chessUI.analysis;
+        
+        // Determine if user is playing white or black
+        const username = chessUI.game.username?.toLowerCase();
+        const whiteName = chessUI.game.white?.name?.toLowerCase();
+        const blackName = chessUI.game.black?.name?.toLowerCase();
+        const userIsWhite = username === whiteName;
+        
+        // Determine if we're looking for user's moves or opponent's moves
+        const isUserMove = (player === 'white' && userIsWhite) || (player === 'black' && !userIsWhite);
+        
+        // Find the first move with this classification for the specified player
+        for (let i = 0; i < analysis.moves.length; i++) {
+            const move = analysis.moves[i];
+            
+            // Check if this move belongs to the specified player
+            // After white's move, it's black's turn (FEN contains ' b ')
+            // After black's move, it's white's turn (FEN contains ' w ')
+            const moveIsWhite = move.fen.includes(' b ');
+            const moveIsBlack = move.fen.includes(' w ');
+            
+            const isTargetPlayer = (player === 'white' && moveIsWhite) || (player === 'black' && moveIsBlack);
+            
+            // Check if this move has the target classification
+            if (isTargetPlayer && move.classification?.type === classificationType) {
+                // Navigate to this move (mainline index is i + 1 since mainline[0] is root)
+                const targetNode = chessUI.moveTree.mainline[i + 1];
+                if (targetNode) {
+                    // Navigate to the move
+                    chessUI.moveNavigator.handleTreeNodeClick(targetNode);
+                    
+                    // Scroll to top
+                    setTimeout(() => {
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                    }, 100);
+                    
+                    return;
+                }
+            }
+        }
+        
+        console.log(`No ${player} move found with classification: ${classificationType}`);
     }
 
     /**

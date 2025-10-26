@@ -34,7 +34,8 @@ export class GamesList {
             [Platform.LICHESS]: 'centichess_last_user_lichess',
             [Platform.PGN]: 'centichess_last_pgn'
         };
-        this.currentPlatform = Platform.CHESSCOM;
+        // Load saved platform preference or default to Chess.com
+        this.currentPlatform = this.loadSavedPlatform();
 
         this.allGames = [];
         this.displayedGames = [];
@@ -57,8 +58,37 @@ export class GamesList {
     init() {
         this.bindEvents();
         this.bindPlatformEvents();
+        this.restoreSelectedPlatformTag();
         this.initializeFilterDropdown();
         this.loadLastSearchedUser();
+    }
+
+    loadSavedPlatform() {
+        const savedPlatform = localStorage.getItem('centichess_selected_platform');
+        // Validate that the saved platform is one of the valid options
+        if (savedPlatform && Object.values(Platform).includes(savedPlatform)) {
+            return savedPlatform;
+        }
+        return Platform.CHESSCOM; // Default to Chess.com
+    }
+
+    savePlatformPreference(platform) {
+        localStorage.setItem('centichess_selected_platform', platform);
+    }
+
+    restoreSelectedPlatformTag() {
+        const platformTags = document.querySelectorAll('.three-tag-layout .tag');
+        platformTags.forEach((tag, index) => {
+            tag.classList.remove('selected');
+            // Apply selected class to the correct tag based on current platform
+            if ((index === 0 && this.currentPlatform === Platform.CHESSCOM) ||
+                (index === 1 && this.currentPlatform === Platform.LICHESS) ||
+                (index === 2 && this.currentPlatform === Platform.PGN)) {
+                tag.classList.add('selected');
+            }
+        });
+        // Also make sure the correct input elements are showing
+        this.toggleInputElements();
     }
 
     toggleInputElements() {
@@ -293,6 +323,9 @@ export class GamesList {
                 } else if (index === 2) {
                     this.currentPlatform = Platform.PGN;
                 }
+                
+                // Save platform preference to localStorage
+                this.savePlatformPreference(this.currentPlatform);
                 
                 // Clear current games and search field
                 this.allGames = [];

@@ -15,6 +15,26 @@ import { Engine } from "./Engine.js";
 export class MoveEvaluator {
     constructor() {}
 
+    // Track active workers and cancellation state for in-flight analysis
+    static workerPool = [];
+    static cancelRequested = false;
+
+    static cancelActiveAnalysis() {
+        this.cancelRequested = true;
+        try {
+            (this.workerPool || []).forEach(worker => {
+                if (worker && typeof worker.abort === 'function') {
+                    worker.abort();
+                }
+                if (worker.worker && typeof worker.worker.terminate === 'function') {
+                    worker.worker.terminate();
+                }
+            });
+        } catch (e) {
+            // swallow
+        }
+    }
+
     static startPositionEvaluation = {
         fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         lines: [
@@ -45,11 +65,15 @@ export class MoveEvaluator {
 
     /**
      * Attempts to get a cloud evaluation from Lichess
+     * Used as default for:
+     * - Manual move evaluations (when playing moves on the board)
+     * - Learn mode evaluations (when practicing mistakes)
+     * Falls back to local engine if unavailable (404, rate limit, timeout)
+     * 
      * @param {string} fen - FEN string to evaluate
      * @returns {Promise<Array|undefined>} - Array of evaluation lines or undefined if unavailable
      */
     static async tryCloudEvaluation(fen) {
-        return false;
         // Send request with a short timeout to prevent long waits when rate limited
         return $.ajax({
             url: "https://lichess.org/api/cloud-eval",
@@ -97,12 +121,19 @@ export class MoveEvaluator {
         });
 
         const depth = settings.engineDepth || 16;
-        const engineType = settings.engineType || 'stockfish-17-lite';
-        const maxWorkers = navigator.hardwareConcurrency || 8; // Use hardware concurrency when available
+        const engineType = settings.engineType || 'stockfish-17.1-lite';
+        const threadCount = settings.engineThreads ?? 0;
+        const maxMoveTime = settings.maxMoveTime || 5;
+        const maxWorkers = navigator.hardwareConcurrency || 8;
         const moves = new Array(history.length);
         
         // Create a pool of workers upfront and reuse them
-        const workerPool = Array.from({ length: Math.min(maxWorkers, queue.length) }, () => new Engine({ engineType }));
+        const workerPool = Array.from(
+            { length: Math.min(maxWorkers, queue.length) }, 
+            () => new Engine({ engineType, threadCount })
+        );
+        MoveEvaluator.workerPool = workerPool;
+        MoveEvaluator.cancelRequested = false;
         
         let completedMoves = 0;
 
@@ -110,6 +141,19 @@ export class MoveEvaluator {
         return new Promise((resolve) => {
             // Process a batch of positions with available workers
             async function processBatch() {
+                if (MoveEvaluator.cancelRequested) {
+                    try {
+                        workerPool.forEach(worker => {
+                            if (worker.worker && worker.worker.terminate) {
+                                worker.worker.terminate();
+                            }
+                        });
+                    } catch (_) {}
+                    const engineName = workerPool[0]?.getEngineName() || 'Engine';
+                    progressCallback(100, engineName);
+                    resolve(moves);
+                    return;
+                }
                 const availableWorkers = workerPool.filter(worker => !worker.busy);
                 
                 // Process moves with available workers
@@ -130,7 +174,8 @@ export class MoveEvaluator {
                                 worker.worker.terminate();
                             }
                         });
-                        progressCallback(100);
+                        const engineName = workerPool[0]?.getEngineName() || 'Engine';
+                        progressCallback(100, engineName);
                         resolve(moves);
                         return;
                     }
@@ -142,47 +187,14 @@ export class MoveEvaluator {
                 
                 // Process each position in the batch
                 await Promise.all(batch.map(async ({ worker, move }) => {
+                    if (MoveEvaluator.cancelRequested) {
+                        return;
+                    }
+                    
                     try {
-                        // Start both cloud and local evaluations in parallel
-                        const cloudPromise = MoveEvaluator.tryCloudEvaluation(move.fen);
-                        const localPromise = worker.evaluate(move.fen, depth);
-                        
-                        // Race between cloud and local evaluation
-                        // Use Promise.allSettled to get both results regardless of success/failure
-                        const [cloudResult, localResult] = await Promise.allSettled([
-                            // Add a timeout to the cloud evaluation as a fallback
-                            Promise.race([
-                                cloudPromise,
-                                new Promise(resolve => setTimeout(() => resolve(undefined), 2500))
-                            ]),
-                            localPromise
-                        ]);
-                        
-                        let lines;
-                        let engineName;
-                        
-                        // If cloud evaluation succeeded with good depth, use it
-                        if (cloudResult.status === 'fulfilled' && 
-                            cloudResult.value && 
-                            cloudResult.value.length > 1 && 
-                            cloudResult.value[0].depth >= depth) {
-                            
-                            // If local evaluation was started, abort it
-                            worker.abort();
-                            
-                            lines = cloudResult.value;
-                            engineName = "Stockfish Cloud";
-                        } 
-                        // Otherwise use local evaluation results
-                        else if (localResult.status === 'fulfilled') {
-                            lines = localResult.value;
-                            engineName = worker.engine.name;
-                        } 
-                        // Fallback in case both failed
-                        else {
-                            lines = [];
-                            engineName = "Failed Evaluation";
-                        }
+                        // For batch game analysis, use local engine only
+                        const lines = await worker.evaluate(move.fen, depth, false, null, 0, maxMoveTime);
+                        const engineName = worker.getEngineName();
                         
                         move.lines = lines;
                         move.engine = engineName;
@@ -194,9 +206,10 @@ export class MoveEvaluator {
                         completedMoves++;
                         worker.busy = false;
                         
-                        // Calculate and report progress
+                        // Calculate and report progress with engine name
                         const progress = Math.round((completedMoves / history.length) * 100);
-                        progressCallback(progress);
+                        const engineName = worker.getEngineName();
+                        progressCallback(progress, engineName);
                     }
                 }));
                 
@@ -206,7 +219,8 @@ export class MoveEvaluator {
             
             // Start processing
             if (history.length === 0) {
-                progressCallback(100);
+                const engineName = workerPool[0]?.getEngineName() || 'Engine';
+                progressCallback(100, engineName);
                 resolve([]);
             } else {
                 processBatch();
@@ -242,8 +256,8 @@ export class MoveEvaluator {
             }
         }
 
-        const moves = await MoveEvaluator.batchEvaluateMoves(chess, history, (progress) => {
-            if (progressCallback) progressCallback(progress);
+        const moves = await MoveEvaluator.batchEvaluateMoves(chess, history, (progress, engineName) => {
+            if (progressCallback) progressCallback(progress, engineName);
         }, settings);
 
         // Loop through moves and assign classifications
@@ -317,7 +331,7 @@ export class MoveEvaluator {
         const getClassification = (accuracy, hasBrilliant, hasGreat) => {
             if (accuracy > 0.8 && hasBrilliant) return Classification.BRILLIANT;
             if (accuracy > 0.8 && hasGreat) return Classification.GREAT;
-            if (accuracy > 0.8) return Classification.PERFECT;
+            if (accuracy > 0.8) return Classification.BEST;
             if (accuracy > 0.7) return Classification.EXCELLENT;
             if (accuracy > 0.65) return Classification.GOOD;
             if (accuracy > 0.6) return Classification.MISTAKE;

@@ -133,20 +133,43 @@ export class GameGraph {
         if (total > 0) {
             const increment = width / total;
 
+            // Create smooth curve using Catmull-Rom spline approach
             ctx.beginPath();
             ctx.moveTo(-3, height);
             ctx.lineTo(0, height/2);
             
-            for (let i = 0; i < total; i++) {
-                const move = moves[i];
-                const offset = increment * i;
-                const x = offset + 3;
-                const y = height / 100 * (move.graph);
+            if (total > 0) {
+                // Collect all data points
+                const points = [];
+                for (let i = 0; i < total; i++) {
+                    const move = moves[i];
+                    const offset = increment * i;
+                    const x = offset + 3;
+                    const y = height / 100 * (move.graph);
+                    points.push({ x, y });
+                }
                 
-                ctx.lineTo(x, y);
-
-                if (i === total-1) {
-                    ctx.lineTo(increment * (total-1) + 50, y);
+                // Draw smooth curve through all points
+                if (points.length > 0) {
+                    ctx.lineTo(points[0].x, points[0].y);
+                    
+                    for (let i = 1; i < points.length; i++) {
+                        const current = points[i];
+                        const previous = points[i - 1];
+                        
+                        // Calculate smooth control points using tension
+                        const tension = 0.4; // Higher = more rounded
+                        const cp1x = previous.x + (current.x - previous.x) * tension;
+                        const cp1y = previous.y;
+                        const cp2x = current.x - (current.x - previous.x) * tension;
+                        const cp2y = current.y;
+                        
+                        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, current.x, current.y);
+                    }
+                    
+                    // End the curve smoothly
+                    const lastPoint = points[points.length - 1];
+                    ctx.lineTo(increment * (total-1) + 50, lastPoint.y);
                 }
             }
             
@@ -160,21 +183,49 @@ export class GameGraph {
             ctx.fillStyle = '#80808075';
             ctx.fillRect(0, height / 2 - 1, width, 2 * this.scaleFactor);
 
+            // Always show classification dots for specific move types
+            const importantClassifications = ['brilliant', 'great', 'mistake', 'miss', 'blunder'];
+            
+            for (let i = 0; i < total; i++) {
+                const move = moves[i];
+                if (importantClassifications.includes(move.classification.type)) {
+                    const offset = increment * i;
+                    const x = offset + 3;
+                    const y = height / 100 * (move.graph);
+                    
+                    // Draw classification dot
+                    ctx.fillStyle = move.classification.color;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3 * this.scaleFactor, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Add a subtle border for better visibility
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+
             if (this.currentMove) {
                 const move = moves[2 * this.currentMove - 2];
                 if (!move) return;
 
                 const offset = increment * this.currentMove * 2 - increment * 2;
-                ctx.fillStyle = '#99999975';
-                ctx.fillRect(offset - this.scaleFactor, 0, 2 * this.scaleFactor, height);
+                
+                // Draw colored vertical line with transparency
+                const classificationColor = move.classification.color;
+                ctx.fillStyle = classificationColor + '99'; // Add transparency (60%)
+                const lineWidth = 4 * this.scaleFactor; // Thicker line
+                ctx.fillRect(offset - lineWidth / 2, 0, lineWidth, height);
             
                 const y = height / 100 * (move.graph);
 
-                // Highlight dot
-                ctx.fillStyle = move.classification.color;
+                // Highlight current move dot (larger than classification dots)
+                ctx.fillStyle = classificationColor;
                 ctx.beginPath();
-                ctx.arc(offset, y, 4 * this.scaleFactor, 0, Math.PI * 2 * this.scaleFactor);
+                ctx.arc(offset, y, 5 * this.scaleFactor, 0, Math.PI * 2 * this.scaleFactor);
                 ctx.fill();
+
             }
 
             // Draw hover effects
@@ -185,12 +236,14 @@ export class GameGraph {
                 const x = offset;
                 const y = height/100 * (move.graph);
 
-                // Vertical line
-                ctx.fillStyle = '#99999975';
-                ctx.fillRect(x - this.scaleFactor, 0, 2 * this.scaleFactor, height);
+                // Draw colored vertical line with transparency
+                const classificationColor = move.classification.color;
+                ctx.fillStyle = classificationColor + '99'; // Add transparency (60%)
+                const lineWidth = 6 * this.scaleFactor; // Thicker line
+                ctx.fillRect(x - lineWidth / 2, 0, lineWidth, height);
                 
                 // Highlight dot
-                ctx.fillStyle = move.classification.color;
+                ctx.fillStyle = classificationColor;
 
                 ctx.beginPath();
                 ctx.arc(x, y, 4 * this.scaleFactor, 0, Math.PI * 2 * this.scaleFactor);

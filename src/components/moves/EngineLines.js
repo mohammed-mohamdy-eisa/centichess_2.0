@@ -6,14 +6,14 @@ import { EvaluationBar } from "../board/EvaluationBar.js";
 export const IgnoredSuggestionTypes = [
     Classification.BRILLIANT.type,
     Classification.GREAT.type,
-    Classification.PERFECT.type,
+    Classification.BEST.type,
     Classification.THEORY.type,
     Classification.FORCED.type
 ];
 
 export class EngineLines {
     static updateEngineLines(node, moveTree, handleTreeNodeClick, queueMoveForEvaluation) {
-        const $engineLines = $(".engine-lines").empty();
+        const $engineLines = $(".engine-lines").empty().addClass("collapsed");
 
         // Create title element
         const titleElement = this.createEngineTitleElement(node);
@@ -63,6 +63,11 @@ export class EngineLines {
         }
 
         $(".engine-lines").append($linesContainer);
+        
+        // Hide content by default since we start collapsed
+        if ($(".engine-lines").hasClass("collapsed")) {
+            $linesContainer.hide();
+        }
     }
 
     static showGameOverMessage(chess) {
@@ -90,6 +95,11 @@ export class EngineLines {
         $resultLine.append($resultBox);
         $resultContainer.append($resultLine);
         $(".engine-lines").append($resultContainer);
+        
+        // Hide content by default since we start collapsed
+        if ($(".engine-lines").hasClass("collapsed")) {
+            $resultContainer.hide();
+        }
 
         // Update evaluation bar based on result
         const evalObj = {
@@ -319,6 +329,18 @@ export class EngineLines {
             );
         }
 
+        // Add collapse/expand button (start with down arrow since collapsed by default)
+        const $collapseButton = $("<span>")
+            .addClass("engine-lines-collapse-button")
+            .html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" fill="currentColor"/></svg>')
+            .on("click", function(e) {
+                e.stopPropagation();
+                EngineLines.toggleEngineLinesCollapse();
+            });
+
+        $title.append($collapseButton);
+        $title.addClass("clickable-title");
+
         return $title;
     }
 
@@ -333,6 +355,11 @@ export class EngineLines {
             .append($("<span>").text(" " + message));
         
         $(".engine-lines").append($waitingMsg);
+        
+        // Hide content by default since we start collapsed
+        if ($(".engine-lines").hasClass("collapsed")) {
+            $waitingMsg.hide();
+        }
     }
 
     static handleEngineLineClick(currentNode, line, movesToPlay, moveTree, handleTreeNodeClick, queueMoveForEvaluation) {
@@ -408,5 +435,25 @@ export class EngineLines {
         queueMoveForEvaluation(newNode, fen, prevFen);
 
         return newNode;
+    }
+
+    static toggleEngineLinesCollapse() {
+        const $engineLines = $(".engine-lines");
+        const $collapseButton = $(".engine-lines-collapse-button");
+        const $content = $engineLines.find(".engine-lines-container, .engine-lines-waiting");
+        
+        const isCollapsed = $engineLines.hasClass("collapsed");
+        
+        if (isCollapsed) {
+            // Expand
+            $engineLines.removeClass("collapsed");
+            $content.slideDown(200);
+            $collapseButton.html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M233.4 105.4c12.5-12.5 32.8-12.5 45.3 0l192 192c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L256 173.3 86.6 342.6c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l192-192z" fill="currentColor"/></svg>');
+        } else {
+            // Collapse
+            $engineLines.addClass("collapsed");
+            $content.slideUp(200);
+            $collapseButton.html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" fill="currentColor"/></svg>');
+        }
     }
 }

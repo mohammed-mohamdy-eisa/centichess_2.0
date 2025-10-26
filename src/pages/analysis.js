@@ -1,4 +1,4 @@
-import { GameLoader } from '../components/games/GameLoader.js';
+import { GameLoader, Platform } from '../components/games/GameLoader.js';
 import { ChessUI } from '../components/ChessUI.js';
 import { GameGraph } from '../components/report/GameGraph.js';
 
@@ -26,6 +26,10 @@ async function loadPlayerData(white, black) {
 // Initialize the application when the document is ready
 $(document).ready(async () => {
     const chessUI = new ChessUI();
+    
+    // Make chessUI globally accessible for GameStats navigation
+    window.chessUI = chessUI;
+    
     let game;
     
     // Check if there's a PGN parameter in the URL
@@ -46,15 +50,34 @@ $(document).ready(async () => {
     chessUI.load(game);
     loadPlayerData(game.white, game.black);
 
+    // Hide profile pictures for Lichess or PGN games
+    if (game.platform === Platform.LICHESS || game.platform === Platform.PGN) {
+        $('#white-profile, #black-profile').hide();
+    } else {
+        $('#white-profile, #black-profile').show();
+    }
+
     // Listen for PGN game loading events
-    window.addEventListener('loadPGNGame', (event) => {
+    window.addEventListener('loadPGNGame', async (event) => {
         const gameData = event.detail;
 
         //GameLoader.matchGameURL()
 
         console.log(gameData)
+        
+        // Mark this as a user-initiated load (game was selected by user)
+        const { SidebarOverlay } = await import('../components/report/SidebarOverlay.js');
+        SidebarOverlay.setUserInitiatedLoad(true);
+        
         chessUI.load(gameData);
         loadPlayerData(gameData.white, gameData.black);
+
+        // Hide profile pictures for dynamically loaded Lichess or PGN games
+        if (gameData.platform === Platform.LICHESS || gameData.platform === Platform.PGN) {
+            $('#white-profile, #black-profile').hide();
+        } else {
+            $('#white-profile, #black-profile').show();
+        }
     });
 
     // Tab switching
@@ -67,6 +90,25 @@ $(document).ready(async () => {
         $('#' + tabName + '-tab').addClass('active');
 
         GameGraph.render();
+        
+        // On mobile, scroll down to show tab content
+        if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
+            const sidebarHeader = document.querySelector('.sidebar-header');
+            const header = document.querySelector('.header');
+            if (sidebarHeader) {
+                setTimeout(() => {
+                    // Get the header height to offset the scroll
+                    const headerHeight = header ? header.offsetHeight : 0;
+                    const elementPosition = sidebarHeader.getBoundingClientRect().top + window.pageYOffset;
+                    const offsetPosition = elementPosition - headerHeight - 10; // 10px extra padding
+                    
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }, 100);
+            }
+        }
     });
 
     // Navigation toggle

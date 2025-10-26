@@ -56,7 +56,7 @@ export class MoveAnnotator {
     };
 
     static drawComments = [];
-    static perfectComments = [];
+    static bestComments = [];
     static goodComments = [];
     static mistakeComments = [];
     static blunderComments = {

@@ -5,7 +5,7 @@
 ## Features
 
 - **Interactive Chess Board**: Beautiful, responsive chessboard with multiple piece sets and themes
-- **Advanced Analysis**: Powered by multiple Stockfish versions including Stockfish 17 Lite and NNUE
+- **Advanced Analysis**: Powered by Lichess Cloud evaluation or multiple local Stockfish versions including Stockfish 17 Lite and NNUE
 - **Detailed Game Reports**: Get comprehensive insights about your games including:
   - Move accuracy and classification (Perfect, Excellent, Good, Inaccuracy, Mistake, Blunder)
   - Game phase detection (Opening, Middlegame, Endgame)
@@ -32,6 +32,7 @@ Try it live at: [centichess.org](centichess.org)
 - Pure JavaScript (ES6+)
 - HTML5 Canvas for board element and arrow rendering
 - Web Workers for background analysis
+- Lichess Cloud evaluation API
 - Multiple Stockfish versions (11, 16, 17) with NNUE support
 
 ## Development
@@ -93,5 +94,6 @@ Please feel free to submit pull requests or open issues.
 
 ## Acknowledgments
 
+- [Lichess](https://lichess.org/) - Cloud evaluation API for fast analysis
 - [Stockfish](https://stockfishchess.org/) - The powerful chess engine that powers the analysis
 - [chess.js](https://github.com/jhlywa/chess.js) - Chess logic implementation
