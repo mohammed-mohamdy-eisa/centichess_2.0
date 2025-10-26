@@ -1645,7 +1645,7 @@ select {
     margin: 0 0 8px 0;
     position: relative;
     min-width: 80%;
-    min-height: 20px;
+    min-height: 21px;
     text-align: left;
     font-weight: 500;
     align-self: center;

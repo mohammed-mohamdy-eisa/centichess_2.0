@@ -7,6 +7,9 @@ import { Clock } from '../board/Clock.js';
 export class MoveNavigator {
     constructor(chessUI) {
         this.chessUI = chessUI;
+        this.badMoveNode = null; // Stores the bad move node for "go back" functionality
+        this.continuationComplete = false; // Tracks if best continuation sequence is complete
+        this.continuationInProgress = false; // Tracks if continuation is currently executing
     }
 
     /**
@@ -342,6 +345,14 @@ export class MoveNavigator {
     }
 
     handleTreeNodeClick(node) {
+        // Reset continuation state when manually navigating (unless navigating back via goBackToBadMove)
+        if (!this._isGoingBackToBadMove) {
+            this.badMoveNode = null;
+            this.continuationComplete = false;
+            this.continuationInProgress = false;
+        }
+        this._isGoingBackToBadMove = false;
+        
         // Handle path navigation
         const path = this.chessUI.moveTree.getPathToNode(node.id);
 
@@ -600,17 +611,33 @@ export class MoveNavigator {
         }
         
         // Enable or disable the button and quick menu item based on evaluation availability
-        $("#show-best-btn").prop('disabled', !hasEvaluation);
-        $("#show-best").toggleClass('disabled', !hasEvaluation);
+        // But keep it disabled if continuation is in progress
+        if (this.continuationInProgress) {
+            $("#show-best-btn").prop('disabled', true);
+            $("#show-best").addClass('disabled');
+        } else {
+            $("#show-best-btn").prop('disabled', !hasEvaluation);
+            $("#show-best").toggleClass('disabled', !hasEvaluation);
+        }
     }
 
     async handleShowBest() {
         $("#quick-menu").removeClass('show');
         
+        // Check if we're in "go back" mode (continuation is complete)
+        if (this.continuationComplete && this.badMoveNode) {
+            this.goBackToBadMove();
+            return;
+        }
+        
         const currentNode = this.chessUI.moveTree.currentNode;
         
         // Check if we're on a bad move - if so, show best continuation
         if (this.isBadMove(currentNode.classification)) {
+            // Store the bad move node for later "go back"
+            this.badMoveNode = currentNode;
+            this.continuationComplete = false;
+            
             // Show best continuation sequence for bad moves
             await this.showBestContinuation();
             return;
@@ -807,6 +834,22 @@ export class MoveNavigator {
         // Icon SVGs
         const magnifierStarIcon = `<svg aria-hidden="true" data-glyph="tool-magnifier-star" viewBox="0 0 24 24" height="20" width="20" xmlns="http://www.w3.org/2000/svg"><path xmlns="http://www.w3.org/2000/svg" d="M10.9999 18.3299C15.1499 18.3299 18.3299 15.1399 18.3299 10.9999C18.3299 6.84992 15.1399 3.66992 10.9999 3.66992C6.84992 3.66992 3.66992 6.85992 3.66992 10.9999C3.66992 15.1499 6.85992 18.3299 10.9999 18.3299ZM10.9999 21.3299C5.20992 21.3299 0.669922 16.7799 0.669922 10.9999C0.669922 5.20992 5.21992 0.669922 10.9999 0.669922C16.7899 0.669922 21.3299 5.21992 21.3299 10.9999C21.3299 16.7899 16.7799 21.3299 10.9999 21.3299ZM21.6699 23.5699C21.1399 23.5699 20.6399 23.3699 19.8699 22.4999L16.3699 18.8299L18.8399 16.3599L22.4399 19.7899C23.3699 20.5899 23.5699 21.1199 23.5699 21.6599C23.5699 22.6899 22.6999 23.5599 21.6699 23.5599V23.5699ZM7.99992 14.8299C7.82992 15.3599 8.02992 15.4599 8.46992 15.1599L10.9999 13.3599L13.4999 15.1599C13.9299 15.4599 14.1299 15.3599 13.9999 14.8299L13.2299 11.8299L15.4999 10.0599C15.8999 9.72992 15.8299 9.48992 15.2999 9.45992L12.3699 9.22992L11.2999 6.55992C11.0999 6.05992 10.8699 6.05992 10.6699 6.55992L9.66992 9.22992L6.66992 9.45992C6.13992 9.48992 6.06992 9.72992 6.49992 10.0599L8.76992 11.8299L7.99992 14.8299Z" fill="currentColor"></path></svg>`;
         const starIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 560"><path d="M280,0C125.4,0,0,125.4,0,280s125.4,280,280,280s280-125.4,280-280S434.6,0,280,0z M475.3,231.3l-114.5,83.2l43.8,134.6c1.9,6-5,11-10.1,7.3L280,373.2l-114.5,83.1c-5.1,3.8-12.1-1.3-10.1-7.3l43.8-134.6L84.7,231.2c-5.2-3.7-2.5-11.8,3.8-11.8H230l43.7-134.7c2-6,10.5-6,12.5,0L330,219.4h141.6C477.9,219.4,480.5,227.5,475.3,231.3z" fill="currentColor"/></svg>`;
+        const goBackIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M125.7 160H176c17.7 0 32 14.3 32 32s-14.3 32-32 32H48c-17.7 0-32-14.3-32-32V64c0-17.7 14.3-32 32-32s32 14.3 32 32v51.2L97.6 97.6c87.5-87.5 229.3-87.5 316.8 0s87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3s-163.8-62.5-226.3 0L125.7 160z" fill="currentColor"/></svg>`;
+        
+        // Check if continuation is in progress - keep magnifier-star icon visible (but disabled)
+        if (this.continuationInProgress) {
+            // Don't change the icon during continuation - it's already set to magnifier-star and disabled
+            return;
+        }
+        
+        // Check if we're in "go back" mode (continuation complete)
+        if (this.continuationComplete && this.badMoveNode) {
+            // Show the button with go back icon
+            $('#show-best-btn').html(goBackIcon).show();
+            $('#skip-to-end').hide();
+            $('#show-best').hide();
+            return;
+        }
         
         if (isBadMove) {
             // Show the button with magnifier-star icon when on a bad move
@@ -842,6 +885,13 @@ export class MoveNavigator {
             return;
         }
 
+        // Mark continuation as in progress
+        this.continuationInProgress = true;
+
+        // Disable the button during continuation (keep icon visible but greyed out)
+        $('#show-best-btn').prop('disabled', true);
+        $('#show-best').addClass('disabled');
+
         // Step 1: Take back the bad move
         this.handleBackwardMove();
         
@@ -850,18 +900,64 @@ export class MoveNavigator {
         
         // Step 2: Get evaluation for the position before bad move and play best move
         const move1 = await this.playBestMoveFromEvaluation();
-        if (!move1) return;
+        if (!move1) {
+            // Re-enable button if failed
+            this.continuationInProgress = false;
+            $('#show-best-btn').prop('disabled', false);
+            $('#show-best').removeClass('disabled');
+            return;
+        }
         
         await new Promise(resolve => setTimeout(resolve, 400));
         
         // Step 3: Get evaluation and play best opponent response
         const move2 = await this.playBestMoveFromEvaluation();
-        if (!move2) return;
+        if (!move2) {
+            // Re-enable button if failed
+            this.continuationInProgress = false;
+            $('#show-best-btn').prop('disabled', false);
+            $('#show-best').removeClass('disabled');
+            return;
+        }
         
         await new Promise(resolve => setTimeout(resolve, 400));
         
         // Step 4: Get evaluation and play best player move again
         await this.playBestMoveFromEvaluation();
+        
+        // Mark continuation as complete and no longer in progress
+        this.continuationInProgress = false;
+        this.continuationComplete = true;
+        
+        // Re-enable the button now that continuation is complete
+        $('#show-best-btn').prop('disabled', false);
+        $('#show-best').removeClass('disabled');
+        
+        // Update button to show "go back" icon
+        this.updateShowBestButtonVisibility(this.chessUI.moveTree.currentNode);
+    }
+
+    /**
+     * Navigates back to the bad move that triggered the continuation
+     */
+    goBackToBadMove() {
+        if (!this.badMoveNode) {
+            return;
+        }
+        
+        // Set flag to prevent resetting state during navigation
+        this._isGoingBackToBadMove = true;
+        
+        // Navigate to the bad move
+        this.handleTreeNodeClick(this.badMoveNode);
+        
+        // Reset the state after navigation
+        this.badMoveNode = null;
+        this.continuationComplete = false;
+        this.continuationInProgress = false;
+        
+        // Update button back to normal state
+        this.updateShowBestButtonVisibility(this.chessUI.moveTree.currentNode);
     }
 
     /**
