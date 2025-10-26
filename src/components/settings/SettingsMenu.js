@@ -162,19 +162,34 @@ export class SettingsMenu {
                             },
                         ]
                     },
+                    'bestMoveSettings': {
+                        type: 'group',
+                        label: 'Best Move',
+                        description: 'Configure "Show Best" feature behavior',
+                        settings: [
+                            {
+                                key: 'showBestButton',
+                                type: 'toggle',
+                                label: 'Show Dedicated Button',
+                                description: 'Display Show Best button in bottom controls (replaces skip to end)',
+                                defaultValue: false,
+                                path: 'showBestButton'
+                            },
+                            {
+                                key: 'showBestMakeMove',
+                                type: 'toggle',
+                                label: 'Auto-Play Best Move',
+                                description: 'Automatically play the best move on the board (when off, shows arrow only)',
+                                defaultValue: true,
+                                path: 'showBestMakeMove'
+                            }
+                        ]
+                    },
                     'quickToggles': {
                         type: 'group',
                         label: 'Quick Toggles',
                         description: 'Quickly toggle settings',
                         settings: [
-                            {
-                                key: 'showBestButton',
-                                type: 'toggle',
-                                label: 'Show Best Button',
-                                description: 'Show dedicated button for Show Best instead of quick menu',
-                                defaultValue: false,
-                                path: 'showBestButton'
-                            },
                             {
                                 key: 'showBoardLabels',
                                 type: 'toggle',

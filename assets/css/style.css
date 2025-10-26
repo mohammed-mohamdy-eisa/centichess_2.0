@@ -1976,7 +1976,7 @@ body.lock-scroll {
     .controls {
         margin: 0 auto;
         gap: 8px;
-        max-width: calc(var(--board-scale) * 1vmin);
+        max-width: calc(var(--board-scale) * 1.5vmin);
     }
 
     .controls button {
@@ -2042,7 +2042,7 @@ body.lock-scroll {
     .controls {
         margin: 0 auto;
         gap: 8px;
-        max-width: calc(var(--board-scale) * 1vmin);
+        max-width: calc(var(--board-scale) * 1.5vmin);
     }
 
     .controls button {
@@ -3728,10 +3728,10 @@ body.lock-scroll {
     padding: 16px;
     background: none;
     color: var(--pure-white);
-    border: 1px solid var(--color-vibrant-purple-400);
+    border: 2px solid var(--color-vibrant-purple-500);
     border-radius: 6px;
-    font-size: 16px;
-    font-weight: 500;
+    font-size: 18px;
+    font-weight: 900;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
@@ -3741,8 +3741,8 @@ body.lock-scroll {
 }
 
 .learn-button:hover {
-    background: var(--color-vibrant-purple-400);
-    border-color: var(--color-vibrant-purple-400);
+    background: var(--color-vibrant-purple-500);
+    border-color: var(--color-vibrant-purple-500);
 }
 
 .learn-button:active {
@@ -3754,6 +3754,22 @@ body.lock-scroll {
     flex-shrink: 0;
     width: 16px;
     height: 16px;
+}
+
+/* Start Review Button */
+#start-review {
+    background: var(--btn-secondary);
+    border: 2px solid var(--btn-secondary);
+}
+
+#start-review:hover {
+    background: var(--hover-button);
+    border-color: var(--hover-button);
+}
+
+#start-review:active {
+    background: var(--light-btn);
+    border-color: var(--light-btn);
 }
 
 /* Learning Feedback in Move Info Box */

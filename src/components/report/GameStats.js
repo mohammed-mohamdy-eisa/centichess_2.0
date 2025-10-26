@@ -277,7 +277,10 @@ export class GameStats {
      */
     static createStartReviewButton() {
         return $(`
-                <button id="start-review" class="learn-button" style="background-color: var(--btn-secondary); border: none;">
+                <button id="start-review" class="learn-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 560" width="18" height="18" fill="currentColor">
+                    <path d="M280,0C125.4,0,0,125.4,0,280s125.4,280,280,280s280-125.4,280-280S434.6,0,280,0z M475.3,231.3l-114.5,83.2l43.8,134.6c1.9,6-5,11-10.1,7.3L280,373.2l-114.5,83.1c-5.1,3.8-12.1-1.3-10.1-7.3l43.8-134.6L84.7,231.2c-5.2-3.7-2.5-11.8,3.8-11.8H230l43.7-134.7c2-6,10.5-6,12.5,0L330,219.4h141.6C477.9,219.4,480.5,227.5,475.3,231.3z"/>
+                </svg>
                 Start Review
             </button>
         `);
