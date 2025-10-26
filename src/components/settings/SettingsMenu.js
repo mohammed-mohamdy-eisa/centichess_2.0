@@ -168,6 +168,14 @@ export class SettingsMenu {
                         description: 'Quickly toggle settings',
                         settings: [
                             {
+                                key: 'showBestButton',
+                                type: 'toggle',
+                                label: 'Show Best Button',
+                                description: 'Show dedicated button for Show Best instead of quick menu',
+                                defaultValue: false,
+                                path: 'showBestButton'
+                            },
+                            {
                                 key: 'showBoardLabels',
                                 type: 'toggle',
                                 label: 'Show Board Labels',
@@ -524,7 +532,7 @@ export class SettingsMenu {
                                 key: 'boardLightSquareColor',
                                 type: 'color',
                                 label: 'Light Squares',
-                                defaultValue: '#f0d9b5',
+                                defaultValue: '#c2c2c2',
                                 path: 'theme.boardLightSquareColor',
                                 preview: { target: '.color-preview-box' }
                             },
@@ -532,7 +540,7 @@ export class SettingsMenu {
                                 key: 'boardDarkSquareColor',
                                 type: 'color',
                                 label: 'Dark Squares',
-                                defaultValue: '#b58863',
+                                defaultValue: '#7d7d7d',
                                 path: 'theme.boardDarkSquareColor',
                                 preview: { target: '.color-preview-box' }
                             }
@@ -1367,6 +1375,22 @@ export class SettingsMenu {
      * Update chessboard settings
      */
     _updateChessboardSetting(path, value) {
+        // Handle special case for show best button toggle
+        if (path === 'showBestButton') {
+            if (value === true || value === 'true') {
+                // Show the show-best button, hide skip-to-end and quick menu item
+                $('#show-best-btn').show();
+                $('#skip-to-end').hide();
+                $('#show-best').hide();
+            } else {
+                // Hide the show-best button, show skip-to-end and quick menu item
+                $('#show-best-btn').hide();
+                $('#skip-to-end').show();
+                $('#show-best').show();
+            }
+            return;
+        }
+        
         if (this.chessboard && this.chessboard.setOption) {
             this.chessboard.setOption(path, value);
         }

@@ -36,8 +36,8 @@ export class ChessUI {
         // Load the board with settings from cookies
         this.board = new Chessboard("#chessboard", {
             theme: {
-                boardDarkSquareColor: this.settingsMenu.getSettingValue('boardDarkSquareColor') || 'rgba(110, 161, 118, 1)',
-                boardLightSquareColor: this.settingsMenu.getSettingValue('boardLightSquareColor') || 'rgba(224, 224, 224, 1)',
+                boardDarkSquareColor: this.settingsMenu.getSettingValue('boardDarkSquareColor') || '#7d7d7d',
+                boardLightSquareColor: this.settingsMenu.getSettingValue('boardLightSquareColor') || '#c2c2c2',
                 pieceFolderName: this.settingsMenu.getSettingValue('pieceTheme') || 'cburnett'
             },
             showBoardLabels: this.settingsMenu.getSettingValue('boardLabels') === 'letter' || this.settingsMenu.getSettingValue('boardLabels') === true

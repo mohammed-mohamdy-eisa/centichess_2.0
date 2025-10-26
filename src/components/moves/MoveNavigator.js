@@ -27,6 +27,7 @@ export class MoveNavigator {
         $("#flip-board").on("click", () => this.handleFlipBoard());
         $("#download-pgn").on("click", () => this.handleDownloadPgn());
         $("#show-best").on("click", () => this.handleShowBest());
+        $("#show-best-btn").on("click", () => this.handleShowBest());
         
         // Learning settings toggle handlers
         $("#toggle-auto-advance").on("click", () => this.handleToggleLearningSettings('autoAdvanceToNextMistake'));
@@ -103,6 +104,9 @@ export class MoveNavigator {
 
         // Update board arrows per mode
         this.updateBoardArrows(node);
+        
+        // Update show-best button state based on evaluation availability
+        this.updateShowBestButtonState(node);
     }
 
     /**
@@ -476,6 +480,11 @@ export class MoveNavigator {
 
             this.chessUI.moveTree.render('move-tree', (node) => this.handleTreeNodeClick(node));
             this.updateAfterMove(currentNode);
+            
+            // Update show-best button state for the evaluated node if it's current
+            if (currentNode.id === node.id) {
+                this.updateShowBestButtonState(currentNode);
+            }
 
         }, this.chessUI.moveTree);
     }
@@ -556,6 +565,42 @@ export class MoveNavigator {
         $("#quick-menu").removeClass('show');
     }
 
+    /**
+     * Checks if evaluation data exists for the current position and updates the show-best button state
+     * @param {Object} node - The current move tree node
+     */
+    updateShowBestButtonState(node) {
+        const currentFen = node.fen || (node.move ? node.move.after : null);
+        
+        if (!currentFen) {
+            $("#show-best-btn").prop('disabled', true);
+            $("#show-best").addClass('disabled');
+            return;
+        }
+
+        let hasEvaluation = false;
+        
+        // Check in the processed moves from evaluation queue
+        if (this.chessUI.evaluationQueue.processedMoves.has(node.id)) {
+            const processed = this.chessUI.evaluationQueue.processedMoves.get(node.id);
+            if (processed?.move?.lines && processed.move.lines.length > 0) {
+                hasEvaluation = true;
+            }
+        }
+        
+        // If not found, check in analysis moves (for analyzed games)
+        if (!hasEvaluation && this.chessUI.analysis?.moves) {
+            const analysisMove = this.chessUI.analysis.moves.find(m => m.fen === currentFen);
+            if (analysisMove?.lines && analysisMove.lines.length > 0) {
+                hasEvaluation = true;
+            }
+        }
+        
+        // Enable or disable the button and quick menu item based on evaluation availability
+        $("#show-best-btn").prop('disabled', !hasEvaluation);
+        $("#show-best").toggleClass('disabled', !hasEvaluation);
+    }
+
     async handleShowBest() {
         $("#quick-menu").removeClass('show');
         
@@ -587,6 +632,10 @@ export class MoveNavigator {
         
         // If still no evaluation, request one
         if (!evaluationData) {
+            // Disable the button and quick menu item during evaluation
+            $("#show-best-btn").prop('disabled', true);
+            $("#show-best").addClass('disabled');
+            
             // Show "Analysing..." in move-info
             const $moveInfo = $(".move-info").empty();
             const $placeholder = $("<div>").addClass("move-info-placeholder");
@@ -633,6 +682,10 @@ export class MoveNavigator {
                             move: { fen: currentFen, lines: lines }
                         });
                     }
+                    
+                    // Enable the button and quick menu item now that we have evaluation
+                    $("#show-best-btn").prop('disabled', false);
+                    $("#show-best").removeClass('disabled');
                 } else {
                     // Restore move-info display
                     MoveInformation.updateMoveInfo(currentNode, this.chessUI.moveTree.getPreviousMove());

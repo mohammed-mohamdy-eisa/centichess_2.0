@@ -206,8 +206,8 @@ export class Chessboard {
 
 		this.settings = {
 			theme: {
-				boardLightSquareColor: 'rgba(224, 224, 224, 1)',
-				boardDarkSquareColor: 'rgba(110, 161, 118, 1)',
+				boardLightSquareColor: '#c2c2c2',
+				boardDarkSquareColor: '#7d7d7d',
 				boardBackgroundPath: '',
 				boardImageBackground: false,
 				pieceFoldersPath: 'assets/pieces/',

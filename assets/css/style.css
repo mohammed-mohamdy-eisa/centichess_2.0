@@ -970,8 +970,8 @@ select {
     position: relative;
 }
 
-.turn:nth-child(even) {
-    background-color: rgba(255, 255, 255, 0.05);
+.turn:nth-child(odd) {
+    background-color: rgba(255, 255, 255, 0.02);
 }
 
 .variation {
@@ -1030,7 +1030,6 @@ select {
 
 .move-container:hover {
     background-color: var(--hover-light);
-    transform: translateY(-1px);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -1059,12 +1058,11 @@ select {
 }
 
 .current-move {
-    color: var(--perm-white) !important;
     font-weight: 600;
 }
 
 .current-container {
-    background-color: var(--light-btn);
+    background-color:  var(--hover-light);
     font-weight: 600;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -1246,6 +1244,15 @@ select {
 .controls button:active {
     transform: translateY(0);
     box-shadow: none;
+}
+
+.controls button:disabled {
+    background-color: var(--btn-secondary);
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    pointer-events: none;
 }
 
 /* Make the quick menu button slightly wider */
@@ -3634,6 +3641,12 @@ body.lock-scroll {
 .quick-menu-item:active {
     background-color: var(--light-btn);
     color: white;
+}
+
+.quick-menu-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .quick-menu-item svg {
