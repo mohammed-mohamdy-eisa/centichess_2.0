@@ -962,6 +962,12 @@ export class MistakeLearner {
      * Plays a learning mode sound
      */
     playSound(soundName) {
+        // Check if audio is enabled
+        const audioEnabled = this.chessUI.settingsMenu.getSettingValue('audioEnabled');
+        if (audioEnabled === false) {
+            return;
+        }
+        
         if (this.sounds[soundName]) {
             // Reset the sound to allow rapid replays
             this.sounds[soundName].currentTime = 0;

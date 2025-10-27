@@ -406,18 +406,19 @@ select {
 /* Logo Styles */
 .logo {
     display: flex;
-    align-items: baseline;
     gap: 4px;
 }
 
 .logo a {
     color: var(--color-primary);
-    font-size: 22px;
+    font-size: 26px;
+    font-family: "Bitcount Grid Single", monospace;
+    font-weight: 500;
 }
 
 .logo svg {
     color: var(--color-primary);
-    width: 22px;
+    width: auto;
     height: 22px;
 }
 
