@@ -735,7 +735,7 @@ export class GamesList {
 
         const profilePicture = this.currentPlatform === Platform.LICHESS 
             ? `<div class="profile-picture-placeholder"></div>`
-            : `<img class="profile-picture" src="./assets/placeholders/white_400.png" data-username="${opponent.name}">`;
+            : `<img class="profile-picture" src="./assets/placeholders/pawn_400.png" data-username="${opponent.name}">`;
 
         // Handle PGN games differently - they load directly without URL params
         const gameItemContent = game.platform === Platform.PGN ? `
@@ -828,7 +828,7 @@ export class GamesList {
             const $img = $(this);
             $img.attr('src', avatarUrl);
             $img.on('error', function() {
-                $(this).attr('src', './assets/placeholders/white_400.png');
+                $(this).attr('src', './assets/placeholders/pawn_400.png');
             });
         });
     }

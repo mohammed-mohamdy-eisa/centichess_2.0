@@ -162,8 +162,8 @@
     --color-gray-900: #262421;
     
     /* Classification Background Gradients */
-    --theory-bg-start: rgba(213, 164, 125, 0.7);
-    --theory-bg-end: rgba(107, 77, 58, 0.9);
+    --book-bg-start: rgba(213, 164, 125, 0.7);
+    --book-bg-end: rgba(107, 77, 58, 0.9);
     --brilliant-bg-start: rgba(38, 194, 163, 0.7);
     --brilliant-bg-end: rgba(16, 119, 124, 0.8);
     --great-bg-start: rgba(116, 155, 191, 0.6);
@@ -603,6 +603,7 @@ select {
 .profile-picture {
     width: 30px;
     height: 30px;
+    border-radius: 4px;
 }
 
 .profile {
@@ -1122,7 +1123,7 @@ select {
     color: var(--color-classification-blunder);
 }
 
-.moves-container .theory-move {
+.moves-container .book-move {
     color: var(--pure-white);
 }
 
@@ -1140,7 +1141,7 @@ select {
 /* Hide move icons for specific classifications in moves-container only */
 .moves-container .best-container .move-icon,
 .moves-container .excellent-container .move-icon,
-.moves-container .theory-container .move-icon,
+.moves-container .book-container .move-icon,
 .moves-container .forced-container .move-icon,
 .moves-container .good-container .move-icon {
     display: none;
@@ -1190,7 +1191,7 @@ select {
     color: var(--color-classification-blunder);
 }
 
-.theory-move:not(.moves-container .theory-move) {
+.book-move:not(.moves-container .book-move) {
     color: var(--color-classification-book);
 }
 
@@ -1283,8 +1284,8 @@ select {
 }
 
 /* Board Classification Background Colors */
-.board-classification.theory-move {
-	background-image: linear-gradient(var(--theory-bg-start) 100%, var(--theory-bg-end) 50%);
+.board-classification.book-move {
+	background-image: linear-gradient(var(--book-bg-start) 100%, var(--book-bg-end) 50%);
 }
 
 .board-classification.brilliant-move {

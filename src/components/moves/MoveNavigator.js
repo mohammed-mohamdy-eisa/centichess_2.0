@@ -133,7 +133,7 @@ export class MoveNavigator {
         // Helper function to check if a move classification is optimal
         const isOptimalMove = (classification) => {
             if (!classification) return false;
-            const optimal = ['brilliant', 'great', 'best', 'theory', 'excellent'];
+            const optimal = ['brilliant', 'great', 'best', 'book', 'excellent'];
             return optimal.includes(classification.toLowerCase());
         };
 

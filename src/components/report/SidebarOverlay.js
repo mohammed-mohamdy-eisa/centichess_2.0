@@ -160,7 +160,7 @@ export const funFacts = [
     `Convincing the knight that horse jokes aren't funny anymore...`,
     `Looking for your opponent's mouse slip (found none, sorry)...`,
     `Calculating faster than you can say 'time trouble'...`,
-    `Checking if that move was theory or madness...`,
+    `Checking if that move was book or madness...`,
     `Consulting with the ghost of Paul Morphy...`,
     `Trying to find a polite way to say 'that was dubious'...`,
     `Running on thoughts and prayers (mostly thoughts)...`,
