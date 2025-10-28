@@ -178,10 +178,6 @@ export class SidebarOverlay {
     static isUserInitiatedLoad = false; // Track if current load is user-initiated (not initial page load)
     static analysisStartTime = null; // Track when analysis started for time estimation
     static wakeLock = null; // Screen Wake Lock to keep screen awake during analysis
-    static keepAwakeVideo = null; // Hidden video fallback to keep devices awake on mobile
-    static keepAwakeCanvas = null;
-    static keepAwakeStream = null;
-    static keepAwakeRAF = 0;
 
     static get $overlay() {
         if (!this.overlay) {
@@ -278,18 +274,9 @@ export class SidebarOverlay {
                 this.wakeLock.addEventListener('release', () => {
                     console.log('Screen wake lock released');
                 });
-            } else {
-                // Fallback if Wake Lock API is unavailable
-                await this.startVideoFallback();
             }
         } catch (err) {
             console.warn('Failed to request wake lock:', err);
-            // Try the video fallback if wake lock request fails (common on iOS/Safari)
-            try {
-                await this.startVideoFallback();
-            } catch (e) {
-                console.warn('Failed to start video fallback:', e);
-            }
         }
     }
 
@@ -306,106 +293,6 @@ export class SidebarOverlay {
         } catch (err) {
             console.warn('Failed to release wake lock:', err);
         }
-        // Always stop the video fallback as well
-        this.stopVideoFallback();
-    }
-
-    /**
-     * Create (once) a hidden inline video fed by a tiny animated canvas stream.
-     * Playing media keeps many mobile browsers awake when muted/inline.
-     */
-    static ensureVideoElements() {
-        if (this.keepAwakeVideo) return;
-
-        // Create a tiny canvas that changes pixels to produce a live stream
-        const canvas = document.createElement('canvas');
-        canvas.width = 2;
-        canvas.height = 2;
-        canvas.style.position = 'fixed';
-        canvas.style.width = '1px';
-        canvas.style.height = '1px';
-        canvas.style.opacity = '0';
-        canvas.style.pointerEvents = 'none';
-        canvas.style.zIndex = '-1';
-
-        const ctx = canvas.getContext('2d');
-        let t = 0;
-        const draw = () => {
-            // Animate a few pixels to keep the stream producing frames
-            ctx.fillStyle = t % 2 === 0 ? '#000' : '#111';
-            ctx.fillRect(0, 0, 2, 2);
-            t++;
-            this.keepAwakeRAF = requestAnimationFrame(draw);
-        };
-
-        // Start the animation loop only when needed in startVideoFallback
-        const stream = canvas.captureStream(1); // 1 FPS is sufficient
-
-        const video = document.createElement('video');
-        video.muted = true;
-        video.loop = true;
-        video.autoplay = true;
-        video.playsInline = true;
-        video.setAttribute('playsinline', '');
-        video.style.position = 'fixed';
-        video.style.width = '1px';
-        video.style.height = '1px';
-        video.style.opacity = '0';
-        video.style.pointerEvents = 'none';
-        video.style.zIndex = '-1';
-        video.srcObject = stream;
-
-        document.body.appendChild(canvas);
-        document.body.appendChild(video);
-
-        this.keepAwakeCanvas = canvas;
-        this.keepAwakeVideo = video;
-        this.keepAwakeStream = stream;
-        this.keepAwakeDraw = draw;
-    }
-
-    /**
-     * Start the hidden inline video fallback.
-     */
-    static async startVideoFallback() {
-        this.ensureVideoElements();
-        // Kick the animation to feed the stream
-        if (this.keepAwakeRAF) cancelAnimationFrame(this.keepAwakeRAF);
-        if (this.keepAwakeDraw) this.keepAwakeDraw();
-        try {
-            await this.keepAwakeVideo.play();
-            console.log('Video fallback started to keep screen awake');
-        } catch (err) {
-            // Some browsers require a user gesture; ignore if it fails silently
-            console.warn('Video fallback play() failed:', err);
-        }
-    }
-
-    /**
-     * Stop and clean up the hidden inline video fallback.
-     */
-    static stopVideoFallback() {
-        try {
-            if (this.keepAwakeRAF) {
-                cancelAnimationFrame(this.keepAwakeRAF);
-                this.keepAwakeRAF = 0;
-            }
-            if (this.keepAwakeVideo) {
-                this.keepAwakeVideo.pause();
-                // Detach stream tracks
-                if (this.keepAwakeStream) {
-                    this.keepAwakeStream.getTracks().forEach(track => track.stop());
-                }
-                // Remove DOM nodes
-                if (this.keepAwakeVideo.parentNode) this.keepAwakeVideo.parentNode.removeChild(this.keepAwakeVideo);
-            }
-            if (this.keepAwakeCanvas && this.keepAwakeCanvas.parentNode) {
-                this.keepAwakeCanvas.parentNode.removeChild(this.keepAwakeCanvas);
-            }
-        } catch (_) {}
-        this.keepAwakeVideo = null;
-        this.keepAwakeCanvas = null;
-        this.keepAwakeStream = null;
     }
 
     /**
@@ -509,10 +396,6 @@ export class SidebarOverlay {
             if (document.visibilityState === 'visible' && this.isAnalysisOverlayActive) {
                 // Re-request wake lock when tab becomes visible and analysis is still running
                 await this.requestWakeLock();
-                // If wake lock still isn't active, ensure fallback is running
-                if (!this.wakeLock) {
-                    try { await this.startVideoFallback(); } catch (_) {}
-                }
             }
         });
     }

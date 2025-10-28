@@ -378,9 +378,38 @@ export class Engine {
         
         if (!this.worker) {
             try {
-                this.worker = new Worker(engines[0].path);
+                // Recompute a sensible worker path for this engine/context
+                let workerPath = this.engine.path;
+
+                // Prefer asm.js on mobile for NNUE if available
+                if (this.engineType === 'stockfish-17.1-nnue' && (function () {
+                    try {
+                        const ua = navigator.userAgent || navigator.vendor || window.opera;
+                        return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(ua);
+                    } catch (_) { return false; }
+                })() && this.engine.mobilePath) {
+                    workerPath = this.engine.mobilePath;
+                } else if (
+                    (this.engineType === 'stockfish-17.1-lite' || this.engineType === 'stockfish-17.1-nnue') &&
+                    this.engine.multiPath &&
+                    this.threadCount > 1 &&
+                    (function () {
+                        try {
+                            if (typeof SharedArrayBuffer === 'undefined') return false;
+                            if (typeof crossOriginIsolated !== 'undefined' && !crossOriginIsolated) return false;
+                            return true;
+                        } catch (_) { return false; }
+                    })()
+                ) {
+                    workerPath = this.engine.multiPath;
+                }
+
+                this.worker = new Worker(workerPath);
                 this.worker.postMessage("uci");
                 this.worker.postMessage(`setoption name MultiPV value ${this.multiPV}`);
+                if (this.threadCount > 1 && workerPath === this.engine.multiPath) {
+                    this.worker.postMessage(`setoption name Threads value ${this.threadCount}`);
+                }
                 this.worker.addEventListener("error", this.handleError.bind(this));
                 this.worker.onerror = this.handleError.bind(this);
             } catch (err) {

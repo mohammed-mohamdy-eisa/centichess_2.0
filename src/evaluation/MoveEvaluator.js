@@ -124,7 +124,14 @@ export class MoveEvaluator {
         const engineType = settings.engineType || 'stockfish-17.1-lite';
         const threadCount = settings.engineThreads ?? 0;
         const maxMoveTime = settings.maxMoveTime || 5;
-        const maxWorkers = navigator.hardwareConcurrency || 8;
+        // Limit workers for mobile browsers to avoid exhausting resources
+        const isMobile = (() => {
+            try {
+                const ua = navigator.userAgent || navigator.vendor || window.opera;
+                return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(ua);
+            } catch (_) { return false; }
+        })();
+        const maxWorkers = isMobile ? Math.min(2, (navigator.hardwareConcurrency || 2)) : (navigator.hardwareConcurrency || 8);
         const moves = new Array(history.length);
         
         // Create a pool of workers upfront and reuse them
