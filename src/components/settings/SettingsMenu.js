@@ -202,7 +202,7 @@ export class SettingsMenu {
                                 key: 'audioEnabled',
                                 type: 'toggle',
                                 label: 'Sound Effects',
-                                description: 'Play sounds for moves, captures, and learning mode',
+                                description: 'Play sounds for moves and captures',
                                 defaultValue: true,
                                 path: 'audioEnabled'
                             },
