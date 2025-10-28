@@ -276,9 +276,8 @@ export class MoveEvaluator {
         // Calculate accuracy
         const whiteMoves = moves.filter(move => move.fen.includes(' b '));
         const blackMoves = moves.filter(move => move.fen.includes(' w '));
-        // Use accuracy 1.0 for top engine moves, otherwise use classification accuracy
-        const whiteAccuracy = whiteMoves.reduce((sum, move) => sum + (move.isTopEngineMove ? 1.0 : move.classification.accuracy), 0) / whiteMoves.length;
-        const blackAccuracy = blackMoves.reduce((sum, move) => sum + (move.isTopEngineMove ? 1.0 : move.classification.accuracy), 0) / blackMoves.length;
+        const whiteAccuracy = whiteMoves.reduce((sum, move) => sum + move.classification.accuracy, 0) / whiteMoves.length;
+        const blackAccuracy = blackMoves.reduce((sum, move) => sum + move.classification.accuracy, 0) / blackMoves.length;
 
         // Calculate counts of each classification type
         const whiteCounts = whiteMoves.reduce((counts, move) => {
@@ -290,15 +289,13 @@ export class MoveEvaluator {
             return counts;
         }, {});
 
-        // Calculate Game Rating from centipawn loss
+        // Calculate estimated Elo from centipawn loss
         const whiteCpl = whiteMoves.reduce((sum, move) => sum + move.centipawnLoss || 0, 0) / whiteMoves.length;
         const blackCpl = blackMoves.reduce((sum, move) => sum + move.centipawnLoss || 0, 0) / blackMoves.length;
 
         const getEloFromAverageCpl = (averageCpl) => {
             const cpl = Math.max(Math.min(averageCpl, 300), 0) / 100;
-            // Calibrated to match Chess.com Elo estimates more closely
-            // Reduced penalty for CPL and increased base Elo
-            return -958.03125 * Math.pow(cpl, 3) + 3395.605 * Math.pow(cpl, 2) - 3800 * cpl + 2750;
+            return -958.03125 * Math.pow(cpl, 3) + 3395.605 * Math.pow(cpl, 2) - 4216.92255 * cpl + 2574.1609;
         }
         
         const getAverageCplFromElo = (elo) => {
@@ -314,11 +311,10 @@ export class MoveEvaluator {
             const cplDiff = gameCpl - expectedCpl;
             if (cplDiff === 0) return eloFromCpl;
 
-            // Calibrated adjustment factor (reduced from 0.005 to 0.003 to be less aggressive)
             if (cplDiff > 0) {
-                return rating * Math.exp(-0.003 * cplDiff);
+                return rating * Math.exp(-0.005 * cplDiff);
             } else {
-                return rating / Math.exp(-0.003 * -cplDiff);
+                return rating / Math.exp(-0.005 * -cplDiff);
             }
         };
 
@@ -328,19 +324,17 @@ export class MoveEvaluator {
         // Helper function to calculate accuracy for a set of moves
         const calculateAccuracy = (movesArray) => {
             if (movesArray.length === 0) return 0;
-            // Use accuracy 1.0 for top engine moves, otherwise use classification accuracy
-            return movesArray.reduce((sum, move) => sum + (move.isTopEngineMove ? 1.0 : move.classification.accuracy), 0) / movesArray.length;
+            return movesArray.reduce((sum, move) => sum + move.classification.accuracy, 0) / movesArray.length;
         };
         
         // Helper function to determine classification based on accuracy and special moves
-        // More dramatic thresholds for clearer performance distinctions
         const getClassification = (accuracy, hasBrilliant, hasGreat) => {
-            if (accuracy > 0.90 && hasBrilliant) return Classification.BRILLIANT;
-            if (accuracy > 0.90 && hasGreat) return Classification.GREAT;
-            if (accuracy > 0.90) return Classification.BEST;
-            if (accuracy > 0.80) return Classification.EXCELLENT;
-            if (accuracy > 0.70) return Classification.GOOD;
-            if (accuracy > 0.55) return Classification.MISTAKE;
+            if (accuracy > 0.8 && hasBrilliant) return Classification.BRILLIANT;
+            if (accuracy > 0.8 && hasGreat) return Classification.GREAT;
+            if (accuracy > 0.8) return Classification.BEST;
+            if (accuracy > 0.7) return Classification.EXCELLENT;
+            if (accuracy > 0.65) return Classification.GOOD;
+            if (accuracy > 0.6) return Classification.MISTAKE;
             return Classification.BLUNDER;
         };
         

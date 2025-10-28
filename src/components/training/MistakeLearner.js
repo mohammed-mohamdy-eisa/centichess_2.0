@@ -19,18 +19,13 @@ export class MistakeLearner {
         this.mistakeSolved = false; // Track if current mistake was solved (top engine move made)
         this.positionBeforeLearning = null; // Store position before entering learning mode
         
-        // Initialize audio for learning sounds with normalized volume
+        // Initialize audio for learning sounds
         this.sounds = {
             correct: new Audio('/assets/sounds/learning/correct.mp3'),
             wrong: new Audio('/assets/sounds/learning/wrong.mp3'),
             completed: new Audio('/assets/sounds/learning/completed.mp3'),
             better: new Audio('/assets/sounds/learning/better.mp3')
         };
-        
-        // Normalize volume for all learning sounds
-        Object.values(this.sounds).forEach(sound => {
-            sound.volume = 0.4; // Normalized volume level
-        });
     }
 
     /**
@@ -523,7 +518,7 @@ export class MistakeLearner {
         const classification = evaluatedMove.classification?.type;
         
         // Check if it's the best move (optimal classifications that only occur for top moves)
-        const topOnlyMoves = ['perfect', 'best', 'brilliant', 'great', 'forced', 'book'];
+        const topOnlyMoves = ['perfect', 'best', 'brilliant', 'great', 'forced', 'theory'];
         
         if (topOnlyMoves.includes(classification)) {
             // Best move found!
@@ -887,7 +882,7 @@ export class MistakeLearner {
             'best': '#81b64c',
             'great': '#749bbf',
             'brilliant': '#26c2a3',
-            'book': '#d5a47d',
+            'theory': '#d5a47d',
             'forced': '#81b64c'
         };
         return colors[classificationType.toLowerCase()] || 'var(--text-primary)';
@@ -962,12 +957,6 @@ export class MistakeLearner {
      * Plays a learning mode sound
      */
     playSound(soundName) {
-        // Check if audio is enabled
-        const audioEnabled = this.chessUI.settingsMenu.getSettingValue('audioEnabled');
-        if (audioEnabled === false) {
-            return;
-        }
-        
         if (this.sounds[soundName]) {
             // Reset the sound to allow rapid replays
             this.sounds[soundName].currentTime = 0;

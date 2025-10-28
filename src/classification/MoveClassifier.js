@@ -4,7 +4,7 @@ import { chessOpeningTree } from '../data/openings.js';
 import { MoveAnnotator } from './MoveAnnotator.js';
 
 export const ClasifCss = {
-    MOVE_THEORY: "book-move",
+	MOVE_THEORY: "theory-move",
     MOVE_BRILLIANT: "brilliant-move",
     MOVE_GREAT: "great-move",
     MOVE_BEST: "best-move",
@@ -22,7 +22,7 @@ export const Classification = {
         type: "brilliant",
         src: "/assets/classifications/brilliant.svg",
         class: ClasifCss.MOVE_BRILLIANT,
-        accuracy: 1.0,  // Maximum accuracy
+        accuracy: 1,
         comment: "is a brilliant move!",
         color: "#26c2a3" // var(--color-classification-brilliant) → var(--color-aqua-300)
     },
@@ -30,7 +30,7 @@ export const Classification = {
         type: "great",
         src: "/assets/classifications/great.svg",
         class: ClasifCss.MOVE_GREAT,
-        accuracy: 0.99,  // Calibrated: brilliant >= great (optimized for high accuracy)
+        accuracy: 1,
         comment: "is a great move!",
         color: "#749bbf" // var(--color-classification-great) → var(--color-slate-300)
     },
@@ -38,7 +38,7 @@ export const Classification = {
         type: "best",
         src: "/assets/classifications/best.svg",
         class: ClasifCss.MOVE_BEST,
-        accuracy: 0.975,  // Calibrated: great >= best (optimized for high accuracy)
+        accuracy: 1,
         comment: "is the best move.",
         color: "#81b64c" // var(--color-classification-best) → var(--color-green-300)
     },
@@ -46,7 +46,7 @@ export const Classification = {
         type: "excellent",
         src: "/assets/classifications/excellent.svg",
         class: ClasifCss.MOVE_EXCELLENT,
-        accuracy: 0.83,  // Calibrated: best > excellent
+        accuracy: 0.79,
         comment: "is an excellent move.",
         color: "#81b64c" // var(--color-classification-excellent) → var(--color-green-300)
     },
@@ -54,23 +54,23 @@ export const Classification = {
         type: "good",
         src: "/assets/classifications/good.svg",
         class: ClasifCss.MOVE_GOOD,
-        accuracy: 0.63,  // Calibrated: excellent > good
+        accuracy: 0.78,
         comment: "is a good move.",
         color: "#95b776" // not explicit var in classification, but matches var(--color-green-400)
     },
     THEORY: {
-        type: "book",
+        type: "theory",
         src: "/assets/classifications/theory.svg",
         class: ClasifCss.MOVE_THEORY,
-        accuracy: 0.975,  // Calibrated: same as BEST (book moves in Chess.com)
-        comment: "is book.",
+        accuracy: 1,
+        comment: "is theory.",
         color: "#d5a47d" // var(--color-classification-book) → var(--color-skin-300). Theory and book share color in chess.com/lichess
     },
     INACCURACY: {
         type: "inaccuracy",
         src: "/assets/classifications/inaccuracy.svg",
         class: ClasifCss.MOVE_INACCURACY,
-        accuracy: 0.33,  // Calibrated: good > inaccuracy
+        accuracy: 0.25,
         comment: "is an inaccuracy.",
         color: "#f7c631" // var(--color-classification-inaccuracy) → var(--color-gold-200)
     },
@@ -78,7 +78,7 @@ export const Classification = {
         type: "mistake",
         src: "/assets/classifications/mistake.svg",
         class: ClasifCss.MOVE_MISTAKE,
-        accuracy: 0.145,  // Calibrated: inaccuracy > mistake
+        accuracy: 0.01,
         comment: "is a mistake.",
         color: "#ffa459" // var(--color-classification-mistake) → var(--color-orange-200)
     },
@@ -86,7 +86,7 @@ export const Classification = {
         type: "blunder",
         src: "/assets/classifications/blunder.svg",
         class: ClasifCss.MOVE_BLUNDER,
-        accuracy: 0.0,  // Minimum accuracy
+        accuracy: 0,
         comment: "was a blunder!",
         color: "#fa412d" // var(--color-classification-blunder) → var(--color-red-300)
     },
@@ -94,7 +94,7 @@ export const Classification = {
         type: "forced",
         src: "/assets/classifications/forced.svg",
         class: ClasifCss.MOVE_FORCED,
-        accuracy: 0.975,  // Calibrated: same as BEST
+        accuracy: 1,
         comment: "was forced.",
         color: "#5d9948" // var(--color-classification-forced) → var(--color-green-400)
     },
@@ -102,7 +102,7 @@ export const Classification = {
         type: "miss",
         src: "/assets/classifications/miss.svg",
         class: ClasifCss.MOVE_MISS,
-        accuracy: 0.08,  // Calibrated: mistake > miss > blunder
+        accuracy: 0.01,
         comment: "missed a great opportunity.",
         color: "#ff7769" // var(--color-classification-miss)
     }
@@ -532,7 +532,6 @@ export class MoveClassifier {
                 }
             }
             move.classification = classification;
-            move.isTopEngineMove = false; // No engine evaluation available
             
             return classification;
         }
@@ -549,7 +548,6 @@ export class MoveClassifier {
             classification = Classification.THEORY;
             move.classification = classification;
             move.centipawnLoss = 0;
-            move.isTopEngineMove = false; // Theory moves use classification accuracy
             return classification;
         }
 
@@ -565,7 +563,6 @@ export class MoveClassifier {
             move.classification = classification;
             move.commentType = CommentType.FORCED;
             move.centipawnLoss = 0;
-            move.isTopEngineMove = false; // Forced moves use classification accuracy
             return classification;
         }
 
@@ -574,7 +571,6 @@ export class MoveClassifier {
             classification = Classification.GOOD;
             move.classification = classification;
             move.centipawnLoss = 0;
-            move.isTopEngineMove = false; // No engine evaluation available
             return classification;
         }
 
@@ -597,9 +593,7 @@ export class MoveClassifier {
         // If the move matches the top computer move already we can skip the rest
         if (move.uciMove === prevBestLine.uciMove) {
             classification = Classification.BEST;
-            move.isTopEngineMove = true; // Mark as top engine move for accuracy calculation
         } else {
-            move.isTopEngineMove = false; // Not the top engine move
             if (noMate) {
                 // Standard move evaluation
                 classification = this.centipawnClassifications.find(classif => evalLoss <= this.evalLossThresholds[classif.type](0)) || classification;
@@ -761,7 +755,7 @@ export class MoveClassifier {
         }
 
         // Chess.com Miss detection: failing to capitalize on opponent's mistake
-        // Check if opponent made a significant mistake (not forced/book) and we failed to punish it
+        // Check if opponent made a significant mistake (not forced/theory) and we failed to punish it
         if (moves.length >= 2) {
             const opponentPrevMove = moves[moves.length - 2];
             

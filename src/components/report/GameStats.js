@@ -58,7 +58,7 @@ export class GameStats {
             .append('<hr class="stats-divider">')
             .append(this.createMovesSection(analysis))
             .append('<hr class="stats-divider">')
-            .append(this.createStatsRow('Game Rating', 
+            .append(this.createStatsRow('Estimated Elo', 
                 analysis.white.elo ? Math.ceil(analysis.white.elo / 10) * 10 : 1400, 
                 analysis.black.elo ? Math.ceil(analysis.black.elo / 10) * 10 : 1400, 
                 true))
