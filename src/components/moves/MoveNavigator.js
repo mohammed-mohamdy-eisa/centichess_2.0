@@ -292,6 +292,15 @@ export class MoveNavigator {
         this.chessUI.moveTree.navigateTo('root');
         this.chessUI.moveTree.updateCurrentMove('root');
 
+        // Reset best continuation/show-best state on restart
+        this.badMoveNode = null;
+        this.continuationComplete = false;
+        this.continuationInProgress = false;
+
+        // Update show-best UI immediately after reset
+        this.updateShowBestButtonVisibility(this.chessUI.moveTree.currentNode);
+        this.updateShowBestButtonState(this.chessUI.moveTree.currentNode);
+
         GameGraph.updateCurrentMoveNumber(0);
         EvaluationBar.updateEvaluationBar();
         EngineLines.updateEngineLines(
@@ -312,6 +321,15 @@ export class MoveNavigator {
     handleSkipToEnd() {
         const lastMove = this.chessUI.moveTree.getFinalMove();
         this.handleTreeNodeClick(lastMove);
+
+        // Reset best continuation/show-best state when skipping to end
+        this.badMoveNode = null;
+        this.continuationComplete = false;
+        this.continuationInProgress = false;
+
+        // Update show-best UI after reset
+        this.updateShowBestButtonVisibility(this.chessUI.moveTree.currentNode);
+        this.updateShowBestButtonState(this.chessUI.moveTree.currentNode);
     }
 
     handleUserMove(moveObj) {
@@ -847,7 +865,7 @@ export class MoveNavigator {
             // Show the button with go back icon
             $('#show-best-btn').html(goBackIcon).show();
             $('#skip-to-end').hide();
-            $('#show-best').hide();
+            // Keep quick menu item always visible
             return;
         }
         
@@ -855,7 +873,6 @@ export class MoveNavigator {
             // Show the button with magnifier-star icon when on a bad move
             $('#show-best-btn').html(magnifierStarIcon).show();
             $('#skip-to-end').hide();
-            $('#show-best').hide(); // Hide quick menu item too
         } else {
             // Restore normal star icon
             $('#show-best-btn').html(starIcon);
@@ -864,11 +881,9 @@ export class MoveNavigator {
             if (showBestButtonSetting === true || showBestButtonSetting === 'true') {
                 $('#show-best-btn').show();
                 $('#skip-to-end').hide();
-                $('#show-best').hide();
             } else {
                 $('#show-best-btn').hide();
                 $('#skip-to-end').show();
-                $('#show-best').show();
             }
         }
     }
@@ -1158,8 +1173,9 @@ export class MoveNavigator {
         $('#restart, #skip-to-end, #show-best-btn').hide();
         // Keep backward, forward, and popup-quick-menu visible - they work in both modes
         
-        // Switch quick menu to learning settings
+        // Switch quick menu to learning settings (hide 'Show best move' in learning mode)
         $('.quick-menu-item:not(.learning-setting-item)').hide();
+        $('#show-best').hide();
         $('.learning-setting-item').show();
         // Hide the inaccuracies toggle in learning mode
         $('#toggle-include-inaccuracies').hide();

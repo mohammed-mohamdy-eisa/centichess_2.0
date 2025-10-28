@@ -58,19 +58,110 @@ export class GameStats {
             .append('<hr class="stats-divider">')
             .append(this.createMovesSection(analysis))
             .append('<hr class="stats-divider">')
-            .append(this.createStatsRow('Estimated Elo', 
+            .append(this.createStatsRow('Game Rating', 
                 analysis.white.elo ? Math.ceil(analysis.white.elo / 10) * 10 : 1400, 
                 analysis.black.elo ? Math.ceil(analysis.black.elo / 10) * 10 : 1400, 
                 true))
-            .append(this.createPhaseClassificationsRow('Opening', phaseClassifications?.white?.opening, phaseClassifications?.black?.opening, false))
-            .append(this.createPhaseClassificationsRow('Middlegame', phaseClassifications?.white?.middlegame, phaseClassifications?.black?.middlegame, false))
-            .append(this.createPhaseClassificationsRow('Endgame', phaseClassifications?.white?.endgame, phaseClassifications?.black?.endgame, false))
+            .append(this.createPhaseClassificationsRow('Opening', phaseClassifications?.white?.opening, phaseClassifications?.black?.opening, analysis.phaseAnalysis?.opening))
+            .append(this.createPhaseClassificationsRow('Middlegame', phaseClassifications?.white?.middlegame, phaseClassifications?.black?.middlegame, analysis.phaseAnalysis?.middlegame))
+            .append(this.createPhaseClassificationsRow('Endgame', phaseClassifications?.white?.endgame, phaseClassifications?.black?.endgame, analysis.phaseAnalysis?.endgame))
             .append(this.createLearnButton())
             .append(this.createStartReviewButton());
 
 
 
         $container.append(statsContainer);
+
+        // Create (or replace) a single tooltip element for phase accuracy
+        $('#phase-accuracy-tooltip').remove();
+        const $tooltip = $('<div id="phase-accuracy-tooltip"></div>')
+            .css({
+                position: 'absolute',
+                zIndex: 9999,
+                background: '#1a1a1a',
+                color: '#fff',
+                padding: '12px 18px',
+                borderRadius: '12px',
+                fontSize: '13px',
+                fontWeight: '600',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.35)',
+                pointerEvents: 'none',
+                display: 'none',
+                opacity: 0,
+                transform: 'translateY(4px) scale(0.98)',
+                transition: 'opacity 150ms ease, transform 150ms ease'
+            })
+            .appendTo('body');
+
+        // Arrow element for bubble look
+        const $arrow = $('<div></div>')
+            .css({
+                position: 'absolute',
+                width: 0,
+                height: 0,
+                borderLeft: '8px solid transparent',
+                borderRight: '8px solid transparent',
+                borderTop: '8px solid #1a1a1a',
+            });
+        $tooltip.append($arrow);
+
+        // Hide tooltip helper (animate out, then hide)
+        const hideTooltip = () => {
+            $tooltip.css({ opacity: 0, transform: 'translateY(4px) scale(0.98)' });
+            setTimeout(() => { $tooltip.hide(); }, 160);
+        };
+
+        // Helper: position and animate in tooltip for a given icon
+        const showTooltipForIcon = (iconEl, label) => {
+            $tooltip.text(label).append($arrow).show();
+            // reset for animation in
+            $tooltip.css({ opacity: 0, transform: 'translateY(4px) scale(0.98)' });
+
+            const rect = iconEl.getBoundingClientRect();
+            const tooltipWidth = $tooltip.outerWidth();
+            const tooltipHeight = $tooltip.outerHeight();
+            let top = window.scrollY + rect.top - tooltipHeight - 14;
+            let left = window.scrollX + rect.left + (rect.width / 2) - (tooltipWidth / 2);
+            let placeBelow = false;
+            if (top < window.scrollY) { top = window.scrollY + rect.bottom + 14; placeBelow = true; }
+            $tooltip.css({ top: `${top}px`, left: `${left}px` });
+            const arrowLeft = tooltipWidth / 2 - 8;
+            if (placeBelow) {
+                $arrow.css({ top: '-8px', left: `${arrowLeft}px`, borderTop: 'none', borderBottom: '8px solid #1a1a1a' });
+            } else {
+                $arrow.css({ top: `${tooltipHeight - 1}px`, left: `${arrowLeft}px`, borderBottom: 'none', borderTop: '8px solid #1a1a1a' });
+            }
+            requestAnimationFrame(() => {
+                $tooltip.css({ opacity: 1, transform: 'translateY(0) scale(1)' });
+            });
+        };
+
+        // Tap/click handler on icons (namespace to avoid duplicate handlers on re-render)
+        statsContainer.off('click.phaseTooltip mouseenter.phaseTooltip mouseleave.phaseTooltip');
+        statsContainer.on('click.phaseTooltip', '.phase-accuracy-icon', function(e) {
+            e.stopPropagation();
+            const $icon = $(this);
+            const acc = $icon.data('accuracy');
+            if (typeof acc !== 'number') return;
+            const label = `Accuracy: ${(acc * 100).toFixed(1)}`;
+            showTooltipForIcon(this, label);
+        });
+
+        // Hover handlers (show on mouseenter, hide on mouseleave)
+        statsContainer.on('mouseenter.phaseTooltip', '.phase-accuracy-icon', function() {
+            const $icon = $(this);
+            const acc = $icon.data('accuracy');
+            if (typeof acc !== 'number') return;
+            const label = `Accuracy: ${(acc * 100).toFixed(1)}`;
+            showTooltipForIcon(this, label);
+        });
+        statsContainer.on('mouseleave.phaseTooltip', '.phase-accuracy-icon', function() {
+            hideTooltip();
+        });
+
+        // Global listeners to hide tooltip
+        $(document).off('click.phaseTooltip').on('click.phaseTooltip', hideTooltip);
+        $(window).off('scroll.phaseTooltip resize.phaseTooltip').on('scroll.phaseTooltip resize.phaseTooltip', hideTooltip);
     }
 
     /**
@@ -113,7 +204,7 @@ export class GameStats {
         </div>`);
     }
 
-    static createPhaseClassificationsRow(label, whiteClassification, blackClassification) {
+    static createPhaseClassificationsRow(label, whiteClassification, blackClassification, phaseAccuracies) {
         const row = $(`<div class="stats-row">
             <div class="stats-label">${label}</div>
             <div id="white-icon" class=" stats-count"></div>
@@ -124,8 +215,18 @@ export class GameStats {
         let whiteIcon = $(`<p class="stats-label no-padding">-</p>`);
         let blackIcon = $(`<p class="stats-label no-padding">-</p>`);
 
-        if (whiteClassification) whiteIcon = $(`<img src="${whiteClassification?.src || '-'}" alt="White" class="stats-icon">`);
-        if (blackClassification) blackIcon = $(`<img src="${blackClassification?.src || '-'}" alt="Black" class="stats-icon">`);
+        if (whiteClassification) {
+            const acc = typeof phaseAccuracies?.white?.accuracy === 'number' ? phaseAccuracies.white.accuracy : null;
+            const title = acc !== null ? `Accuracy: ${(acc * 100).toFixed(1)}` : '';
+            whiteIcon = $(`<img src="${whiteClassification?.src || '-'}" alt="White" class="stats-icon phase-accuracy-icon" title="${title}">`);
+            if (acc !== null) whiteIcon.attr('data-accuracy', acc);
+        }
+        if (blackClassification) {
+            const acc = typeof phaseAccuracies?.black?.accuracy === 'number' ? phaseAccuracies.black.accuracy : null;
+            const title = acc !== null ? `Accuracy: ${(acc * 100).toFixed(1)}` : '';
+            blackIcon = $(`<img src="${blackClassification?.src || '-'}" alt="Black" class="stats-icon phase-accuracy-icon" title="${title}">`);
+            if (acc !== null) blackIcon.attr('data-accuracy', acc);
+        }
 
         row.find('#white-icon').append(whiteIcon);
         row.find('#black-icon').append(blackIcon);

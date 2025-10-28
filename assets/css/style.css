@@ -23,7 +23,7 @@
     --color-classification-great: var(--color-slate-300);
     --color-classification-best: var(--color-green-300);
     --color-classification-excellent: var(--color-green-300);
-    --color-classification-book: var(--color-skin-300);
+    --color-classification-theory: var(--color-skin-300);
     --color-classification-inaccuracy: var(--color-gold-200);
     --color-classification-mistake: var(--color-orange-200);
     --color-classification-miss: #ff7769;
@@ -1191,7 +1191,7 @@ select {
 }
 
 .theory-move:not(.moves-container .theory-move) {
-    color: var(--color-classification-book);
+    color: var(--color-classification-theory);
 }
 
 
@@ -1283,7 +1283,7 @@ select {
 }
 
 /* Board Classification Background Colors */
-.board-classification.theory-move {
+.board-Classification.THEORY-move {
 	background-image: linear-gradient(var(--theory-bg-start) 100%, var(--theory-bg-end) 50%);
 }
 

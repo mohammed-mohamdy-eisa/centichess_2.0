@@ -13,19 +13,93 @@ export class MistakeLearner {
         this.currentMistakeNodeId = null; // Track the node we should be at
         this.solvedCorrectly = 0; // Track mistakes solved without hints/solutions
         this.usedHintOrSolution = false; // Track if current mistake used help
+        this.madeIncorrectAttempt = false; // Track if user made any incorrect attempt on current mistake
+        this.skippedCurrentMistake = false; // Track if user skipped current mistake
+        this.madeIncorrectAttempt = false; // Reset incorrect attempt tracking
+        this.skippedCurrentMistake = false; // Reset skipped flag
         this.currentEvaluationId = null; // Track current evaluation to prevent race conditions
         this.lastIncorrectMove = null; // Store last incorrect move for "Try again" button
         this.lastPositionBeforeMistake = null; // Store position for undo
         this.mistakeSolved = false; // Track if current mistake was solved (top engine move made)
         this.positionBeforeLearning = null; // Store position before entering learning mode
         
-        // Initialize audio for learning sounds
-        this.sounds = {
-            correct: new Audio('/assets/sounds/learning/correct.mp3'),
-            wrong: new Audio('/assets/sounds/learning/wrong.mp3'),
-            completed: new Audio('/assets/sounds/learning/completed.mp3'),
-            better: new Audio('/assets/sounds/learning/better.mp3')
-        };
+        // Web Audio API: lazy-init context and normalized buffers for learning sounds
+        this.audioContext = null;
+        this.masterGainNode = null;
+        this.compressorNode = null;
+        this.learningBuffers = {}; // { name: { buffer, normGain } }
+        this._audioInitPromise = null;
+    }
+
+    /**
+     * Lazily initialize audio graph and load/normalize learning sounds
+     */
+    async _ensureAudioInitialized() {
+        if (this._audioInitPromise) return this._audioInitPromise;
+
+        this._audioInitPromise = (async () => {
+            // Respect autoplay policies by creating context on-demand
+            if (!this.audioContext) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                this.masterGainNode = this.audioContext.createGain();
+                // Slightly reduce overall volume to harmonize with board SFX
+                this.masterGainNode.gain.value = 0.8;
+
+                // Gentle dynamics to smooth perceived loudness differences
+                this.compressorNode = this.audioContext.createDynamicsCompressor();
+                this.compressorNode.threshold.setValueAtTime(-24, this.audioContext.currentTime);
+                this.compressorNode.knee.setValueAtTime(30, this.audioContext.currentTime);
+                this.compressorNode.ratio.setValueAtTime(6, this.audioContext.currentTime);
+                this.compressorNode.attack.setValueAtTime(0.003, this.audioContext.currentTime);
+                this.compressorNode.release.setValueAtTime(0.25, this.audioContext.currentTime);
+
+                this.masterGainNode.connect(this.compressorNode);
+                this.compressorNode.connect(this.audioContext.destination);
+            }
+
+            const files = {
+                correct: '/assets/sounds/learning/correct.mp3',
+                wrong: '/assets/sounds/learning/wrong.mp3',
+                completed: '/assets/sounds/learning/completed.mp3',
+                better: '/assets/sounds/learning/better.mp3'
+            };
+
+            const loadOne = async (name, url) => {
+                if (this.learningBuffers[name]?.buffer) return;
+                const resp = await fetch(url);
+                const arrayBuf = await resp.arrayBuffer();
+                const audioBuf = await this.audioContext.decodeAudioData(arrayBuf);
+
+                // Compute RMS to derive a normalization gain
+                const rms = this._computeRMS(audioBuf);
+                const targetRMS = 0.12; // empirically pleasant level
+                const epsilon = 1e-6;
+                const normGain = Math.min(2.5, targetRMS / Math.max(rms, epsilon));
+
+                this.learningBuffers[name] = { buffer: audioBuf, normGain };
+            };
+
+            await Promise.all(Object.entries(files).map(([n, u]) => loadOne(n, u)));
+        })();
+
+        return this._audioInitPromise;
+    }
+
+    /**
+     * Compute RMS across all channels
+     */
+    _computeRMS(audioBuffer) {
+        let sumSquares = 0;
+        let count = 0;
+        for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
+            const data = audioBuffer.getChannelData(ch);
+            for (let i = 0; i < data.length; i++) {
+                const s = data[i];
+                sumSquares += s * s;
+            }
+            count += data.length;
+        }
+        return Math.sqrt(sumSquares / Math.max(1, count));
     }
 
     /**
@@ -222,7 +296,10 @@ export class MistakeLearner {
 
         // Bind event handlers
         $('#view-solution').off('click').on('click', () => this.viewSolution());
-        $('#skip-mistake').off('click').on('click', () => this.nextMistake());
+        $('#skip-mistake').off('click').on('click', () => {
+            this.skippedCurrentMistake = true;
+            this.nextMistake();
+        });
     }
 
 
@@ -262,7 +339,7 @@ export class MistakeLearner {
             <div class="learning-actions-counter">Mistake ${current} of ${total}</div>
             <div class="learning-actions-message">${message || defaultMessage}</div>
             <div class="learning-actions-buttons">
-                <button class="learning-action-btn primary" id="next-solution">${isLast ? 'Complete Training' : 'Next Mistake'}</button>
+                <button class="learning-action-btn primary" id="next-solution">${isLast ? 'Show results' : 'Next Mistake'}</button>
             </div>
         `).show();
 
@@ -305,7 +382,7 @@ export class MistakeLearner {
             
             this.setupMistakePosition(mistakeMainlineIndex);
         });
-        $('#next-anyway').off('click').on('click', () => this.nextMistake());
+        $('#next-anyway').off('click').on('click', () => { this.skippedCurrentMistake = true; this.nextMistake(); });
     }
 
     /**
@@ -518,7 +595,7 @@ export class MistakeLearner {
         const classification = evaluatedMove.classification?.type;
         
         // Check if it's the best move (optimal classifications that only occur for top moves)
-        const topOnlyMoves = ['perfect', 'best', 'brilliant', 'great', 'forced', 'theory'];
+        const topOnlyMoves = ['perfect', 'best', 'brilliant', 'great', 'forced', 'book'];
         
         if (topOnlyMoves.includes(classification)) {
             // Best move found!
@@ -560,8 +637,8 @@ export class MistakeLearner {
             this.correctMoveMade = true;
             this.hintLevel = 0;
 
-        // Track if solved without help
-        if (!this.usedHintOrSolution) {
+        // Track if solved without disqualifiers
+        if (!this.usedHintOrSolution && !this.madeIncorrectAttempt && !this.skippedCurrentMistake) {
             this.solvedCorrectly++;
         }
         
@@ -609,7 +686,8 @@ export class MistakeLearner {
      * Handles incorrect moves
      */
     handleIncorrectMove(positionBeforeMistake, incorrectMove, classification = null) {
-        // Play wrong sound
+        // Mark incorrect attempt and play wrong sound
+        this.madeIncorrectAttempt = true;
         this.playSound('wrong');
         
         // Store the incorrect move for the "Try again" button
@@ -683,6 +761,16 @@ export class MistakeLearner {
                 this.viewSolution();
             }, 100);
         });
+
+        // If auto-advance is enabled, also auto-take-back incorrect answers
+        const autoAdvance = this.chessUI.settingsMenu.getSettingValue('autoAdvanceToNextMistake');
+        if (autoAdvance !== false) {
+            if (this.lastIncorrectMove) {
+                this.chessUI.board.unmove(true, this.lastIncorrectMove, this.lastPositionBeforeMistake.fen || this.lastPositionBeforeMistake.move?.after);
+            } else if (this.lastPositionBeforeMistake) {
+                this.chessUI.board.fen(this.lastPositionBeforeMistake.fen || this.lastPositionBeforeMistake.move?.after);
+            }
+        }
     }
 
     /**
@@ -692,9 +780,6 @@ export class MistakeLearner {
         if (!this.isActive || this.correctMoveMade) {
             return;
         }
-
-        // Mark that help was used
-        this.usedHintOrSolution = true;
 
         const mistakeMainlineIndex = this.currentMistakeMove.mainlineIndex;
         const positionBeforeMistake = this.chessUI.moveTree.mainline[mistakeMainlineIndex - 1];
@@ -720,6 +805,8 @@ export class MistakeLearner {
             this.chessUI.board.clearHighlights();
             this.chessUI.board.addBestMoveArrow(bestLine.uciMove, '#710099', 0.59);
             this.hintLevel = 2;
+            // Count second hint usage as disqualifier
+            this.usedHintOrSolution = true;
         }
         // No more hints after level 2
     }
@@ -786,15 +873,29 @@ export class MistakeLearner {
             <div class="learning-actions-counter" style="opacity: 0">Mistake ${current} of ${total}</div>
             <div class="learning-actions-message">🎉 Congratulations!<br>You completed ${solved} out of ${total} mistake${total > 1 ? 's' : ''}</div>
             <div class="learning-actions-buttons">
-                <button class="learning-action-btn primary" id="finish-learning">Return to Report</button>
+                <button class="learning-action-btn primary" id="finish-learning">Do it again</button>
             </div>
         `).show();
 
         // Disable navigation buttons on completion screen
         this.disableNavigationButtons();
 
-        // Bind event handler
-        $('#finish-learning').off('click').on('click', () => this.exit());
+        // Bind event handler: restart learning from first mistake
+        $('#finish-learning').off('click').on('click', () => {
+            // Reset tracking state and start again from first mistake
+            this.isActive = true;
+            this.currentMistakeIndex = 0;
+            this.hintLevel = 0;
+            this.correctMoveMade = false;
+            this.usedHintOrSolution = false;
+            this.madeIncorrectAttempt = false;
+            this.skippedCurrentMistake = false;
+            this.mistakeSolved = false;
+            this.solvedCorrectly = 0;
+
+            this.chessUI.moveNavigator.showLearningControls();
+            this.navigateToMistake(0);
+        });
         
         // Big confetti for completion
         this.triggerCompletionConfetti();
@@ -836,9 +937,10 @@ export class MistakeLearner {
         // Hide learning actions container and unbind all event handlers
         $('#learning-actions').hide().off().empty();
 
-        // Show sidebar content again
+        // Show sidebar content again and ensure graph is visible
         $('.sidebar-header').show();
         $('.tab-content').show();
+        $('.game-graph').show();
 
         // Restore normal move information
         const currentNode = this.chessUI.moveTree.currentNode;
@@ -882,7 +984,7 @@ export class MistakeLearner {
             'best': '#81b64c',
             'great': '#749bbf',
             'brilliant': '#26c2a3',
-            'theory': '#d5a47d',
+            'book': '#d5a47d',
             'forced': '#81b64c'
         };
         return colors[classificationType.toLowerCase()] || 'var(--text-primary)';
@@ -957,13 +1059,35 @@ export class MistakeLearner {
      * Plays a learning mode sound
      */
     playSound(soundName) {
-        if (this.sounds[soundName]) {
-            // Reset the sound to allow rapid replays
-            this.sounds[soundName].currentTime = 0;
-            this.sounds[soundName].play().catch(err => {
-                console.warn('Failed to play learning sound:', err);
+        // Respect global audio toggle (same as board SFX)
+        const audioEnabled = this.chessUI?.board?.settings?.audioEnabled ?? this.chessUI?.settingsMenu?.getSettingValue('audioEnabled');
+        if (!audioEnabled) return;
+
+        // Lazy init and play via Web Audio with normalization
+        this._ensureAudioInitialized()
+            .then(() => {
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume().catch(() => {});
+                }
+                const entry = this.learningBuffers[soundName];
+                if (!entry?.buffer) return;
+
+                const src = this.audioContext.createBufferSource();
+                src.buffer = entry.buffer;
+                const gain = this.audioContext.createGain();
+                gain.gain.value = entry.normGain;
+
+                src.connect(gain);
+                gain.connect(this.masterGainNode);
+                try {
+                    src.start(0);
+                } catch (err) {
+                    console.warn('Failed to start learning sound:', err);
+                }
+            })
+            .catch(err => {
+                console.warn('Failed to initialize learning audio:', err);
             });
-        }
     }
 }
 

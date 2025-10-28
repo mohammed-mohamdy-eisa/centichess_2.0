@@ -276,8 +276,9 @@ export class MoveEvaluator {
         // Calculate accuracy
         const whiteMoves = moves.filter(move => move.fen.includes(' b '));
         const blackMoves = moves.filter(move => move.fen.includes(' w '));
-        const whiteAccuracy = whiteMoves.reduce((sum, move) => sum + move.classification.accuracy, 0) / whiteMoves.length;
-        const blackAccuracy = blackMoves.reduce((sum, move) => sum + move.classification.accuracy, 0) / blackMoves.length;
+        // Use accuracy 1.0 for top engine moves, otherwise use classification accuracy
+        const whiteAccuracy = whiteMoves.reduce((sum, move) => sum + (move.isTopEngineMove ? 1.0 : move.classification.accuracy), 0) / whiteMoves.length;
+        const blackAccuracy = blackMoves.reduce((sum, move) => sum + (move.isTopEngineMove ? 1.0 : move.classification.accuracy), 0) / blackMoves.length;
 
         // Calculate counts of each classification type
         const whiteCounts = whiteMoves.reduce((counts, move) => {
@@ -289,13 +290,15 @@ export class MoveEvaluator {
             return counts;
         }, {});
 
-        // Calculate estimated Elo from centipawn loss
+        // Calculate Game Rating from centipawn loss
         const whiteCpl = whiteMoves.reduce((sum, move) => sum + move.centipawnLoss || 0, 0) / whiteMoves.length;
         const blackCpl = blackMoves.reduce((sum, move) => sum + move.centipawnLoss || 0, 0) / blackMoves.length;
 
         const getEloFromAverageCpl = (averageCpl) => {
             const cpl = Math.max(Math.min(averageCpl, 300), 0) / 100;
-            return -958.03125 * Math.pow(cpl, 3) + 3395.605 * Math.pow(cpl, 2) - 4216.92255 * cpl + 2574.1609;
+            // Calibrated to match Chess.com Elo estimates more closely
+            // Reduced penalty for CPL and increased base Elo
+            return -958.03125 * Math.pow(cpl, 3) + 3395.605 * Math.pow(cpl, 2) - 3800 * cpl + 2750;
         }
         
         const getAverageCplFromElo = (elo) => {
@@ -311,10 +314,11 @@ export class MoveEvaluator {
             const cplDiff = gameCpl - expectedCpl;
             if (cplDiff === 0) return eloFromCpl;
 
+            // Calibrated adjustment factor (reduced from 0.005 to 0.003 to be less aggressive)
             if (cplDiff > 0) {
-                return rating * Math.exp(-0.005 * cplDiff);
+                return rating * Math.exp(-0.003 * cplDiff);
             } else {
-                return rating / Math.exp(-0.005 * -cplDiff);
+                return rating / Math.exp(-0.003 * -cplDiff);
             }
         };
 
@@ -324,17 +328,22 @@ export class MoveEvaluator {
         // Helper function to calculate accuracy for a set of moves
         const calculateAccuracy = (movesArray) => {
             if (movesArray.length === 0) return 0;
-            return movesArray.reduce((sum, move) => sum + move.classification.accuracy, 0) / movesArray.length;
+            // Use accuracy 1.0 for top engine moves, otherwise use classification accuracy
+            return movesArray.reduce((sum, move) => sum + (move.isTopEngineMove ? 1.0 : move.classification.accuracy), 0) / movesArray.length;
         };
         
-        // Helper function to determine classification based on accuracy and special moves
-        const getClassification = (accuracy, hasBrilliant, hasGreat) => {
-            if (accuracy > 0.8 && hasBrilliant) return Classification.BRILLIANT;
-            if (accuracy > 0.8 && hasGreat) return Classification.GREAT;
-            if (accuracy > 0.8) return Classification.BEST;
-            if (accuracy > 0.7) return Classification.EXCELLENT;
-            if (accuracy > 0.65) return Classification.GOOD;
-            if (accuracy > 0.6) return Classification.MISTAKE;
+        // Helper function to determine classification based on accuracy only (phase-level)
+        // Thresholds (in percentages):
+        // Great ≥ 94, Best 89-93, Excellent 79-88, Good 64-78,
+        // Inaccuracy 49-63, Mistake 31-48, Blunder ≤ 30
+        const getClassification = (accuracy) => {
+            const pct = Math.round(accuracy * 100);
+            if (pct >= 94) return Classification.GREAT;
+            if (pct >= 89) return Classification.BEST;
+            if (pct >= 79) return Classification.EXCELLENT;
+            if (pct >= 64) return Classification.GOOD;
+            if (pct >= 49) return Classification.INACCURACY;
+            if (pct >= 31) return Classification.MISTAKE;
             return Classification.BLUNDER;
         };
         
@@ -356,18 +365,13 @@ export class MoveEvaluator {
             const whiteAccuracy = calculateAccuracy(whiteMoves);
             const blackAccuracy = calculateAccuracy(blackMoves);
             
-            const whiteBrilliant = whiteMoves.some(m => m.classification.type === 'brilliant');
-            const blackBrilliant = blackMoves.some(m => m.classification.type === 'brilliant');
-            const whiteGreat = whiteMoves.some(m => m.classification.type === 'great');
-            const blackGreat = blackMoves.some(m => m.classification.type === 'great');
-            
             phaseAnalysis[phaseName] = {
-                white: { accuracy: whiteAccuracy, brilliant: whiteBrilliant, great: whiteGreat },
-                black: { accuracy: blackAccuracy, brilliant: blackBrilliant, great: blackGreat }
+                white: { accuracy: whiteAccuracy },
+                black: { accuracy: blackAccuracy }
             };
             
-            phaseClassifications.white[phaseName] = getClassification(whiteAccuracy, whiteBrilliant, whiteGreat);
-            phaseClassifications.black[phaseName] = getClassification(blackAccuracy, blackBrilliant, blackGreat);
+            phaseClassifications.white[phaseName] = getClassification(whiteAccuracy);
+            phaseClassifications.black[phaseName] = getClassification(blackAccuracy);
         });
 
         return {
@@ -381,6 +385,7 @@ export class MoveEvaluator {
                 counts: blackCounts,
                 elo: getEloFromRatingAndCpl(blackCpl, game.black.elo, game.white.elo)
             },
+            phaseAnalysis,
             phaseClassifications,
             moves: moves
         };
